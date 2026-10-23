@@ -140,6 +140,9 @@ export interface Workspace {
   path: string;
   /** The file isn't where the list says. */
   missing: boolean;
+  /** Index into the project palette, saved in the workspace's own file; none is the plain mark. */
+  color: number | null;
+  icon: string | null;
 }
 export interface Workspaces {
   active: string;

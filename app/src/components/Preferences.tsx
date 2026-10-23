@@ -1,15 +1,7 @@
 import { useState } from "react";
-import {
-  chooseDirectory,
-  copyText,
-  errorMessage,
-  relocateWorkspace,
-  removeWorkspace,
-  revealLabel,
-  revealPath,
-} from "../lib/api";
+import { copyText, errorMessage, revealLabel, revealPath } from "../lib/api";
 import type { Project, Snapshot, Workspace, Workspaces } from "../lib/types";
-import { Icon } from "./Icon";
+import { CopyIcon, Icon } from "./Icon";
 import { ContextMenu, type MenuItem } from "./Sidebar";
 import { workspaceName } from "./Workspaces";
 import { language, languages, setLanguage, t } from "../lib/i18n";
@@ -17,19 +9,24 @@ import { language, languages, setLanguage, t } from "../lib/i18n";
 export function Preferences({
   data,
   workspaces,
-  onWorkspaces,
-  onRenameWorkspace,
+  onEditWorkspace,
+  onLeaveWorkspace,
   notify,
   onEdit,
+  onAddProject,
 }: {
   data: Snapshot;
   workspaces: Workspaces | null;
-  onWorkspaces: (list: Workspaces) => void;
-  onRenameWorkspace: (workspace: Workspace) => void;
+  onEditWorkspace: (workspace: Workspace) => void;
+  /** Asks before the workspace leaves the list or is deleted, the open one included. */
+  onLeaveWorkspace: (workspace: Workspace, mode: "remove" | "delete") => void;
   notify: (message: string, error?: boolean) => void;
   onEdit: (project: Project) => void;
+  onAddProject: () => void;
 }) {
   const [copied, setCopied] = useState("");
+  /** The value just copied, whose button shows a check for a moment. */
+  const [justCopied, setJustCopied] = useState("");
   const [menu, setMenu] = useState<{
     workspace: Workspace;
     x: number;
@@ -37,12 +34,17 @@ export function Preferences({
     trigger: HTMLElement;
   } | null>(null);
   const fail = (e: unknown) => notify(errorMessage(e), true);
-  const defaultPath = workspaces?.workspaces[0]?.path;
+  const list = workspaces?.workspaces ?? [];
+  // Any workspace can go as long as one remains; the open one also needs another to switch to.
+  const canLeave = (workspace: Workspace) =>
+    workspace.path === workspaces?.active
+      ? list.some((w) => w.path !== workspace.path && !w.missing)
+      : list.length > 1;
   const actions = (workspace: Workspace): MenuItem[] => [
     {
-      label: t("Rename…"),
+      label: t("Edit…"),
       icon: "rename",
-      onSelect: () => onRenameWorkspace(workspace),
+      onSelect: () => onEditWorkspace(workspace),
     },
     ...(workspace.missing
       ? []
@@ -53,49 +55,37 @@ export function Preferences({
             onSelect: () => void revealPath(workspace.path).catch(fail),
           },
         ]),
-    ...(workspace.missing || workspace.path === defaultPath
+    ...(!canLeave(workspace)
       ? []
       : [
           {
-            label: t("Move file…"),
-            icon: "folder" as const,
-            onSelect: () =>
-              void chooseDirectory(t("Move the workspace to"))
-                .then((folder) =>
-                  folder
-                    ? relocateWorkspace(workspace.path, folder).then((list) => {
-                        onWorkspaces(list);
-                        notify(t("Workspace file moved."));
-                      })
-                    : undefined,
-                )
-                .catch(fail),
-          },
-        ]),
-    ...(workspace.path === workspaces?.active || workspace.path === defaultPath
-      ? []
-      : [
-          {
-            label: t("Remove from list"),
+            label: t("Remove from list…"),
             icon: "close" as const,
             separated: true,
-            onSelect: () =>
-              void removeWorkspace(workspace.path)
-                .then((list) => {
-                  onWorkspaces(list);
-                  notify(
-                    t("“{0}” left the list. The file wasn't touched.", [
-                      workspaceName(workspace),
-                    ]),
-                  );
-                })
-                .catch(fail),
+            onSelect: () => onLeaveWorkspace(workspace, "remove"),
           },
+          ...(workspace.missing
+            ? []
+            : [
+                {
+                  label: t("Delete…"),
+                  icon: "trash" as const,
+                  danger: true,
+                  onSelect: () => onLeaveWorkspace(workspace, "delete"),
+                },
+              ]),
         ]),
   ];
   const copy = (value: string, label: string) =>
     void copyText(value)
-      .then(() => setCopied(label))
+      .then(() => {
+        setCopied(label);
+        setJustCopied(value);
+        window.setTimeout(
+          () => setJustCopied((now) => (now === value ? "" : now)),
+          1400,
+        );
+      })
       .catch(() => setCopied(t("Couldn't copy.")));
   return (
     <div className="page scroll">
@@ -146,7 +136,15 @@ export function Preferences({
           <ul className="settings-list">
             {(workspaces && !workspaces.pinned
               ? workspaces.workspaces
-              : [{ name: "", path: data.databasePath, missing: false }]
+              : [
+                  {
+                    name: "",
+                    path: data.databasePath,
+                    missing: false,
+                    color: null,
+                    icon: null,
+                  },
+                ]
             ).map((workspace) => (
               <li className="settings-row" key={workspace.path}>
                 <div className="settings-text">
@@ -171,7 +169,7 @@ export function Preferences({
                   aria-label={t("Copy path of {0}", [workspaceName(workspace)])}
                   onClick={() => copy(workspace.path, t("Path copied."))}
                 >
-                  <Icon name="copy" size={14} />
+                  <CopyIcon copied={justCopied === workspace.path} size={14} />
                 </button>
                 {workspaces && !workspaces.pinned && (
                   <button
@@ -181,7 +179,10 @@ export function Preferences({
                       workspaceName(workspace),
                     ])}
                     aria-haspopup="menu"
+                    aria-expanded={menu?.workspace.path === workspace.path}
                     onClick={(event) => {
+                      if (menu?.workspace.path === workspace.path)
+                        return setMenu(null);
                       const rect = event.currentTarget.getBoundingClientRect();
                       setMenu({
                         workspace,
@@ -202,6 +203,7 @@ export function Preferences({
               x={menu.x}
               y={menu.y}
               label={t("Actions for {0}", [workspaceName(menu.workspace)])}
+              anchor={{ current: menu.trigger }}
               items={actions(menu.workspace)}
               onClose={(restoreFocus) => {
                 if (restoreFocus) menu.trigger.focus();
@@ -228,7 +230,7 @@ export function Preferences({
                   aria-label={t("Copy ID of {0}", [project.name])}
                   onClick={() => copy(project.id, t("ID copied."))}
                 >
-                  <Icon name="copy" size={14} />
+                  <CopyIcon copied={justCopied === project.id} size={14} />
                 </button>
                 <button
                   type="button"
@@ -239,10 +241,18 @@ export function Preferences({
                 </button>
               </li>
             ))}
+            {data.projects.length === 0 && (
+              <li className="settings-row">
+                <span className="settings-text muted">
+                  {t("No projects created yet.")}
+                </span>
+                <button type="button" className="button" onClick={onAddProject}>
+                  <Icon name="plus" size={14} />
+                  {t("Add project")}
+                </button>
+              </li>
+            )}
           </ul>
-          {data.projects.length === 0 && (
-            <p className="muted">{t("No projects created.")}</p>
-          )}
         </section>
         <p className="muted small" role="status">
           {copied}

@@ -163,21 +163,30 @@ export async function chooseDatabase(
 }
 export const listWorkspaces = () => call<Workspaces>("list_workspaces");
 /** Creates `<folder>/<name>.sqlite` and opens it. */
-export const createWorkspace = (name: string, folder: string) =>
-  call<Workspaces>("create_workspace", { name, folder });
+export const createWorkspace = (
+  name: string,
+  folder: string,
+  color: number | null,
+  icon: string | null,
+) => call<Workspaces>("create_workspace", { name, folder, color, icon });
 /** Opens an existing database file, adding it to the list. */
 export const openWorkspace = (path: string) =>
   call<Workspaces>("open_workspace", { path });
 export const switchWorkspace = (path: string) =>
   call<Workspaces>("switch_workspace", { path });
-export const renameWorkspace = (path: string, name: string) =>
-  call<Workspaces>("rename_workspace", { path, name });
+/** Renames it and saves its color and icon inside its file. */
+export const editWorkspace = (
+  path: string,
+  name: string,
+  color: number | null,
+  icon: string | null,
+) => call<Workspaces>("edit_workspace", { path, name, color, icon });
 /** Takes it off the list; the file stays. */
 export const removeWorkspace = (path: string) =>
   call<Workspaces>("remove_workspace", { path });
-/** Moves the workspace's file into `folder`. */
-export const relocateWorkspace = (path: string, folder: string) =>
-  call<Workspaces>("relocate_workspace", { path, folder });
+/** Takes it off the list and deletes its file, with every project and task in it. */
+export const deleteWorkspace = (path: string) =>
+  call<Workspaces>("delete_workspace", { path });
 /** Moves a project, with everything in it, to the workspace at `path`. */
 export const moveProject = (projectId: string, path: string) =>
   call<null>("move_project", { projectId, path });

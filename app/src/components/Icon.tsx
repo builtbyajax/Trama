@@ -108,3 +108,22 @@ export function Icon({ name, size = 15 }: { name: IconName; size?: number }) {
     </svg>
   );
 }
+
+/**
+ * The copy glyph, which turns into a check while `copied`: the check draws itself in and fades
+ * out when it goes back. Both are stacked so the button keeps its size.
+ */
+export function CopyIcon({
+  copied,
+  size = 15,
+}: {
+  copied: boolean;
+  size?: number;
+}) {
+  return (
+    <span className={`copy-icon ${copied ? "copied" : ""}`} aria-hidden="true">
+      <Icon name="copy" size={size} />
+      <Icon name="check" size={size} />
+    </span>
+  );
+}

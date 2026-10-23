@@ -1,6 +1,8 @@
 //! Workspaces: each one is a separate database file. The list and the open one live in
 //! `workspaces.json`, beside the default database, so the window and the MCP read the same choice.
+//! A workspace's color and icon live in its own database, so they travel with the file.
 use crate::store::{Result, Store};
+use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -25,6 +27,9 @@ pub struct Workspace {
     /// The file isn't where the list says: moved or deleted outside Trama, or on a drive that
     /// isn't connected.
     pub missing: bool,
+    /// Index into the project palette; none shows the plain mark.
+    pub color: Option<i64>,
+    pub icon: Option<String>,
 }
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -56,21 +61,18 @@ fn same(a: &str, b: &Path) -> bool {
     Path::new(a) == b
 }
 
-/// The list as saved, with the default workspace always in it, first.
+/// The list as saved. The default workspace starts it on first use; after that it can leave like
+/// any other, as long as one remains.
 fn load() -> Registry {
     let mut registry: Registry = std::fs::read(registry_path())
         .ok()
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
         .unwrap_or_default();
-    let default = default_path();
-    if !registry.workspaces.iter().any(|w| same(&w.path, &default)) {
-        registry.workspaces.insert(
-            0,
-            Entry {
-                name: String::new(),
-                path: default.display().to_string(),
-            },
-        );
+    if registry.workspaces.is_empty() {
+        registry.workspaces.push(Entry {
+            name: String::new(),
+            path: default_path().display().to_string(),
+        });
     }
     registry
 }
@@ -87,15 +89,21 @@ fn save(registry: &Registry) -> Result<()> {
 }
 
 /// The database the app and the MCP open: `TRAMA_DB` when set, otherwise the open workspace. One
-/// whose file went missing falls back to the default, instead of creating an empty file there.
+/// whose file went missing falls back to the first one in the list that exists, instead of
+/// creating an empty file there; with none, to the first, which Trama then creates.
 pub fn active_path() -> PathBuf {
     if let Some(path) = pinned() {
         return path;
     }
-    load()
+    let registry = load();
+    let paths = || registry.workspaces.iter().map(|w| PathBuf::from(&w.path));
+    registry
         .active
+        .as_ref()
         .map(PathBuf::from)
         .filter(|path| path.is_file())
+        .or_else(|| paths().find(|path| path.is_file()))
+        .or_else(|| paths().next())
         .unwrap_or_else(default_path)
 }
 
@@ -109,13 +117,63 @@ pub fn list() -> Workspaces {
         workspaces: registry
             .workspaces
             .into_iter()
-            .map(|w| Workspace {
-                // The default one is only created by its first use.
-                missing: !Path::new(&w.path).is_file() && !same(&w.path, &default_path()),
-                name: w.name,
-                path: w.path,
+            .map(|w| {
+                let (color, icon) = look(Path::new(&w.path));
+                Workspace {
+                    // The default one is only created by its first use.
+                    missing: !Path::new(&w.path).is_file() && !same(&w.path, &default_path()),
+                    name: w.name,
+                    path: w.path,
+                    color,
+                    icon,
+                }
             })
             .collect(),
+    }
+}
+
+const COLOR: &str = "workspace.color";
+const ICON: &str = "workspace.icon";
+
+/// The color and icon saved in a workspace's file. Opened without the create flag and without
+/// migrating, so listing never makes or changes a database; a missing or older file has neither.
+/// Not read-only: a WAL file with no `-shm` beside it can't be opened that way.
+fn look(path: &Path) -> (Option<i64>, Option<String>) {
+    let flags = OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX;
+    let Ok(db) = Connection::open_with_flags(path, flags) else {
+        return (None, None);
+    };
+    let read = |key: &str| -> Option<String> {
+        db.query_row("SELECT value FROM settings WHERE key=?", [key], |r| {
+            r.get(0)
+        })
+        .optional()
+        .ok()
+        .flatten()
+    };
+    (read(COLOR).and_then(|v| v.parse().ok()), read(ICON))
+}
+fn clean_icon(icon: Option<&str>) -> Option<&str> {
+    icon.map(str::trim).filter(|i| !i.is_empty())
+}
+
+impl Store {
+    /// Saves the workspace's color and icon in this database; none clears them.
+    fn set_look(&self, color: Option<i64>, icon: Option<&str>) -> Result<()> {
+        for (key, value) in [
+            (COLOR, color.map(|c| c.to_string())),
+            (ICON, clean_icon(icon).map(String::from)),
+        ] {
+            match value {
+                Some(value) => self.db.execute(
+                    "INSERT INTO settings(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=?2",
+                    params![key, value],
+                ),
+                None => self.db.execute("DELETE FROM settings WHERE key=?", [key]),
+            }
+            .map_err(|e| e.to_string())?;
+        }
+        Ok(())
     }
 }
 
@@ -141,7 +199,12 @@ fn clean_name(name: &str) -> Result<String> {
 }
 
 /// Creates `<folder>/<name>.sqlite` and opens it.
-pub fn create(name: &str, folder: &str) -> Result<Workspaces> {
+pub fn create(
+    name: &str,
+    folder: &str,
+    color: Option<i64>,
+    icon: Option<&str>,
+) -> Result<Workspaces> {
     let mut registry = unpinned()?;
     let name = clean_name(name)?;
     if name.contains(['/', '\\', ':']) || name.starts_with('.') {
@@ -151,7 +214,7 @@ pub fn create(name: &str, folder: &str) -> Result<Workspaces> {
     if path.exists() {
         return Err("A file with that name already exists in the folder.".into());
     }
-    Store::open(&path)?;
+    Store::open(&path)?.set_look(color, icon)?;
     let path = path.display().to_string();
     registry.workspaces.push(Entry {
         name,
@@ -196,9 +259,16 @@ pub fn switch(path: &str) -> Result<Workspaces> {
     Ok(list())
 }
 
-pub fn rename(path: &str, name: &str) -> Result<Workspaces> {
+/// Renames a workspace in the list and saves its color and icon in its file.
+pub fn edit(path: &str, name: &str, color: Option<i64>, icon: Option<&str>) -> Result<Workspaces> {
     let mut registry = unpinned()?;
-    find(&mut registry, path)?.name = clean_name(name)?;
+    let name = clean_name(name)?;
+    find(&mut registry, path)?;
+    if !Path::new(path).is_file() && !same(path, &default_path()) {
+        return Err("The workspace file doesn't exist.".into());
+    }
+    Store::open(Path::new(path))?.set_look(color, icon)?;
+    find(&mut registry, path)?.name = name;
     save(&registry)?;
     Ok(list())
 }
@@ -209,10 +279,36 @@ pub fn remove(path: &str) -> Result<Workspaces> {
     if same(path, &active_path()) {
         return Err("Switch to another workspace before removing this one.".into());
     }
-    if same(path, &default_path()) {
-        return Err("The default workspace stays in the list.".into());
+    find(&mut registry, path)?;
+    if registry.workspaces.len() == 1 {
+        return Err("Trama needs at least one workspace.".into());
+    }
+    registry.workspaces.retain(|w| w.path != path);
+    save(&registry)?;
+    Ok(list())
+}
+
+/// Removes a workspace from the list and deletes its file with its journal files: its projects and
+/// tasks are gone. Like removing, never the open one or the last.
+pub fn delete(path: &str) -> Result<Workspaces> {
+    let mut registry = unpinned()?;
+    if same(path, &active_path()) {
+        return Err("Switch to another workspace before deleting this one.".into());
     }
     find(&mut registry, path)?;
+    if registry.workspaces.len() == 1 {
+        return Err("Trama needs at least one workspace.".into());
+    }
+    for file in [
+        path.to_string(),
+        format!("{path}-wal"),
+        format!("{path}-shm"),
+    ] {
+        match std::fs::remove_file(&file) {
+            Err(e) if e.kind() != std::io::ErrorKind::NotFound => return Err(e.to_string()),
+            _ => {}
+        }
+    }
     registry.workspaces.retain(|w| w.path != path);
     save(&registry)?;
     Ok(list())

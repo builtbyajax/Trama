@@ -249,6 +249,16 @@ button.crumb:hover {
   background: var(--ink-2);
   color: var(--bg-window);
 }
+/* A workspace with a color fills its tile with it everywhere, checked or not. Dark ink reads on
+   every hue of the palette in both themes. */
+.workspace-mark.tinted,
+.workspace-menu .popover-option .workspace-mark.tinted {
+  background: var(--hue);
+  color: rgb(0 0 0 / 0.72);
+}
+.workspace-mark .icon {
+  stroke-width: 1.75;
+}
 .workspace-name {
   flex: 1;
   min-width: 0;

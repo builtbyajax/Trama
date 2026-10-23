@@ -56,10 +56,14 @@ import { ProjectMove } from "./components/ProjectMove";
 import {
   WorkspaceButton,
   WorkspaceComposer,
+  WorkspaceLeave,
   otherWorkspaces,
   workspaceName,
 } from "./components/Workspaces";
-import { createWorkspace, renameWorkspace } from "./lib/api";
+import {
+  createWorkspace,
+  editWorkspace,
+} from "./lib/api";
 import {
   taskMenuItems,
   taskMenuLabel,
@@ -76,6 +80,7 @@ import {
   type Project,
   type Task,
   type TaskStatus,
+  type Workspace,
 } from "./lib/types";
 import { t } from "./lib/i18n";
 
@@ -120,6 +125,11 @@ export function App() {
   const workspaces = useWorkspaces(notify);
   const [taskMenu, setTaskMenu] = useState<MenuRequest | null>(null);
   const [taskDelete, setTaskDelete] = useState<Task | null>(null);
+  const edited = workspaces.composer?.workspace;
+  const [workspaceLeave, setWorkspaceLeave] = useState<{
+    workspace: Workspace;
+    mode: "remove" | "delete";
+  } | null>(null);
   const [noteRequest, setNoteRequest] = useState<{
     path: string;
     at: number;
@@ -512,8 +522,10 @@ export function App() {
                   list={workspaces.list}
                   rail={Boolean(panel)}
                   onSwitch={workspaces.switchTo}
+                  onEdit={(workspace) => workspaces.setComposer({ workspace })}
                   onCreate={() => workspaces.setComposer({})}
                   onOpen={workspaces.open}
+                  onManage={() => navigate({ kind: "preferences" })}
                 />
               )
             }
@@ -640,12 +652,15 @@ export function App() {
               <Preferences
                 data={data}
                 workspaces={workspaces.list}
-                onWorkspaces={workspaces.setList}
-                onRenameWorkspace={(workspace) =>
+                onEditWorkspace={(workspace) =>
                   workspaces.setComposer({ workspace })
+                }
+                onLeaveWorkspace={(workspace, mode) =>
+                  setWorkspaceLeave({ workspace, mode })
                 }
                 notify={notify}
                 onEdit={(project) => setProjectComposer({ project })}
+                onAddProject={() => setProjectComposer({})}
               />
             ) : data.projects.length === 0 ? (
               <div className="empty-state">
@@ -845,17 +860,49 @@ export function App() {
           }}
         />
       )}
+      {workspaceLeave && workspaces.list && (
+        <WorkspaceLeave
+          {...workspaceLeave}
+          fallback={
+            workspaceLeave.workspace.path === workspaces.list.active
+              ? workspaces.list.workspaces.find(
+                  (w) => w.path !== workspaceLeave.workspace.path && !w.missing,
+                )
+              : undefined
+          }
+          onClose={() => setWorkspaceLeave(null)}
+          onDone={(list) => {
+            // Leaving the open one switched workspaces, so the window reloads into the new one.
+            if (workspaceLeave.workspace.path === workspaces.list?.active)
+              return workspaces.enter(list);
+            workspaces.setList(list);
+            setWorkspaceLeave(null);
+            const name = workspaceName(workspaceLeave.workspace);
+            notify(
+              workspaceLeave.mode === "remove"
+                ? t("“{0}” left the list. The file wasn't touched.", [name])
+                : t("Workspace “{0}” deleted.", [name]),
+            );
+          }}
+        />
+      )}
       {workspaces.composer && workspaces.list && (
         <WorkspaceComposer
-          workspace={workspaces.composer.workspace}
+          workspace={edited}
+          workspaces={workspaces.list.workspaces}
           defaultFolder={workspaces.list.defaultFolder}
           onClose={() => workspaces.setComposer(null)}
-          onSubmit={async (name, folder) => {
-            const renaming = workspaces.composer?.workspace;
-            if (renaming) {
-              workspaces.setList(await renameWorkspace(renaming.path, name));
+          onSubmit={async (name, folder, color, icon) => {
+            const editing = workspaces.composer?.workspace;
+            if (editing) {
+              workspaces.setList(
+                await editWorkspace(editing.path, name, color, icon),
+              );
               workspaces.setComposer(null);
-            } else workspaces.enter(await createWorkspace(name, folder));
+            } else
+              workspaces.enter(
+                await createWorkspace(name, folder, color, icon),
+              );
           }}
         />
       )}

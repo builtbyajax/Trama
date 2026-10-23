@@ -22,14 +22,22 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
             return encoded(workspaces::create(
                 text(&args, "name")?,
                 text(&args, "folder")?,
+                args["color"].as_i64(),
+                args["icon"].as_str(),
             ))
         }
         "open_workspace" => return encoded(workspaces::open(workspace()?)),
         "switch_workspace" => return encoded(workspaces::switch(workspace()?)),
-        "rename_workspace" => {
-            return encoded(workspaces::rename(workspace()?, text(&args, "name")?))
+        "edit_workspace" => {
+            return encoded(workspaces::edit(
+                workspace()?,
+                text(&args, "name")?,
+                args["color"].as_i64(),
+                args["icon"].as_str(),
+            ))
         }
         "remove_workspace" => return encoded(workspaces::remove(workspace()?)),
+        "delete_workspace" => return encoded(workspaces::delete(workspace()?)),
         "relocate_workspace" => {
             return encoded(workspaces::relocate(workspace()?, text(&args, "folder")?))
         }

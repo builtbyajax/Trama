@@ -240,6 +240,44 @@ pre {
   flex: none;
 }
 
+/* Copy turning into a check: the check's stroke draws in, then fades out as copy comes back.
+   The stroke resets only after the fade, so it never undraws while visible. */
+.copy-icon {
+  display: grid;
+  flex: none;
+}
+.copy-icon > .icon {
+  grid-area: 1 / 1;
+  transition:
+    opacity 160ms ease,
+    transform 200ms ease;
+}
+.copy-icon > .icon:last-child {
+  color: var(--success);
+  stroke-width: 1.6;
+  stroke-dasharray: 14;
+  stroke-dashoffset: 14;
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 160ms ease,
+    transform 200ms ease,
+    stroke-dashoffset 0s 200ms;
+}
+.copy-icon.copied > .icon:first-child {
+  opacity: 0;
+  transform: scale(0.6);
+}
+.copy-icon.copied > .icon:last-child {
+  stroke-dashoffset: 0;
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 120ms ease,
+    transform 260ms cubic-bezier(0.3, 1.5, 0.6, 1),
+    stroke-dashoffset 280ms ease-out 60ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
