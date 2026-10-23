@@ -969,6 +969,10 @@ button.crumb:hover {
 .goal-concluded.selected {
   color: var(--ink);
 }
+/* Points to the side the list opens on, like a submenu. */
+.goal-concluded > .icon:last-child {
+  margin-left: auto;
+}
 
 /* ───── the goal the board is filtered by, in the project head ───── */
 .page-crumb {

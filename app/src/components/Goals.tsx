@@ -297,9 +297,10 @@ export function SidebarGoals({
             onClick={(event) => {
               if (concludedMenu) return setConcludedMenu(null);
               const rect = event.currentTarget.getBoundingClientRect();
+              // Opens to the side, so it doesn't cover the projects below.
               setConcludedMenu({
-                x: rect.left,
-                y: rect.bottom + 4,
+                x: rect.right + 4,
+                y: rect.top,
                 trigger: event.currentTarget,
               });
             }}
@@ -308,6 +309,7 @@ export function SidebarGoals({
             {concluded.length === 1
               ? t("1 concluded")
               : t("{0} concluded", [concluded.length])}
+            <Icon name="chevronRight" size={12} />
           </button>
         )}
       </div>
