@@ -295,7 +295,8 @@ button.crumb:hover {
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
-  /* The bar sits in the sidebar's own padding, so the items keep their width. */
+  /* The bar sits in the sidebar's own padding, so the items keep their width. `--bar` is measured
+     here (`useScrollbarRoom`): the macOS WebKit only takes the room while the list scrolls. */
   margin: 0 calc(-1 * var(--bar)) 0 -4px;
   padding: 0 0 8px 4px;
 }
@@ -414,9 +415,10 @@ button.crumb:hover {
   font-size: 13px;
 }
 .sidebar-empty {
+  position: relative;
   margin: 2px 0;
   padding: 8px 10px;
-  border: 1px dashed var(--line);
+  border: 0;
   border-radius: var(--radius-control);
   background: transparent;
   color: var(--ink-3);
@@ -425,7 +427,23 @@ button.crumb:hover {
 }
 .sidebar-empty:hover {
   color: var(--ink);
-  border-color: var(--line-strong);
+}
+/* 70 dashes around the box: 100 / 70 = 0.8 dash + 0.6286 gap in `pathLength` units. */
+.dashed-outline {
+  position: absolute;
+  inset: 0.5px;
+  width: calc(100% - 1px);
+  height: calc(100% - 1px);
+  overflow: visible;
+  pointer-events: none;
+}
+.dashed-outline rect {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.sidebar-empty:hover .dashed-outline rect {
+  stroke: var(--line-strong);
 }
 .agent-status {
   flex: none;
@@ -582,13 +600,41 @@ button.crumb:hover {
   white-space: nowrap;
   overflow: hidden;
 }
+/* The project's folder, which opens in Finder: underlined while hovered, drawn from the left. The
+   icon, text and line share the color and its timing. */
 .page-repo {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  transition: color 0.18s var(--ease);
+}
+.page-repo > span {
+  position: relative;
+  padding-bottom: 2px;
+}
+.page-repo > span::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.18s var(--ease);
+}
+.page-repo:hover:not(.quiet) {
+  color: var(--ink);
+}
+.page-repo:hover:not(.quiet) > span::after {
+  transform: scaleX(1);
 }
 .filter-row {
   display: flex;
@@ -759,11 +805,514 @@ button.crumb:hover {
   transition-duration: 160ms, 200ms;
   transition-timing-function: ease-in;
 }
+/* A menu the floating sidebar opened leaves with it, at the same pace. */
+.context-menu.leaving {
+  opacity: 0;
+  transform: translateX(-18px);
+  pointer-events: none;
+  transition:
+    opacity 160ms ease-in,
+    transform 200ms ease-in;
+}
 .sidebar-peek .sidebar {
   padding-top: 8px;
 }
 @media (prefers-reduced-motion: reduce) {
-  .sidebar-peek {
+  .sidebar-peek,
+  .context-menu.leaving {
     transition: none;
   }
+}
+
+/* ───── goals of the open project, under its row ─────
+   A line comes down from the project's mark (its center, 18px in) and branches to each row. */
+.sidebar-goals {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 6px;
+}
+.sidebar-goals > * {
+  position: relative;
+  margin-left: 30px;
+}
+.sidebar-goals > *::before,
+.sidebar-goals > *:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  /* Half a pixel back, so the 1px stroke is centred under the project mark. */
+  left: -12.5px;
+  pointer-events: none;
+  border-left: 1px solid var(--line-strong);
+}
+.sidebar-goals > *::before {
+  top: 0;
+  width: 8px;
+  height: 50%;
+  border-bottom: 1px solid var(--line-strong);
+  border-bottom-left-radius: 6px;
+}
+/* Above the last row the trunk runs through, so the branch is only the horizontal stroke, past
+   the trunk: the strokes are translucent and would darken where they overlap. */
+.sidebar-goals > *:not(:last-child)::before {
+  left: -11.5px;
+  width: 7px;
+  border-left: 0;
+  border-bottom-left-radius: 0;
+}
+.sidebar-goals > *:not(:last-child)::after {
+  top: 0;
+  bottom: 0;
+}
+.goal-item {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-height: 28px;
+  padding: 3px 8px 4px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  transition:
+    background-color 0.12s,
+    color 0.12s;
+}
+.goal-item:hover,
+.goal-item.menu-open {
+  background: var(--hover);
+  color: var(--ink);
+}
+.goal-item.selected {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.goal-item.concluded {
+  color: var(--ink-3);
+}
+.goal-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.goal-name {
+  flex: 1;
+  min-width: 0;
+}
+.goal-count,
+.goal-near {
+  flex: none;
+  color: var(--ink-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.goal-near.late {
+  color: var(--danger);
+}
+.goal-ready {
+  flex: none;
+  display: inline-flex;
+  color: var(--s-done);
+}
+.goal-ready .icon {
+  stroke-width: 2;
+}
+.goal-bar {
+  display: block;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--line-subtle);
+  overflow: hidden;
+}
+.goal-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ink-3);
+  transition: width 0.3s var(--ease);
+}
+.goal-item.selected .goal-bar > span {
+  background: var(--accent);
+}
+.goal-bar.full > span,
+.goal-item.selected .goal-bar.full > span {
+  background: var(--s-done);
+}
+.goal-new,
+.goal-concluded {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+}
+.goal-new:hover,
+.goal-concluded:hover,
+.goal-concluded[aria-expanded="true"] {
+  background: var(--hover);
+  color: var(--ink-2);
+}
+.goal-concluded.selected {
+  color: var(--ink);
+}
+
+/* ───── the goal the board is filtered by, in the project head ───── */
+.page-crumb {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  font: inherit;
+  transition: color 0.12s;
+}
+.page-crumb:hover {
+  color: var(--ink-2);
+}
+.page-title h1 > .icon {
+  flex: none;
+  color: var(--ink-off);
+}
+/* Opens a goal from the project's title, where the goal's name goes once one is open. */
+.page-goal-open {
+  margin-left: -4px;
+}
+.page-goal-open[aria-expanded="true"] {
+  background: var(--hover);
+  color: var(--ink);
+}
+.page-goal-switch {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.page-goal-switch > .icon {
+  flex: none;
+  color: var(--ink-off);
+  transition: color 0.12s;
+}
+.page-goal-switch:hover > .icon,
+.page-goal-switch[aria-expanded="true"] > .icon {
+  color: var(--ink-2);
+}
+.goal-meta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 4px;
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--ink-2);
+}
+.page-goal-description {
+  min-width: 0;
+}
+.goal-progress,
+.goal-day {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.goal-day.late {
+  color: var(--danger);
+}
+/* One dot per task up to 12, then a bar as wide as 12 dots (12 × 7 + 11 × 3). */
+.goal-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+.goal-dots > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.goal-bar {
+  display: inline-flex;
+  gap: 2px;
+  width: 117px;
+  height: 7px;
+}
+.goal-bar > span {
+  border-radius: 3.5px;
+}
+:is(.goal-dots, .goal-bar) > .s-done {
+  background: var(--s-done);
+}
+:is(.goal-dots, .goal-bar) > .s-review {
+  background: var(--s-review);
+}
+:is(.goal-dots, .goal-bar) > .s-inProgress {
+  background: var(--s-inProgress);
+}
+:is(.goal-dots, .goal-bar) > .s-todo {
+  background: var(--ink-off);
+}
+
+/* ───── day field and its month popover ───── */
+.date-field {
+  width: 100%;
+}
+.date-field > .icon {
+  color: var(--ink-3);
+}
+.date-field.empty .select-value {
+  color: var(--ink-3);
+}
+.date-field .select-value {
+  flex: 1;
+}
+.date-field-hint {
+  flex: none;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.date-popover {
+  z-index: 200;
+  display: flex;
+  border-radius: 10px;
+  background: var(--bg-menu);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+.date-presets {
+  flex: none;
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px;
+  border-right: 1px solid var(--line-subtle);
+}
+.date-preset {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+}
+.date-preset > span {
+  color: var(--ink-3);
+  font-size: 11px;
+}
+.date-preset:hover,
+.date-preset:focus-visible {
+  background: var(--hover);
+}
+.date-preset.clear {
+  margin-top: auto;
+  color: var(--ink-2);
+}
+.date-month {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 10px 8px;
+}
+.date-month-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.date-month-name {
+  flex: 1;
+  padding-left: 4px;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+.date-month-name::first-letter {
+  text-transform: uppercase;
+}
+.date-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.date-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+.date-weekday {
+  padding: 2px 0;
+  color: var(--ink-3);
+  font-size: 11px;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.date-day {
+  width: 100%;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+.date-day.outside {
+  color: var(--ink-off);
+}
+.date-day:hover {
+  background: var(--hover);
+}
+.date-day[aria-current="date"] {
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+.date-day[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.date-day:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+.goal-modal {
+  width: 460px;
+}
+.text-area.short {
+  height: 82px;
+}
+.workspace-target .truncate {
+  flex: 1;
+}
+.goal-chip.empty {
+  color: var(--ink-3);
+}
+
+/* Every concluded goal, from "See all…" in the goal menus. */
+.concluded-modal {
+  width: 520px;
+  height: min(600px, calc(100vh - 48px));
+}
+.modal-body.concluded-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  scrollbar-gutter: auto;
+  padding: 4px 24px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.concluded-search {
+  position: relative;
+  flex: none;
+}
+.concluded-search .icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-3);
+  pointer-events: none;
+}
+.concluded-search input {
+  padding-left: 30px;
+}
+.concluded-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0 -8px;
+  padding: 0 calc(8px - var(--bar)) 0 8px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+.concluded-month {
+  margin: 0;
+  padding: 10px 8px 4px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.concluded-month::first-letter {
+  text-transform: uppercase;
+}
+.concluded-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px 0 0;
+  border-radius: 7px;
+}
+.concluded-row:hover,
+.concluded-row:focus-within {
+  background: var(--hover);
+}
+.concluded-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+.concluded-open > .truncate {
+  max-width: 100%;
+}
+.concluded-meta {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.concluded-row > .button,
+.concluded-row > .icon-button {
+  opacity: 0;
+}
+.concluded-row:hover > .button,
+.concluded-row:hover > .icon-button,
+.concluded-row:focus-within > .button,
+.concluded-row:focus-within > .icon-button {
+  opacity: 1;
+}
+.concluded-empty {
+  margin: 0;
+  padding: 24px 8px;
+  color: var(--ink-3);
+  text-align: center;
 }

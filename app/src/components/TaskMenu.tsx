@@ -54,6 +54,7 @@ export function taskMenuItems(
     onOpenPage,
     onMoveToTop,
     onAssign,
+    onMoveToGoal,
     onCopy,
     onGit,
     onOpenPullRequest,
@@ -69,6 +70,8 @@ export function taskMenuItems(
     onOpenPage: () => void;
     onMoveToTop: () => void;
     onAssign: (assignee: Task["assignee"]) => void;
+    /** Left out when the task's project has no goal to move it to. */
+    onMoveToGoal?: () => void;
     onCopy: (value: string, done: string) => void;
     onGit: () => void;
     onOpenPullRequest: (url: string) => void;
@@ -106,6 +109,12 @@ export function taskMenuItems(
           onSelect: () => onAssign("agent"),
         },
   );
+  if (onMoveToGoal)
+    moves.push({
+      label: t("Move to goal…"),
+      icon: "target",
+      onSelect: onMoveToGoal,
+    });
   moves[0].separated = true;
   items.push(...moves);
 

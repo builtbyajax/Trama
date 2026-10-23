@@ -17,6 +17,7 @@ import type {
   DocumentListing,
   TaskDocument,
   Workspaces,
+  Goal,
 } from "./types";
 import { known, t } from "./i18n";
 import { isMac, isWindows } from "./shortcuts";
@@ -79,6 +80,30 @@ export const moveTask = (
     status,
     afterId,
   });
+/** Creates a goal, or edits one when `goalId` is given. */
+export const saveGoal = (
+  projectId: string,
+  name: string,
+  description: string,
+  targetDate: string | null,
+  goalId: string | null = null,
+) =>
+  call<Goal>("save_goal", {
+    goalId,
+    projectId,
+    name,
+    description,
+    targetDate,
+  });
+export const completeGoal = (goal: Goal, completed: boolean) =>
+  call<Goal>("complete_goal", {
+    goalId: goal.id,
+    projectId: goal.projectId,
+    completed,
+  });
+/** Deletes the goal; its tasks stay, without one. */
+export const deleteGoal = (goal: Goal) =>
+  call<null>("delete_goal", { goalId: goal.id, projectId: goal.projectId });
 export const createCategory = (projectId: string, name: string) =>
   call<Category>("create_category", { projectId, name });
 export const deleteCategory = (

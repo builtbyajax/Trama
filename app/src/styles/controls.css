@@ -325,6 +325,9 @@ kbd {
   background: var(--accent-soft);
   color: var(--ink);
 }
+.context-menu .popover-option.muted {
+  color: var(--ink-3);
+}
 .context-menu .popover-option.danger,
 .context-menu .popover-option.danger > .icon {
   color: var(--danger);

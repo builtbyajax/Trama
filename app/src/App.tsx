@@ -50,9 +50,18 @@ import {
   openUrl,
   promoteDraft,
 } from "./lib/api";
-import { ContextMenu } from "./components/Sidebar";
+import { ContextMenu, type MenuItem } from "./components/Sidebar";
 import { TaskDelete } from "./components/TaskDelete";
 import { ProjectMove } from "./components/ProjectMove";
+import {
+  GoalComplete,
+  GoalComposer,
+  GoalActions,
+  ConcludedGoals,
+  GoalDelete,
+  GoalSummary,
+  SidebarGoals,
+} from "./components/Goals";
 import {
   WorkspaceButton,
   WorkspaceComposer,
@@ -61,8 +70,10 @@ import {
   workspaceName,
 } from "./components/Workspaces";
 import {
+  completeGoal,
   createWorkspace,
   editWorkspace,
+  revealPath,
 } from "./lib/api";
 import {
   taskMenuItems,
@@ -77,6 +88,7 @@ import {
   isAgentWorking,
   isDraft,
   type GitFocus,
+  type Goal,
   type Project,
   type Task,
   type TaskStatus,
@@ -125,6 +137,14 @@ export function App() {
   const workspaces = useWorkspaces(notify);
   const [taskMenu, setTaskMenu] = useState<MenuRequest | null>(null);
   const [taskDelete, setTaskDelete] = useState<Task | null>(null);
+  const [taskGoalMenu, setTaskGoalMenu] = useState<MenuRequest | null>(null);
+  const [goalComposer, setGoalComposer] = useState<{
+    projectId: string;
+    goal?: Goal;
+  } | null>(null);
+  const [goalComplete, setGoalComplete] = useState<Goal | null>(null);
+  const [goalDelete, setGoalDelete] = useState<Goal | null>(null);
+  const [concludedOpen, setConcludedOpen] = useState(false);
   const edited = workspaces.composer?.workspace;
   const [workspaceLeave, setWorkspaceLeave] = useState<{
     workspace: Workspace;
@@ -265,6 +285,38 @@ export function App() {
           : { kind: "task", id: task.id },
     );
   }
+  /** The goals a task can move to: its project's open ones, and none. */
+  function goalMenuItems(task: Task): MenuItem[] {
+    const setGoal = (goalId: string | null, done: string) =>
+      void editTask({ projectId: task.projectId, goalId }, task.id)
+        .then(() => refresh())
+        .then(() => notify(done))
+        .catch((e) => notify(errorMessage(e), true));
+    return [
+      ...data!.goals
+        .filter(
+          (g) =>
+            g.projectId === task.projectId &&
+            (g.completedAt === null || g.id === task.goalId),
+        )
+        .map((g) => ({
+          label: g.name,
+          icon: "target" as const,
+          checked: g.id === task.goalId,
+          onSelect: () =>
+            g.id !== task.goalId &&
+            setGoal(g.id, t("“{0}” moved to “{1}”.", [task.title, g.name])),
+        })),
+      {
+        label: t("No goal"),
+        checked: task.goalId === null,
+        separated: true,
+        onSelect: () =>
+          task.goalId !== null &&
+          setGoal(null, t("“{0}” left its goal.", [task.title])),
+      },
+    ];
+  }
   function menuItems(task: Task) {
     const column = data!.tasks
       .filter((t) => t.projectId === task.projectId && t.status === task.status)
@@ -286,6 +338,13 @@ export function App() {
         setSheetMode("page");
       },
       onMoveToTop: () => void move(task.id, task.status, null),
+      onMoveToGoal: data!.goals.some(
+        (g) =>
+          g.projectId === task.projectId &&
+          (g.completedAt === null || g.id === task.goalId),
+      )
+        ? () => taskMenu && setTaskGoalMenu(taskMenu)
+        : undefined,
       onAssign: (assignee) =>
         void editTask({ projectId: task.projectId, assignee }, task.id)
           .then(() => refresh())
@@ -350,8 +409,11 @@ export function App() {
         .sort((a, b) => b.updatedAt - a.updatedAt)
     : [];
   const storedFilter = project
-    ? (filters[project.id] ?? defaultFilter)
+    ? { ...defaultFilter, ...filters[project.id] }
     : defaultFilter;
+  const projectGoals = project
+    ? data.goals.filter((g) => g.projectId === project.id)
+    : [];
   // An empty archive closes itself and shows the board again.
   const archived = Boolean(storedFilter.archived) && archivedTasks.length > 0;
   const projectTasks = archived
@@ -373,13 +435,26 @@ export function App() {
       )
         ? storedFilter.branch
         : "*",
+    // A deleted goal no longer filters anything.
+    goal:
+      storedFilter.goal === "*" ||
+      projectGoals.some((g) => g.id === storedFilter.goal)
+        ? storedFilter.goal
+        : "*",
   };
+  const activeGoal = projectGoals.find((g) => g.id === filter.goal);
   const visibleTasks = projectTasks.filter(
     (t) =>
       (filter.assignee === "all" || t.assignee === filter.assignee) &&
       (filter.category === "*" || t.category === filter.category) &&
-      (filter.branch === "*" || (t.repositoryBranch ?? "") === filter.branch),
+      (filter.branch === "*" || (t.repositoryBranch ?? "") === filter.branch) &&
+      (filter.goal === "*" || (t.goalId ?? "") === filter.goal),
   );
+  const reopenGoal = (goal: Goal) =>
+    void completeGoal(goal, false)
+      .then(() => refresh())
+      .then(() => notify(t("Goal “{0}” reopened.", [goal.name])))
+      .catch((e) => notify(errorMessage(e), true));
   const changeFilter = (patch: Partial<BoardFilter>) =>
     project &&
     setFilters((v) => ({ ...v, [project.id]: { ...filter, ...patch } }));
@@ -516,6 +591,28 @@ export function App() {
             onEditProject={(project) => setProjectComposer({ project })}
             onDeleteProject={setProjectDelete}
             onMoveProject={setProjectMove}
+            projectExtra={
+              project && (
+                <SidebarGoals
+                  key={project.id}
+                  goals={projectGoals}
+                  tasks={data.tasks}
+                  activeId={activeGoal?.id ?? null}
+                  onSelect={(goalId) => {
+                    if (mode !== "board") setProjectMode("board");
+                    changeFilter({ goal: goalId ?? "*", archived: false });
+                  }}
+                  onNew={() => setGoalComposer({ projectId: project.id })}
+                  onEdit={(goal) =>
+                    setGoalComposer({ projectId: project.id, goal })
+                  }
+                  onComplete={setGoalComplete}
+                  onReopen={reopenGoal}
+                  onDelete={setGoalDelete}
+                  onShowConcluded={() => setConcludedOpen(true)}
+                />
+              )
+            }
             workspace={
               workspaces.list && (
                 <WorkspaceButton
@@ -550,11 +647,46 @@ export function App() {
               color={projectColor(project)}
               tasks={projectTasks}
               archivedCount={archivedTasks.length}
+              goals={projectGoals}
+              goal={
+                mode === "board" && activeGoal
+                  ? {
+                      id: activeGoal.id,
+                      name: activeGoal.name,
+                      description: activeGoal.description,
+                      onEdit: () =>
+                        setGoalComposer({
+                          projectId: project.id,
+                          goal: activeGoal,
+                        }),
+                      onDelete: () => setGoalDelete(activeGoal),
+                      onClear: () => changeFilter({ goal: "*" }),
+                      summary: (
+                        <GoalSummary goal={activeGoal} tasks={data.tasks} />
+                      ),
+                      actions: (
+                        <GoalActions
+                          goal={activeGoal}
+                          tasks={data.tasks}
+                          onComplete={() => setGoalComplete(activeGoal)}
+                          onReopen={() => reopenGoal(activeGoal)}
+                        />
+                      ),
+                    }
+                  : undefined
+              }
               mode={mode}
               filter={filter}
               onMode={setProjectMode}
               onFilter={changeFilter}
+              onShowConcluded={() => setConcludedOpen(true)}
+              onNewGoal={() => setGoalComposer({ projectId: project.id })}
               onManageCategories={() => setCategoriesOpen(true)}
+              onReveal={(path) =>
+                void revealPath(path).catch((e) =>
+                  notify(errorMessage(e), true),
+                )
+              }
             />
           )}
           <div className="content">
@@ -699,6 +831,9 @@ export function App() {
                 selectedTask.projectId,
               )}
               branches={sheetBranches}
+              goals={data.goals.filter(
+                (g) => g.projectId === selectedTask.projectId,
+              )}
               onOpenNote={(path) => {
                 if (closeDetails()) openNote(selectedTask.projectId, path);
               }}
@@ -756,8 +891,14 @@ export function App() {
               ? filter.branch || null
               : null
           }
+          goalId={
+            project?.id === composer.projectId && activeGoal
+              ? activeGoal.id
+              : null
+          }
           projects={snapshot!.projects}
           categories={snapshot!.categories}
+          goals={snapshot!.goals.filter((g) => g.completedAt === null)}
           onClose={() => setComposer(null)}
           onSaved={(task) => {
             setComposer(null);
@@ -821,6 +962,79 @@ export function App() {
           onDeleted={(deleted) => {
             setTaskDelete(null);
             notify(t("“{0}” was deleted.", [deleted.title]));
+            void refresh();
+          }}
+        />
+      )}
+      {taskGoalMenu && (
+        <ContextMenu
+          x={taskGoalMenu.x}
+          y={taskGoalMenu.y}
+          label={t("Move to goal")}
+          heading={t("Move to goal")}
+          items={goalMenuItems(
+            data.tasks.find((t) => t.id === taskGoalMenu.task.id) ??
+              taskGoalMenu.task,
+          )}
+          onClose={(restoreFocus) => {
+            if (restoreFocus) taskGoalMenu.trigger.focus();
+            setTaskGoalMenu(null);
+          }}
+        />
+      )}
+      {goalComposer && (
+        <GoalComposer
+          {...goalComposer}
+          onClose={() => setGoalComposer(null)}
+          onSaved={(goal) => {
+            const created = !goalComposer.goal;
+            setGoalComposer(null);
+            notify(
+              created
+                ? t("Goal “{0}” created.", [goal.name])
+                : t("Goal saved."),
+            );
+            void refresh();
+          }}
+        />
+      )}
+      {goalComplete && (
+        <GoalComplete
+          goal={goalComplete}
+          onClose={() => setGoalComplete(null)}
+          onDone={(goal) => {
+            setGoalComplete(null);
+            // It leaves the list, so the board shows every task again.
+            if (filter.goal === goal.id) changeFilter({ goal: "*" });
+            notify(t("Goal “{0}” concluded.", [goal.name]));
+            void refresh();
+          }}
+        />
+      )}
+      {concludedOpen && project && (
+        <ConcludedGoals
+          goals={projectGoals}
+          tasks={data.tasks}
+          onOpen={(goal) => {
+            setConcludedOpen(false);
+            if (mode !== "board") setProjectMode("board");
+            changeFilter({ goal: goal.id, archived: false });
+          }}
+          onReopen={reopenGoal}
+          onDelete={setGoalDelete}
+          onClose={() => setConcludedOpen(false)}
+        />
+      )}
+      {goalDelete && (
+        <GoalDelete
+          goal={goalDelete}
+          taskCount={
+            data.tasks.filter((t) => t.goalId === goalDelete.id).length
+          }
+          onClose={() => setGoalDelete(null)}
+          onDeleted={(goal) => {
+            setGoalDelete(null);
+            notify(t("Goal “{0}” deleted.", [goal.name]));
             void refresh();
           }}
         />

@@ -87,8 +87,8 @@ pre {
 }
 /* One thin scrollbar everywhere, instead of the wide native one. */
 ::-webkit-scrollbar {
-  width: var(--bar);
-  height: var(--bar);
+  width: var(--bar-width);
+  height: var(--bar-width);
 }
 ::-webkit-scrollbar-thumb {
   background: var(--line);

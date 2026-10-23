@@ -115,6 +115,23 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
             text(&args, "name")?,
             args["replacement"].as_str(),
         )),
+        "save_goal" => encoded(store.save_goal(
+            args["goalId"].as_str(),
+            project()?,
+            text(&args, "name")?,
+            args["description"].as_str().unwrap_or(""),
+            args["targetDate"].as_str(),
+        )),
+        "complete_goal" => encoded(
+            store.complete_goal(
+                text(&args, "goalId")?,
+                project()?,
+                args["completed"]
+                    .as_bool()
+                    .ok_or("Missing argument: completed")?,
+            ),
+        ),
+        "delete_goal" => encoded(store.delete_goal(text(&args, "goalId")?, project()?)),
         "promote_draft" => encoded(store.promote_draft(task()?, project()?)),
         "delete_task" => encoded(store.delete_task(task()?, project()?)),
         "archive_task" => encoded(

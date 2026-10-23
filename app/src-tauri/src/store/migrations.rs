@@ -3,7 +3,7 @@
 use super::*;
 
 /// The version of the schema this build writes.
-const LATEST: i64 = 9;
+const LATEST: i64 = 10;
 
 /// Brings the database up to `LATEST`; refuses one written by a newer build.
 pub(super) fn migrate(tx: &Transaction) -> Result<()> {
@@ -12,7 +12,7 @@ pub(super) fn migrate(tx: &Transaction) -> Result<()> {
         return Err("This database uses a newer version of Trama. Update the app.".into());
     }
     let steps: [fn(&Transaction) -> Result<()>; LATEST as usize] =
-        [v1, v2, v3, v4, v5, v6, v7, v8, v9];
+        [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10];
     for step in &steps[version as usize..] {
         step(tx)?;
     }
@@ -165,5 +165,16 @@ fn v9(tx: &Transaction) -> Result<()> {
         ))?;
     }
     sql(tx.execute_batch("PRAGMA user_version=9;"))?;
+    Ok(())
+}
+
+fn v10(tx: &Transaction) -> Result<()> {
+    // Goals: what a group of a project's tasks is for. A task belongs to at most one; deleting the
+    // goal leaves its tasks on the board without one.
+    sql(tx.execute_batch("CREATE TABLE goals(id TEXT PRIMARY KEY NOT NULL,project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,name TEXT NOT NULL,description TEXT NOT NULL DEFAULT '',target_date TEXT,completed_at REAL,created_at REAL NOT NULL);
+CREATE INDEX goals_project ON goals(project_id,created_at);
+ALTER TABLE tasks ADD COLUMN goal_id TEXT REFERENCES goals(id) ON DELETE SET NULL;
+CREATE INDEX tasks_goal ON tasks(goal_id);
+PRAGMA user_version=10;"))?;
     Ok(())
 }

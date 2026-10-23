@@ -5,6 +5,7 @@ import {
   emptyInput,
   isDraft,
   type Category,
+  type Goal,
   type Project,
   type Task,
   type TaskStatus,
@@ -31,24 +32,30 @@ const defaultCategory = (categories: Category[], projectId: string) => {
 export function TaskComposer({
   projects,
   categories,
+  goals,
   projectId,
   status,
   branch = null,
+  goalId = null,
   onClose,
   onSaved,
 }: {
   projects: Project[];
   categories: Category[];
+  goals: Goal[];
   projectId: string;
   status: TaskStatus;
   /** Starts on this branch, e.g. the one the board is filtered by. */
   branch?: string | null;
+  /** Starts in this goal, e.g. the one the board is filtered by. */
+  goalId?: string | null;
   onClose: () => void;
   onSaved: (task: Task) => void;
 }) {
   const [input, setInput] = useState(() => ({
     ...emptyInput(projectId, status, defaultCategory(categories, projectId)),
     repositoryBranch: branch,
+    goalId,
   }));
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -98,6 +105,7 @@ export function TaskComposer({
                       ...input,
                       projectId: value,
                       repositoryBranch: null,
+                      goalId: null,
                     })
                   }
                 />
@@ -144,6 +152,7 @@ export function TaskComposer({
             allStates={false}
             autoFocus
             branches={project?.repositoryPath ? branches : undefined}
+            goals={goals.filter((g) => g.projectId === input.projectId)}
           />
           {error && (
             <p className="form-error" role="alert">

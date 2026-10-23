@@ -60,6 +60,11 @@ impl Store {
             return Err("The PR number must be positive.".into());
         }
         let project = self.project(&input.project_id)?;
+        let goal = match input.goal_id.as_deref().filter(|g| !g.is_empty()) {
+            Some(goal) => Some(self.goal(goal, &project.id)?),
+            None => None,
+        };
+        input.goal_id = goal.as_ref().map(|g| g.id.clone());
         let is_update = task_id.is_some();
         let task_id = if let Some(t) = task_id {
             self.task(t, &project.id)?.id
@@ -76,7 +81,7 @@ impl Store {
             None
         };
         if let Some(previous) = &previous {
-            sql(self.db.execute("UPDATE tasks SET title=?,details=?,category=?,assignee=?,status=?,agent_summary=?,repository_branch=?,commit_hash=?,pull_request_url=?,pull_request_number=?,updated_at=? WHERE id=? AND project_id=?",params![input.title,input.details,input.category,input.assignee,input.status,input.agent_summary,input.repository_branch,input.commit_hash,input.pull_request_url,input.pull_request_number,timestamp,task_id,project.id]))?;
+            sql(self.db.execute("UPDATE tasks SET title=?,details=?,category=?,assignee=?,status=?,agent_summary=?,repository_branch=?,commit_hash=?,pull_request_url=?,pull_request_number=?,goal_id=?,updated_at=? WHERE id=? AND project_id=?",params![input.title,input.details,input.category,input.assignee,input.status,input.agent_summary,input.repository_branch,input.commit_hash,input.pull_request_url,input.pull_request_number,input.goal_id,timestamp,task_id,project.id]))?;
             if previous.status != input.status {
                 self.place_on_top(&task_id, &project.id, &input.status)?;
             }
@@ -115,6 +120,10 @@ impl Store {
                     self.record(&task_id, actor, kind, value, timestamp)?;
                 }
             }
+            if previous.goal_id != input.goal_id {
+                let name = goal.as_ref().map(|g| g.name.as_str());
+                self.record(&task_id, actor, "goal", name, timestamp)?;
+            }
             if previous.pull_request_number != input.pull_request_number
                 || previous.pull_request_url != input.pull_request_url
             {
@@ -126,7 +135,7 @@ impl Store {
             }
         } else {
             let position = self.top_position(&project.id, &input.status)?;
-            sql(self.db.execute("INSERT INTO tasks(id,project_id,title,details,category,assignee,status,position,agent_summary,repository_branch,commit_hash,pull_request_url,pull_request_number,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",params![task_id,project.id,input.title,input.details,input.category,input.assignee,input.status,position,input.agent_summary,input.repository_branch,input.commit_hash,input.pull_request_url,input.pull_request_number,timestamp,timestamp]))?;
+            sql(self.db.execute("INSERT INTO tasks(id,project_id,title,details,category,assignee,status,position,agent_summary,repository_branch,commit_hash,pull_request_url,pull_request_number,goal_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",params![task_id,project.id,input.title,input.details,input.category,input.assignee,input.status,position,input.agent_summary,input.repository_branch,input.commit_hash,input.pull_request_url,input.pull_request_number,input.goal_id,timestamp,timestamp]))?;
             self.record(&task_id, actor, "created", None, timestamp)?;
         }
         self.remember_category(&project.id, &input.category)?;
@@ -173,6 +182,9 @@ impl Store {
         }
         if let Some(v) = patch.pull_request_number {
             input.pull_request_number = v;
+        }
+        if let Some(v) = patch.goal_id {
+            input.goal_id = v;
         }
         let task = self.save_task_inner(Some(&task.id), input, actor)?;
         sql(tx.commit())?;
@@ -249,7 +261,7 @@ impl Store {
         ))?;
         Ok(())
     }
-    fn top_position(&self, project_id: &str, status: &str) -> Result<i64> {
+    pub(super) fn top_position(&self, project_id: &str, status: &str) -> Result<i64> {
         sql(self.db.query_row(
             "SELECT COALESCE(MIN(position),1)-1 FROM tasks WHERE project_id=? AND status=?",
             params![project_id, status],

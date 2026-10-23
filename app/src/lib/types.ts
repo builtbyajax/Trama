@@ -27,6 +27,8 @@ export interface TaskInput {
   commitHash: string | null;
   pullRequestUrl: string | null;
   pullRequestNumber: number | null;
+  /** The project goal the task counts toward. */
+  goalId: string | null;
 }
 export interface Task extends TaskInput {
   id: string;
@@ -73,7 +75,8 @@ export type TaskEventKind =
   | "commit"
   | "pullRequest"
   | "document"
-  | "documentRemoved";
+  | "documentRemoved"
+  | "goal";
 /** Something that happened to a task; `actor` is null for events older than the activity. */
 export interface TaskEvent {
   id: string;
@@ -132,6 +135,30 @@ export interface Snapshot {
   tasks: Task[];
   categories: Category[];
   documents: TaskDocument[];
+  goals: Goal[];
+}
+/** What a group of a project's tasks is for; its progress is how many of them are done. */
+export interface Goal {
+  id: string;
+  projectId: string;
+  name: string;
+  description: string;
+  /** A day, `YYYY-MM-DD`. */
+  targetDate: string | null;
+  /** When the person concluded it. */
+  completedAt: number | null;
+  createdAt: number;
+}
+/** Done tasks over the goal's tasks on the board; drafts don't count. */
+export function goalProgress(goal: Goal, tasks: Task[]) {
+  let total = 0;
+  let done = 0;
+  for (const task of tasks)
+    if (task.goalId === goal.id && !isDraft(task.status)) {
+      total++;
+      if (task.status === "done") done++;
+    }
+  return { total, done };
 }
 /** A database file; the app shows one at a time. */
 export interface Workspace {
@@ -281,6 +308,7 @@ export const emptyInput = (
   commitHash: null,
   pullRequestUrl: null,
   pullRequestNumber: null,
+  goalId: null,
 });
 
 /** Column order: manual position first, newest update as the tie-breaker. */

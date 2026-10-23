@@ -2,9 +2,10 @@
 use super::*;
 
 /// Every table that holds a project's data, parents first, with the rows that belong to it.
-const PROJECT_TABLES: [(&str, &str); 8] = [
+const PROJECT_TABLES: [(&str, &str); 9] = [
     ("projects", "id=?1"),
     ("task_categories", "project_id=?1"),
+    ("goals", "project_id=?1"),
     ("tasks", "project_id=?1"),
     (
         "task_messages",

@@ -4,7 +4,13 @@ import type { Task, TaskDetails, TaskInput } from "../lib/types";
 
 type Edit = Pick<
   TaskInput,
-  "title" | "details" | "category" | "assignee" | "status" | "repositoryBranch"
+  | "title"
+  | "details"
+  | "category"
+  | "assignee"
+  | "status"
+  | "repositoryBranch"
+  | "goalId"
 >;
 type Key = keyof Edit;
 export type SaveState =
@@ -117,6 +123,7 @@ export function useTaskAutosave(task: Task, onSaved: () => void) {
     assignee: task.assignee,
     status: task.status,
     repositoryBranch: task.repositoryBranch,
+    goalId: task.goalId,
     ...draft,
   };
   return {

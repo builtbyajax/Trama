@@ -1,4 +1,7 @@
-import type { ReactNode } from "react";
+import { createContext, type ReactNode } from "react";
+
+/** True while the floating sidebar slides away, so the menus it opened fade out with it. */
+export const SidebarLeaving = createContext(false);
 
 /**
  * Where the sidebar sits. Visible, it is just the sidebar; hidden, a strip at the window's left
@@ -42,7 +45,9 @@ export function SidebarSlot({
             if (event.key === "Escape") onClose();
           }}
         >
-          {children}
+          <SidebarLeaving.Provider value={peek === "leaving"}>
+            {children}
+          </SidebarLeaving.Provider>
         </div>
       )}
     </>
