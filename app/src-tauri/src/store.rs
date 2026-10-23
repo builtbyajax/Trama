@@ -52,14 +52,9 @@ pub const PROJECT_COLORS: i64 = 6;
 pub fn id() -> String {
     uuid::Uuid::new_v4().to_string().to_uppercase()
 }
+/// The open workspace's database, or the one `TRAMA_DB` names.
 pub fn default_database_path() -> PathBuf {
-    std::env::var_os("TRAMA_DB")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| {
-            dirs::data_dir()
-                .unwrap_or_default()
-                .join("Trama/trama.sqlite")
-        })
+    crate::workspaces::active_path()
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

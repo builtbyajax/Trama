@@ -529,6 +529,19 @@ button.holder:hover {
   flex-direction: column;
   gap: 2px;
 }
+.settings-tag {
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+.settings-tag.warning {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
 .settings-text code {
   font-size: 10.5px;
   color: var(--ink-3);

@@ -6,6 +6,7 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
 import type { Project } from "../lib/types";
@@ -38,6 +39,8 @@ interface SidebarProps {
   onAddProject: () => void;
   onEditProject: (project: Project) => void;
   onDeleteProject: (project: Project) => void;
+  /** The workspace switcher, above everything else. */
+  workspace?: ReactNode;
   onShortcuts: () => void;
   /** Icons only, with names in tooltips: the Notes tab keeps it beside its own notes list. */
   rail?: boolean;
@@ -73,6 +76,7 @@ export function Sidebar({
   onAddProject,
   onEditProject,
   onDeleteProject,
+  workspace,
   onShortcuts,
   rail = false,
   onPeek,
@@ -93,6 +97,7 @@ export function Sidebar({
       className={`sidebar ${rail ? "rail" : ""}`}
       aria-label={t("Navigation")}
     >
+      {workspace}
       <div className="sidebar-group">
         <NavItem
           rail={rail}
@@ -301,7 +306,12 @@ function NavItem({
 
 export interface MenuItem {
   label: string;
-  icon: IconName;
+  /** Left out, the row keeps the icon's room so labels stay aligned. */
+  icon?: IconName;
+  /** Drawn in the icon's place, for rows that stand for something with its own mark. */
+  leading?: ReactNode;
+  /** The current choice among the rows: a check at the end. */
+  checked?: boolean;
   /** A shortcut or gesture that does the same, shown at the end. */
   hint?: string;
   danger?: boolean;
@@ -320,12 +330,22 @@ export function ContextMenu({
   label,
   items,
   onClose,
+  anchor,
+  heading,
+  width,
+  className = "",
 }: {
   x: number;
   y: number;
   label: string;
   items: MenuItem[];
   onClose: (restoreFocus: boolean) => void;
+  /** The button that opened the menu: pressing it again is left to its own click, which closes. */
+  anchor?: RefObject<HTMLElement | null>;
+  /** A quiet title above the rows. */
+  heading?: string;
+  width?: number;
+  className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ left: x, top: y });
@@ -343,11 +363,17 @@ export function ContextMenu({
         Math.min(y, window.innerHeight - menu.offsetHeight - margin),
       ),
     });
-    menu.querySelector<HTMLElement>("[role=menuitem]")?.focus();
+    (
+      menu.querySelector<HTMLElement>("[aria-checked=true]") ??
+      menu.querySelector<HTMLElement>("[role^=menuitem]")
+    )?.focus();
   }, [x, y]);
   useEffect(() => {
     const outside = (event: Event) => {
-      if (!ref.current?.contains(event.target as Node)) onClose(false);
+      const target = event.target as Node;
+      if (ref.current?.contains(target) || anchor?.current?.contains(target))
+        return;
+      onClose(false);
     };
     const dismiss = () => onClose(false);
     document.addEventListener("pointerdown", outside, true);
@@ -361,10 +387,10 @@ export function ContextMenu({
       window.removeEventListener("blur", dismiss);
       window.removeEventListener("resize", dismiss);
     };
-  }, [onClose]);
+  }, [onClose, anchor]);
   function keyDown(event: KeyboardEvent<HTMLDivElement>) {
     const options = [
-      ...event.currentTarget.querySelectorAll<HTMLElement>("[role=menuitem]"),
+      ...event.currentTarget.querySelectorAll<HTMLElement>("[role^=menuitem]"),
     ];
     const index = options.indexOf(document.activeElement as HTMLElement);
     const move = (next: number) => {
@@ -389,11 +415,16 @@ export function ContextMenu({
       ref={ref}
       role="menu"
       aria-label={label}
-      className="popover-list context-menu"
-      style={{ position: "fixed", ...position }}
+      className={`popover-list context-menu ${className}`}
+      style={{ position: "fixed", ...position, width }}
       onKeyDown={keyDown}
       onContextMenu={(event) => event.preventDefault()}
     >
+      {heading && (
+        <div className="menu-heading" aria-hidden="true">
+          {heading}
+        </div>
+      )}
       {items.map((item, index) => [
         item.separated && index > 0 && (
           <div
@@ -405,7 +436,8 @@ export function ContextMenu({
         <button
           key={item.label}
           type="button"
-          role="menuitem"
+          role={item.checked === undefined ? "menuitem" : "menuitemradio"}
+          aria-checked={item.checked}
           tabIndex={-1}
           className={`popover-option ${item.danger ? "danger" : ""}`}
           onClick={() => {
@@ -413,9 +445,19 @@ export function ContextMenu({
             item.onSelect();
           }}
         >
-          <Icon name={item.icon} size={14} />
+          {item.leading ??
+            (item.icon ? (
+              <Icon name={item.icon} size={14} />
+            ) : (
+              <span className="menu-icon-space" aria-hidden="true" />
+            ))}
           <span className="popover-label">{item.label}</span>
           {item.hint && <kbd className="popover-hint">{item.hint}</kbd>}
+          {item.checked && (
+            <span className="menu-check" aria-hidden="true">
+              <Icon name="check" size={14} />
+            </span>
+          )}
         </button>,
       ])}
     </div>,

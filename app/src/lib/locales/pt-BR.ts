@@ -631,9 +631,7 @@ export const ptBR = {
   "You took the task": "Você pegou a tarefa",
 
   // preferences
-  "Copy database path": "Copiar caminho do banco",
   "Copy ID of {0}": "Copiar ID de {0}",
-  Database: "Banco de dados",
   "Each agent connects to a single project using the ID below.":
     "Cada agente se conecta a um único projeto pelo ID abaixo.",
   "ID copied.": "ID copiado.",
@@ -642,8 +640,6 @@ export const ptBR = {
   "Projects and MCP integration": "Projetos e integração MCP",
   "The language, where your data lives and how the agent connects.":
     "O idioma, onde ficam os seus dados e como o agente se conecta.",
-  "This Trama's data stays on this computer. The Git screen is read-only: Trama doesn't change branches or push anything.":
-    "Os dados deste Trama ficam neste computador. A tela Git é somente de consulta: o Trama não altera branches nem envia conteúdo.",
   "Trama reloads to show everything in the chosen language.":
     "O Trama abre de novo para mostrar tudo no idioma escolhido.",
 
@@ -712,6 +708,38 @@ export const ptBR = {
     "Sem repositório, o quadro funciona normalmente; o histórico Git fica indisponível.",
   Work: "Trabalho",
 
+  // workspaces
+  Personal: "Pessoal",
+  Workspaces: "Espaços",
+  "Workspace: {0}": "Espaço: {0}",
+  "New workspace…": "Novo espaço…",
+  "Open workspace…": "Abrir espaço…",
+  "Open workspace": "Abrir espaço",
+  "New workspace": "Novo espaço",
+  "Rename workspace": "Renomear espaço",
+  "Workspace name": "Nome do espaço",
+  "E.g. Work": "Ex.: Trabalho",
+  Folder: "Pasta",
+  "The workspace is one file in this folder. Copy or move it like any other file.":
+    "O espaço é um arquivo nesta pasta. Copie ou mova como qualquer outro arquivo.",
+  "Choose workspace folder": "Escolher pasta do espaço",
+  "Workspace folder": "Pasta do espaço",
+  "Each workspace has its own projects and tasks.":
+    "Cada espaço tem os próprios projetos e tarefas.",
+  "Create workspace": "Criar espaço",
+  "Rename…": "Renomear…",
+  "Move file…": "Mover arquivo…",
+  "Move the workspace to": "Mover o espaço para",
+  "Workspace file moved.": "Arquivo do espaço movido.",
+  "Remove from list": "Remover da lista",
+  "“{0}” left the list. The file wasn't touched.":
+    "“{0}” saiu da lista. O arquivo não foi alterado.",
+  "TRAMA_DB chose this database, so workspaces can't change.":
+    "O TRAMA_DB escolheu este banco, então os espaços não podem mudar.",
+  "Each workspace is a database file on this computer, with its own projects. Agents follow the open one. The Git screen is read-only: Trama doesn't change branches or push anything.":
+    "Cada espaço é um arquivo de banco neste computador, com os próprios projetos. Os agentes seguem o espaço aberto. A tela Git é somente de consulta: o Trama não altera branches nem envia conteúdo.",
+  "Not found": "Não encontrado",
+  "Copy path of {0}": "Copiar caminho de {0}",
   // search
   "{0} results": "{0} resultados",
   Draft: "Rascunho",
@@ -895,6 +923,22 @@ export type Key = keyof typeof ptBR;
  * the core filled in, such as a name or a path.
  */
 export const errors: Record<string, string> = {
+  "TRAMA_DB chooses the database, so workspaces can't be changed.":
+    "O TRAMA_DB escolhe o banco, então os espaços não podem mudar.",
+  "The workspace isn't in the list.": "O espaço não está na lista.",
+  "The workspace needs a name.": "O espaço precisa de um nome.",
+  "The name can't have slashes, colons or start with a dot.":
+    "O nome não pode ter barras, dois-pontos ou começar com ponto.",
+  "A file with that name already exists in the folder.":
+    "Já existe um arquivo com esse nome na pasta.",
+  "The workspace file doesn't exist.": "O arquivo do espaço não existe.",
+  "Switch to another workspace before removing this one.":
+    "Troque para outro espaço antes de remover este.",
+  "The default workspace stays in the list.":
+    "O espaço padrão continua na lista.",
+  "The default workspace stays in Trama's folder.":
+    "O espaço padrão fica na pasta do Trama.",
+  "Invalid workspace path.": "Caminho de espaço inválido.",
   "“{0}” already exists in this folder.": "Já existe “{0}” nesta pasta.",
   "“{0}” already exists in this project.": "“{0}” já existe neste projeto.",
   "“{0}” isn't a folder.": "“{0}” não é uma pasta.",

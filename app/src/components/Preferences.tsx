@@ -1,17 +1,98 @@
 import { useState } from "react";
-import { copyText } from "../lib/api";
-import type { Project, Snapshot } from "../lib/types";
+import {
+  chooseDirectory,
+  copyText,
+  errorMessage,
+  relocateWorkspace,
+  removeWorkspace,
+  revealLabel,
+  revealPath,
+} from "../lib/api";
+import type { Project, Snapshot, Workspace, Workspaces } from "../lib/types";
 import { Icon } from "./Icon";
+import { ContextMenu, type MenuItem } from "./Sidebar";
+import { workspaceName } from "./Workspaces";
 import { language, languages, setLanguage, t } from "../lib/i18n";
 
 export function Preferences({
   data,
+  workspaces,
+  onWorkspaces,
+  onRenameWorkspace,
+  notify,
   onEdit,
 }: {
   data: Snapshot;
+  workspaces: Workspaces | null;
+  onWorkspaces: (list: Workspaces) => void;
+  onRenameWorkspace: (workspace: Workspace) => void;
+  notify: (message: string, error?: boolean) => void;
   onEdit: (project: Project) => void;
 }) {
   const [copied, setCopied] = useState("");
+  const [menu, setMenu] = useState<{
+    workspace: Workspace;
+    x: number;
+    y: number;
+    trigger: HTMLElement;
+  } | null>(null);
+  const fail = (e: unknown) => notify(errorMessage(e), true);
+  const defaultPath = workspaces?.workspaces[0]?.path;
+  const actions = (workspace: Workspace): MenuItem[] => [
+    {
+      label: t("Rename…"),
+      icon: "rename",
+      onSelect: () => onRenameWorkspace(workspace),
+    },
+    ...(workspace.missing
+      ? []
+      : [
+          {
+            label: revealLabel(),
+            icon: "reveal" as const,
+            onSelect: () => void revealPath(workspace.path).catch(fail),
+          },
+        ]),
+    ...(workspace.missing || workspace.path === defaultPath
+      ? []
+      : [
+          {
+            label: t("Move file…"),
+            icon: "folder" as const,
+            onSelect: () =>
+              void chooseDirectory(t("Move the workspace to"))
+                .then((folder) =>
+                  folder
+                    ? relocateWorkspace(workspace.path, folder).then((list) => {
+                        onWorkspaces(list);
+                        notify(t("Workspace file moved."));
+                      })
+                    : undefined,
+                )
+                .catch(fail),
+          },
+        ]),
+    ...(workspace.path === workspaces?.active || workspace.path === defaultPath
+      ? []
+      : [
+          {
+            label: t("Remove from list"),
+            icon: "close" as const,
+            separated: true,
+            onSelect: () =>
+              void removeWorkspace(workspace.path)
+                .then((list) => {
+                  onWorkspaces(list);
+                  notify(
+                    t("“{0}” left the list. The file wasn't touched.", [
+                      workspaceName(workspace),
+                    ]),
+                  );
+                })
+                .catch(fail),
+          },
+        ]),
+  ];
   const copy = (value: string, label: string) =>
     void copyText(value)
       .then(() => setCopied(label))
@@ -54,25 +135,80 @@ export function Preferences({
           </div>
         </section>
         <section className="settings-group">
-          <h2>{t("Database")}</h2>
+          <h2>{t("Workspaces")}</h2>
           <p className="muted">
-            {t(
-              "This Trama's data stays on this computer. The Git screen is read-only: Trama doesn't change branches or push anything.",
-            )}
+            {workspaces?.pinned
+              ? t("TRAMA_DB chose this database, so workspaces can't change.")
+              : t(
+                  "Each workspace is a database file on this computer, with its own projects. Agents follow the open one. The Git screen is read-only: Trama doesn't change branches or push anything.",
+                )}
           </p>
-          <div className="settings-row">
-            <code className="path-text" title={data.databasePath}>
-              {data.databasePath}
-            </code>
-            <button
-              type="button"
-              className="icon-button"
-              aria-label={t("Copy database path")}
-              onClick={() => copy(data.databasePath, t("Path copied."))}
-            >
-              <Icon name="copy" size={14} />
-            </button>
-          </div>
+          <ul className="settings-list">
+            {(workspaces && !workspaces.pinned
+              ? workspaces.workspaces
+              : [{ name: "", path: data.databasePath, missing: false }]
+            ).map((workspace) => (
+              <li className="settings-row" key={workspace.path}>
+                <div className="settings-text">
+                  <span className="truncate">
+                    {workspaceName(workspace)}
+                    {workspace.path === data.databasePath && (
+                      <span className="settings-tag">{t("Open now")}</span>
+                    )}
+                    {workspace.missing && (
+                      <span className="settings-tag warning">
+                        {t("Not found")}
+                      </span>
+                    )}
+                  </span>
+                  <code className="selectable" title={workspace.path}>
+                    {workspace.path}
+                  </code>
+                </div>
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label={t("Copy path of {0}", [workspaceName(workspace)])}
+                  onClick={() => copy(workspace.path, t("Path copied."))}
+                >
+                  <Icon name="copy" size={14} />
+                </button>
+                {workspaces && !workspaces.pinned && (
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label={t("Actions for {0}", [
+                      workspaceName(workspace),
+                    ])}
+                    aria-haspopup="menu"
+                    onClick={(event) => {
+                      const rect = event.currentTarget.getBoundingClientRect();
+                      setMenu({
+                        workspace,
+                        x: rect.left,
+                        y: rect.bottom + 4,
+                        trigger: event.currentTarget,
+                      });
+                    }}
+                  >
+                    <Icon name="more" size={14} />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+          {menu && (
+            <ContextMenu
+              x={menu.x}
+              y={menu.y}
+              label={t("Actions for {0}", [workspaceName(menu.workspace)])}
+              items={actions(menu.workspace)}
+              onClose={(restoreFocus) => {
+                if (restoreFocus) menu.trigger.focus();
+                setMenu(null);
+              }}
+            />
+          )}
         </section>
         <section className="settings-group">
           <h2>{t("Projects and MCP integration")}</h2>

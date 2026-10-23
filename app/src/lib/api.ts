@@ -16,6 +16,7 @@ import type {
   DocumentHit,
   DocumentListing,
   TaskDocument,
+  Workspaces,
 } from "./types";
 import { known, t } from "./i18n";
 import { isMac, isWindows } from "./shortcuts";
@@ -147,6 +148,36 @@ export async function chooseDirectory(
   const { open } = await import("@tauri-apps/plugin-dialog");
   return open({ directory: true, multiple: false, title, defaultPath });
 }
+/** A Trama database file from the system's picker; null when cancelled. */
+export async function chooseDatabase(
+  title = t("Open workspace"),
+): Promise<string | null> {
+  if (!inTauri()) return call<string | null>("choose_file", { title });
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  return open({
+    multiple: false,
+    directory: false,
+    title,
+    filters: [{ name: "Trama", extensions: ["sqlite", "db"] }],
+  });
+}
+export const listWorkspaces = () => call<Workspaces>("list_workspaces");
+/** Creates `<folder>/<name>.sqlite` and opens it. */
+export const createWorkspace = (name: string, folder: string) =>
+  call<Workspaces>("create_workspace", { name, folder });
+/** Opens an existing database file, adding it to the list. */
+export const openWorkspace = (path: string) =>
+  call<Workspaces>("open_workspace", { path });
+export const switchWorkspace = (path: string) =>
+  call<Workspaces>("switch_workspace", { path });
+export const renameWorkspace = (path: string, name: string) =>
+  call<Workspaces>("rename_workspace", { path, name });
+/** Takes it off the list; the file stays. */
+export const removeWorkspace = (path: string) =>
+  call<Workspaces>("remove_workspace", { path });
+/** Moves the workspace's file into `folder`. */
+export const relocateWorkspace = (path: string, folder: string) =>
+  call<Workspaces>("relocate_workspace", { path, folder });
 /** Notes and images of the project's notes folder. */
 export const listDocuments = (projectId: string) =>
   call<DocumentListing>("list_documents", { projectId });

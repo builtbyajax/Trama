@@ -133,6 +133,22 @@ export interface Snapshot {
   categories: Category[];
   documents: TaskDocument[];
 }
+/** A database file; the app shows one at a time. */
+export interface Workspace {
+  /** Empty for the one Trama creates on its own: see `workspaceName`. */
+  name: string;
+  path: string;
+  /** The file isn't where the list says. */
+  missing: boolean;
+}
+export interface Workspaces {
+  active: string;
+  /** `TRAMA_DB` chose the database, so it can't be switched. */
+  pinned: boolean;
+  /** Where Trama keeps its own database, offered for new workspaces. */
+  defaultFolder: string;
+  workspaces: Workspace[];
+}
 export interface SearchResult {
   id: string;
   kind: "task" | "draft" | "message";

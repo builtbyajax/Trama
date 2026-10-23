@@ -290,6 +290,22 @@ kbd {
 .context-menu .popover-option > .icon {
   color: var(--ink-3);
 }
+.menu-icon-space {
+  flex: none;
+  width: 14px;
+}
+.menu-heading {
+  padding: 6px 8px 4px;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+.menu-check {
+  flex: none;
+  display: flex;
+  margin-left: 8px;
+  color: var(--accent-text);
+}
 .menu-separator {
   flex: none;
   height: 1px;

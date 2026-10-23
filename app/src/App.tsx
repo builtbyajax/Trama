@@ -22,6 +22,7 @@ import { useNavigation } from "./hooks/useNavigation";
 import { useSidebarLayout } from "./hooks/useSidebarLayout";
 import { useSnapshot } from "./hooks/useSnapshot";
 import { useToast } from "./hooks/useToast";
+import { useWorkspaces } from "./hooks/useWorkspaces";
 import { Tooltips } from "./components/Tooltips";
 import { Drafts } from "./components/Drafts";
 import { ArchivedTasks } from "./components/ArchivedTasks";
@@ -51,6 +52,11 @@ import {
 } from "./lib/api";
 import { ContextMenu } from "./components/Sidebar";
 import { TaskDelete } from "./components/TaskDelete";
+import {
+  WorkspaceButton,
+  WorkspaceComposer,
+} from "./components/Workspaces";
+import { createWorkspace, renameWorkspace } from "./lib/api";
 import {
   taskMenuItems,
   taskMenuLabel,
@@ -107,6 +113,7 @@ export function App() {
     project?: Project;
   } | null>(null);
   const [projectDelete, setProjectDelete] = useState<Project | null>(null);
+  const workspaces = useWorkspaces(notify);
   const [taskMenu, setTaskMenu] = useState<MenuRequest | null>(null);
   const [taskDelete, setTaskDelete] = useState<Task | null>(null);
   const [noteRequest, setNoteRequest] = useState<{
@@ -494,6 +501,17 @@ export function App() {
             onAddProject={() => setProjectComposer({})}
             onEditProject={(project) => setProjectComposer({ project })}
             onDeleteProject={setProjectDelete}
+            workspace={
+              workspaces.list && (
+                <WorkspaceButton
+                  list={workspaces.list}
+                  rail={Boolean(panel)}
+                  onSwitch={workspaces.switchTo}
+                  onCreate={() => workspaces.setComposer({})}
+                  onOpen={workspaces.open}
+                />
+              )
+            }
             onShortcuts={() => setShortcutsOpen(true)}
             rail={Boolean(panel)}
             onPeek={rail && notesTreeHidden ? showPeekSoon : undefined}
@@ -616,6 +634,12 @@ export function App() {
             ) : destination.kind === "preferences" ? (
               <Preferences
                 data={data}
+                workspaces={workspaces.list}
+                onWorkspaces={workspaces.setList}
+                onRenameWorkspace={(workspace) =>
+                  workspaces.setComposer({ workspace })
+                }
+                notify={notify}
                 onEdit={(project) => setProjectComposer({ project })}
               />
             ) : data.projects.length === 0 ? (
@@ -794,6 +818,20 @@ export function App() {
             forget(deleted.id);
             notify(t("Project “{0}” deleted.", [deleted.name]));
             void refresh();
+          }}
+        />
+      )}
+      {workspaces.composer && workspaces.list && (
+        <WorkspaceComposer
+          workspace={workspaces.composer.workspace}
+          defaultFolder={workspaces.list.defaultFolder}
+          onClose={() => workspaces.setComposer(null)}
+          onSubmit={async (name, folder) => {
+            const renaming = workspaces.composer?.workspace;
+            if (renaming) {
+              workspaces.setList(await renameWorkspace(renaming.path, name));
+              workspaces.setComposer(null);
+            } else workspaces.enter(await createWorkspace(name, folder));
           }}
         />
       )}
