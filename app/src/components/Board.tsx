@@ -13,6 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { useBoardKeyboard, type BoardColumns } from "../hooks/useBoardKeyboard";
 import { useReducedMotion } from "../hooks/useReducedMotion";
+import { useScrollbarRoom } from "../hooks/useScrollbarRoom";
 import type { KeyboardEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -363,6 +364,8 @@ function Column({
   onOpen: (task: Task) => void;
 }) {
   const { setNodeRef } = useDroppable({ id: status });
+  const body = useRef<HTMLDivElement | null>(null);
+  useScrollbarRoom(body);
   const slotRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (keyboardSlot)
@@ -445,7 +448,13 @@ function Column({
           {tasks.length}
         </span>
       </header>
-      <div ref={bodyRef} className="column-body scroll">
+      <div
+        ref={(node) => {
+          body.current = node;
+          bodyRef(node);
+        }}
+        className="column-body scroll"
+      >
         {nodes}
         {tasks.length === 0 && !slot && !keyboardSlot && (
           <div className="column-empty">{t("No tasks")}</div>

@@ -10,6 +10,7 @@ import {
 import type { Front, Fronts, Reach } from "../../lib/fronts";
 import { commitGraph, type GraphRow, type Segment } from "../../lib/graph";
 import type { FileDiff, GitCommit, GitSnapshot, Task } from "../../lib/types";
+import { useScrollbarRoom } from "../../hooks/useScrollbarRoom";
 import { Glyph } from "../BoardFilters";
 import { Icon } from "../Icon";
 import { Select } from "../Select";
@@ -156,6 +157,7 @@ export function HistoryNav({
   commitFiles: (id: string) => Promise<FileDiff[]>;
 }) {
   const list = useRef<HTMLDivElement>(null);
+  useScrollbarRoom(list);
   const graph = useMemo(() => commitGraph(commits), [commits]);
   const lanes = Math.min(
     maxLanes,
