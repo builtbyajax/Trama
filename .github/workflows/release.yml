@@ -48,6 +48,7 @@ jobs:
           cache-dependency-path: app/package-lock.json
 
       - name: Check version and release tag
+        id: version
         shell: bash
         run: |
           node <<'NODE'
@@ -73,6 +74,7 @@ jobs:
           } else if (exists.status !== 1) {
             throw new Error('Could not check the release tag.');
           }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${app.version}\n`);
           console.log(`Building ${tag} from ${process.env.GITHUB_SHA}`);
           NODE
 
@@ -107,13 +109,14 @@ jobs:
           releaseDraft: true
           prerelease: true
           releaseBody: |
-            Desktop installers for testing Trama. Each installer includes the local MCP server.
+            Trama ${{ steps.version.outputs.version }} is an early test release. Each installer includes the local MCP server.
 
-            - macOS: choose the DMG for Apple Silicon (aarch64) or Intel (x64).
-            - Windows: download the x64 setup executable.
+            - **macOS Apple Silicon:** DMG for Apple Silicon Macs.
+            - **macOS Intel:** DMG for Intel Macs.
+            - **Windows x64:** installer for 64-bit Windows.
 
-            These test builds aren't notarized by Apple on macOS or code-signed on Windows.
-            macOS may require approval in Privacy & Security; Windows may show a SmartScreen warning.
-            See the [macOS](https://github.com/builtbyajax/Trama/blob/main/docs/installation.md#macos) and [Windows](https://github.com/builtbyajax/Trama/blob/main/docs/installation.md#windows) guides for instructions.
+            These test builds are not notarized on macOS or code-signed on Windows. macOS may require approval in Privacy & Security; Windows may show a SmartScreen warning.
+
+            See the [macOS installation guide](https://github.com/builtbyajax/Trama/blob/main/docs/installation.md#macos) or [Windows installation guide](https://github.com/builtbyajax/Trama/blob/main/docs/installation.md#windows) before opening the app.
           uploadUpdaterJson: false
           uploadWorkflowArtifacts: true
