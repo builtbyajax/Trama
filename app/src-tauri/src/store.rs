@@ -5,6 +5,7 @@ mod migrations;
 mod operations;
 mod search;
 mod tasks;
+mod transfer;
 use rusqlite::{params, Connection, OptionalExtension, Row, Transaction, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use std::{

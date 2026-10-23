@@ -733,3 +733,37 @@ button.holder:hover {
   color: var(--ink);
   font: 500 var(--fs-sm) var(--font);
 }
+
+/* ───── moving a project ───── */
+.workspace-targets {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 12px;
+}
+.workspace-target {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  text-align: left;
+}
+.workspace-target:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.workspace-target[aria-checked="true"] {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.workspace-target > .icon {
+  flex: none;
+  color: var(--accent-text);
+}

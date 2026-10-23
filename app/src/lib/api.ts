@@ -178,6 +178,9 @@ export const removeWorkspace = (path: string) =>
 /** Moves the workspace's file into `folder`. */
 export const relocateWorkspace = (path: string, folder: string) =>
   call<Workspaces>("relocate_workspace", { path, folder });
+/** Moves a project, with everything in it, to the workspace at `path`. */
+export const moveProject = (projectId: string, path: string) =>
+  call<null>("move_project", { projectId, path });
 /** Notes and images of the project's notes folder. */
 export const listDocuments = (projectId: string) =>
   call<DocumentListing>("list_documents", { projectId });

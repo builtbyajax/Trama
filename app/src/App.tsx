@@ -52,9 +52,12 @@ import {
 } from "./lib/api";
 import { ContextMenu } from "./components/Sidebar";
 import { TaskDelete } from "./components/TaskDelete";
+import { ProjectMove } from "./components/ProjectMove";
 import {
   WorkspaceButton,
   WorkspaceComposer,
+  otherWorkspaces,
+  workspaceName,
 } from "./components/Workspaces";
 import { createWorkspace, renameWorkspace } from "./lib/api";
 import {
@@ -113,6 +116,7 @@ export function App() {
     project?: Project;
   } | null>(null);
   const [projectDelete, setProjectDelete] = useState<Project | null>(null);
+  const [projectMove, setProjectMove] = useState<Project | null>(null);
   const workspaces = useWorkspaces(notify);
   const [taskMenu, setTaskMenu] = useState<MenuRequest | null>(null);
   const [taskDelete, setTaskDelete] = useState<Task | null>(null);
@@ -501,6 +505,7 @@ export function App() {
             onAddProject={() => setProjectComposer({})}
             onEditProject={(project) => setProjectComposer({ project })}
             onDeleteProject={setProjectDelete}
+            onMoveProject={setProjectMove}
             workspace={
               workspaces.list && (
                 <WorkspaceButton
@@ -817,6 +822,25 @@ export function App() {
             if (selectedTask?.projectId === deleted.id) setSelected(null);
             forget(deleted.id);
             notify(t("Project “{0}” deleted.", [deleted.name]));
+            void refresh();
+          }}
+        />
+      )}
+      {projectMove && (
+        <ProjectMove
+          project={projectMove}
+          taskCount={
+            data.tasks.filter((t) => t.projectId === projectMove.id).length
+          }
+          targets={otherWorkspaces(workspaces.list)}
+          onClose={() => setProjectMove(null)}
+          onMoved={(moved, target) => {
+            setProjectMove(null);
+            if (selectedTask?.projectId === moved.id) setSelected(null);
+            forget(moved.id);
+            notify(
+              t("“{0}” moved to {1}.", [moved.name, workspaceName(target)]),
+            );
             void refresh();
           }}
         />

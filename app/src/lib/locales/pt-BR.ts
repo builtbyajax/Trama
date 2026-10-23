@@ -644,6 +644,17 @@ export const ptBR = {
     "O Trama abre de novo para mostrar tudo no idioma escolhido.",
 
   // projects
+  "Move to another workspace…": "Mover para outro espaço…",
+  "Move to another workspace": "Mover para outro espaço",
+  "There's no other workspace yet. Create one from the menu at the top of the sidebar.":
+    "Ainda não existe outro espaço. Crie um pelo menu no topo da barra lateral.",
+  "“{0}” leaves this workspace with 1 task and everything in it: activity, checklist, annotations and categories.":
+    "“{0}” sai deste espaço com 1 tarefa e tudo o que está nela: atividade, checklist, anotações e categorias.",
+  "“{0}” leaves this workspace with {1} tasks and everything in them: activity, checklists, annotations and categories.":
+    "“{0}” sai deste espaço com {1} tarefas e tudo o que está nelas: atividade, checklists, anotações e categorias.",
+  Destination: "Destino",
+  "Move project": "Mover projeto",
+  "“{0}” moved to {1}.": "“{0}” foi para {1}.",
   ". The repository folder is not touched. This can't be undone.":
     ". A pasta do repositório não é tocada. Não é possível desfazer.",
   "” leaves Trama with": "” sai do Trama com",
@@ -939,6 +950,10 @@ export const errors: Record<string, string> = {
   "The default workspace stays in Trama's folder.":
     "O espaço padrão fica na pasta do Trama.",
   "Invalid workspace path.": "Caminho de espaço inválido.",
+  "The project is already in this workspace.":
+    "O projeto já está neste espaço.",
+  "The other workspace already has this project.":
+    "O outro espaço já tem este projeto.",
   "“{0}” already exists in this folder.": "Já existe “{0}” nesta pasta.",
   "“{0}” already exists in this project.": "“{0}” já existe neste projeto.",
   "“{0}” isn't a folder.": "“{0}” não é uma pasta.",

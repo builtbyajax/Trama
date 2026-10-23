@@ -39,6 +39,7 @@ interface SidebarProps {
   onAddProject: () => void;
   onEditProject: (project: Project) => void;
   onDeleteProject: (project: Project) => void;
+  onMoveProject: (project: Project) => void;
   /** The workspace switcher, above everything else. */
   workspace?: ReactNode;
   onShortcuts: () => void;
@@ -76,6 +77,7 @@ export function Sidebar({
   onAddProject,
   onEditProject,
   onDeleteProject,
+  onMoveProject,
   workspace,
   onShortcuts,
   rail = false,
@@ -205,6 +207,11 @@ export function Sidebar({
               label: t("Edit project…"),
               icon: "pencil",
               onSelect: () => onEditProject(menu.project),
+            },
+            {
+              label: t("Move to another workspace…"),
+              icon: "arrowRight",
+              onSelect: () => onMoveProject(menu.project),
             },
             {
               label: t("Delete project…"),

@@ -69,6 +69,9 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
             ))
         }
         "delete_project" => encoded(store.delete_project(project()?)),
+        "move_project" => {
+            encoded(store.move_project_to(project()?, std::path::Path::new(workspace()?)))
+        }
         "save_task" => {
             let input: store::TaskInput =
                 serde_json::from_value(args["input"].clone()).map_err(|e| e.to_string())?;
