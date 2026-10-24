@@ -163,11 +163,20 @@ impl Normalize {
                 if key == "unavailable" {
                     return json!("<provider unavailable>");
                 }
-                let normalized = s
-                    .replace(&self.canonical, "<temp>")
-                    .replace(&self.root, "<temp>")
-                    .replace(&self.canonical.replace('\\', "/"), "<temp>")
-                    .replace(&self.root.replace('\\', "/"), "<temp>");
+                let mut normalized = s;
+                for root in [&self.canonical, &self.root] {
+                    // Git drops Windows' verbatim prefix and uses forward slashes.
+                    let plain = if let Some(unc) = root.strip_prefix(r"\\?\UNC\") {
+                        format!(r"\\{unc}")
+                    } else {
+                        root.strip_prefix(r"\\?\").unwrap_or(root).to_string()
+                    };
+                    for form in [root.as_str(), plain.as_str()] {
+                        normalized = normalized
+                            .replace(form, "<temp>")
+                            .replace(&form.replace('\\', "/"), "<temp>");
+                    }
+                }
                 json!(if normalized.contains("<temp>") {
                     normalized.replace('\\', "/")
                 } else {
@@ -176,6 +185,29 @@ impl Normalize {
             }
             other => other,
         }
+    }
+}
+
+#[test]
+fn snapshot_normalization_handles_windows_verbatim_and_git_paths() {
+    for (root, path) in [
+        (r"\\?\C:\Temp\scope", "C:/Temp/scope/repo"),
+        (r"\\?\C:\Temp\scope", r"C:\Temp\scope\repo"),
+        (r"\\?\C:\Temp\scope", r"\\?\C:\Temp\scope\repo"),
+        (r"\\?\UNC\server\share\scope", "//server/share/scope/repo"),
+        (r"\\?\UNC\server\share\scope", r"\\server\share\scope\repo"),
+    ] {
+        let mut normalize = Normalize {
+            root: root.into(),
+            canonical: root.into(),
+            ids: BTreeMap::new(),
+        };
+        assert_eq!(normalize.value(json!(path), "root"), "<temp>/repo");
+        assert_eq!(
+            normalize.value(json!({"root":path}).to_string().into(), "text"),
+            json!({"root":"<temp>/repo"}).to_string()
+        );
+        assert_eq!(normalize.value(json!("unchanged"), "title"), "unchanged");
     }
 }
 fn first_difference(actual: &Value, expected: &Value, path: &str) -> Option<String> {
