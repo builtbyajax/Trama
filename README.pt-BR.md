@@ -15,7 +15,8 @@
   <a href="https://trama.ajaxdev.com.br/pt/">Site de apresentação</a> &nbsp;·&nbsp;
   <a href="#primeiros-passos">Primeiros passos</a> &nbsp;·&nbsp;
   <a href="docs/installation.pt-BR.md">Instalação e configuração do MCP</a> &nbsp;·&nbsp;
-  <a href="#desenvolvimento">Executar pelo código-fonte</a>
+  <a href="#desenvolvimento">Executar pelo código-fonte</a> &nbsp;·&nbsp;
+  <a href="CHANGELOG.md">Histórico de versões</a>
 </p>
 
 ![Quadro do Trama com tarefas atribuídas à pessoa ou ao agente em quatro colunas](docs/images/pt-BR/board.png)
@@ -28,7 +29,7 @@ Escreva o briefing, anexe o contexto e coloque a tarefa na fila do agente. O Tra
 
 ## Primeiros passos
 
-O Trama está em desenvolvimento inicial. Os instaladores ainda não foram publicados; por enquanto, você pode [executar pelo código-fonte](#desenvolvimento). O canal de download planejado é o GitHub Releases, com um `.dmg` para macOS e um `.exe` para Windows.
+O Trama está em desenvolvimento inicial. Baixe os instaladores de teste no [GitHub Releases](https://github.com/builtbyajax/Trama/releases), com um `.dmg` para macOS e um `.exe` para Windows, ou [execute pelo código-fonte](#desenvolvimento). Leia o [guia de instalação](docs/installation.pt-BR.md) antes de abrir o app.
 
 A interface está disponível em inglês e português brasileiro. Escolha o idioma em **Preferências → Idioma**. As capturas mostram a interface real com dados de demonstração.
 
