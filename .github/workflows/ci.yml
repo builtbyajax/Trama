@@ -124,3 +124,35 @@ jobs:
           name: browser-failures
           path: app/test-results
           retention-days: 7
+
+  coverage:
+    name: Coverage reports (informational)
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@e9d7b9f1e587218970671bac74e5511ed9506e6a # v2
+        with:
+          workspaces: app/src-tauri -> target
+          key: coverage
+      - working-directory: app
+        run: |
+          npm ci
+          npm run test:coverage
+      - run: cargo install cargo-llvm-cov --locked --version 0.9.1
+      - run: cargo llvm-cov --manifest-path app/src-tauri/Cargo.toml --locked --features agent-cli,dev-bridge --json --output-path app/src-tauri/target/coverage.json
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: coverage-reports
+          path: |
+            app/coverage
+            app/src-tauri/target/coverage.json
+          retention-days: 14
