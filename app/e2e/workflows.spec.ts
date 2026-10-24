@@ -116,6 +116,37 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
       .sort((a, b) => a.position - b.position)
       .map((t) => t.title),
   ).toEqual(["Second task", "First task"]);
+  const dragged = page
+    .locator(".card[data-task-id]")
+    .filter({ hasText: "First task" });
+  const reviewColumn = page
+    .locator(".column")
+    .filter({
+      has: page.getByRole("heading", { name: "In review", exact: true }),
+    });
+  const from = await dragged.boundingBox();
+  const to = await reviewColumn.locator(".column-body").boundingBox();
+  await page.mouse.move(from!.x + from!.width / 2, from!.y + from!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    from!.x + from!.width / 2 + 12,
+    from!.y + from!.height / 2,
+    { steps: 3 },
+  );
+  await page.mouse.move(to!.x + to!.width / 2, to!.y + 30, { steps: 15 });
+  await page.mouse.up();
+  await expect
+    .poll(
+      async () =>
+        (await command<Snapshot>(request, "load_snapshot")).tasks.find(
+          (t) => t.title === "First task",
+        )?.status,
+    )
+    .toBe("review");
+  await page.reload();
+  await expect(
+    reviewColumn.locator(".card").filter({ hasText: "First task" }),
+  ).toBeVisible();
   const project = data.projects[0];
   const note = join(home, `note-${run}.md`);
   await writeFile(note, "# Original\n");
@@ -289,6 +320,30 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
       }
     })
     .toBe(false);
+
+  await page
+    .getByRole("button", {
+      name: `Actions for Destination ${run}`,
+      exact: true,
+    })
+    .click();
+  await page
+    .getByRole("menuitem", { name: "Remove from list…", exact: true })
+    .click();
+  await Promise.all([
+    page.waitForEvent("load"),
+    page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Remove from list", exact: true })
+      .click(),
+  ]);
+  await access(destination.active);
+  expect(
+    (await command<Workspaces>(request, "list_workspaces")).active,
+  ).not.toBe(destination.active);
+  await command(request, "open_workspace", { path: destination.active });
+  await page.reload();
+  await page.getByRole("button", { name: "Preferences", exact: true }).click();
   await page
     .getByRole("button", {
       name: `Actions for Destination ${run}`,
