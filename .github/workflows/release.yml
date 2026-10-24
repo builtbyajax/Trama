@@ -3,17 +3,22 @@ name: Build installers
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: release
   cancel-in-progress: false
 
 jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
   build:
+    needs: checks
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
-    permissions:
-      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -22,75 +27,91 @@ jobs:
             runner: macos-latest
             target: aarch64-apple-darwin
             bundle: dmg
-            assetNamePattern: '[name]_[version]_macOS_Apple-Silicon[ext]'
+            asset: macOS_Apple-Silicon
           - name: macOS Intel
-            runner: macos-latest
+            runner: macos-15-intel
             target: x86_64-apple-darwin
             bundle: dmg
-            assetNamePattern: '[name]_[version]_macOS_Intel[ext]'
+            asset: macOS_Intel
           - name: Windows x64
             runner: windows-latest
             target: x86_64-pc-windows-msvc
             bundle: nsis
-            assetNamePattern: '[name]_[version]_Windows_x64_Setup[ext]'
-
+            asset: Windows_x64_Setup
     steps:
-      - name: Check out source
-        uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: app/package-lock.json
-
-      - name: Check version and release tag
+      - name: Check version, release tag and installation guide
         id: version
         shell: bash
-        run: node app/scripts/check-version.mjs --release
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
+        run: |
+          test -f docs/installation.md
+          node app/scripts/check-version.mjs --release
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           targets: ${{ matrix.target }}
-
-      - name: Cache Rust build files
-        uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@e9d7b9f1e587218970671bac74e5511ed9506e6a # v2
         with:
           workspaces: app/src-tauri -> target
           key: ${{ matrix.target }}
-
-      - name: Install frontend dependencies
-        working-directory: app
+      - working-directory: app
         run: npm ci
-
-      - name: Build app and MCP server, then upload installers
-        uses: tauri-apps/tauri-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build installers without uploading
+        id: bundle
+        uses: tauri-apps/tauri-action@944946e3e4cac6603d1fe8f514171e9ecd3c78aa # v1
         with:
           projectPath: app
-          # This wrapper builds and bundles trama-agent before the desktop app.
           tauriScript: npm run tauri
           args: --target ${{ matrix.target }} --bundles ${{ matrix.bundle }}
-          tagName: v__VERSION__
-          releaseName: Trama __VERSION__
-          releaseAssetNamePattern: ${{ matrix.assetNamePattern }}
-          releaseCommitish: ${{ github.sha }}
-          releaseDraft: true
-          prerelease: true
-          releaseBody: |
-            Trama ${{ steps.version.outputs.version }} is an early test release. Each installer includes the local MCP server.
-
-            - **macOS Apple Silicon:** DMG for Apple Silicon Macs.
-            - **macOS Intel:** DMG for Intel Macs.
-            - **Windows x64:** installer for 64-bit Windows.
-
-            These test builds are not notarized on macOS or code-signed on Windows. macOS may require approval in Privacy & Security; Windows may show a SmartScreen warning.
-
-            See the [macOS installation guide](https://github.com/builtbyajax/Trama/blob/main/docs/installation.md#macos) or [Windows installation guide](https://github.com/builtbyajax/Trama/blob/main/docs/installation.md#windows) before opening the app.
           uploadUpdaterJson: false
-          uploadWorkflowArtifacts: true
+      - name: Test the MCP server from the packaged app
+        working-directory: app
+        env:
+          ARTIFACT_PATHS: ${{ steps.bundle.outputs.artifactPaths }}
+        run: node scripts/verify-packaged-agent.mjs ${{ matrix.target }}
+      - name: Stage the verified installer
+        working-directory: app
+        env:
+          ARTIFACT_PATHS: ${{ steps.bundle.outputs.artifactPaths }}
+          APP_VERSION: ${{ steps.version.outputs.version }}
+          ASSET_PLATFORM: ${{ matrix.asset }}
+        shell: bash
+        run: node scripts/release-assets.mjs stage "$APP_VERSION" "$ASSET_PLATFORM" ../release-assets
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: installer-${{ matrix.asset }}
+          path: release-assets
+          if-no-files-found: error
+
+  draft:
+    # All installers and their packaged MCP contracts must pass before any release asset is uploaded.
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          pattern: installer-*
+          path: release-assets
+          merge-multiple: true
+      - name: Generate checksums and release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          node app/scripts/release-assets.mjs checksums release-assets
+          node app/scripts/release-notes.mjs
+          VERSION=$(node -p "JSON.parse(require('fs').readFileSync('app/package.json')).version")
+          gh release create "v$VERSION" release-assets/*.dmg release-assets/*.exe release-assets/SHA256SUMS --title "Trama $VERSION" --notes-file release-assets/RELEASE_NOTES.md --target "$GITHUB_SHA" --draft --prerelease
