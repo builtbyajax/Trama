@@ -6,10 +6,12 @@
 
 Changes delivered in each Trama version. **Unreleased** lists implemented changes that have not shipped yet; when publishing a version, replace that heading with the release number and date.
 
-## Unreleased
+## [0.2.1](https://github.com/builtbyajax/Trama/releases/tag/v0.2.1) — 2026-10-24
 
 ### Fixed
 
+- Use separate data for development sessions by default, avoiding unintended migrations of personal databases.
+- Reject requests from untrusted hosts and origins on the local development bridge.
 - Refuse databases from a newer version without changing the main file or pending WAL data.
 - Handle concurrent workspace opening during a migration without lock failures when enabling WAL.
 - Protect notes from symbolic links pointing to hidden folders.

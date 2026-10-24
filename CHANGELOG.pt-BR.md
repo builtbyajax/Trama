@@ -6,10 +6,12 @@
 
 Mudanças entregues em cada versão do Trama. A seção **Em desenvolvimento** reúne alterações implementadas que ainda não foram lançadas; ao publicar uma versão, substitua esse título pelo número e pela data da release.
 
-## Em desenvolvimento
+## [0.2.1](https://github.com/builtbyajax/Trama/releases/tag/v0.2.1) — 2026-10-24
 
 ### Corrigido
 
+- Sessões de desenvolvimento usam dados separados por padrão, evitando migrações involuntárias dos bancos pessoais.
+- Requisições de hosts e origens não confiáveis são recusadas na ponte local de desenvolvimento.
 - Recusa de bancos de uma versão mais nova sem alterar o arquivo principal ou os dados pendentes no WAL.
 - Abertura simultânea de um espaço durante uma migração, evitando falhas por bloqueio na ativação do WAL.
 - Proteção das notas contra atalhos simbólicos que apontam para pastas ocultas.
