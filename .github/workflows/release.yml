@@ -52,7 +52,11 @@ jobs:
         shell: bash
         run: |
           test -f docs/installation.md
-          node app/scripts/check-version.mjs --release
+          if [[ "$GITHUB_REF" == refs/heads/main ]]; then
+            node app/scripts/check-version.mjs --release
+          else
+            node app/scripts/check-version.mjs
+          fi
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           targets: ${{ matrix.target }}
@@ -89,13 +93,10 @@ jobs:
           path: release-assets
           if-no-files-found: error
 
-  draft:
-    # All installers and their packaged MCP contracts must pass before any release asset is uploaded.
+  checksums:
+    # Verify the combined assets on branches too, without creating a release or tag.
     needs: build
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
@@ -107,11 +108,35 @@ jobs:
           path: release-assets
           merge-multiple: true
       - name: Generate checksums and release notes
+        run: |
+          node app/scripts/release-assets.mjs checksums release-assets
+          node app/scripts/release-notes.mjs
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: verified-installers
+          path: release-assets
+          if-no-files-found: error
+
+  draft:
+    # All installers, their MCP contracts and checksums must pass before release upload.
+    needs: checksums
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: verified-installers
+          path: release-assets
+      - name: Create the draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          node app/scripts/release-assets.mjs checksums release-assets
-          node app/scripts/release-notes.mjs
           VERSION=$(node -p "JSON.parse(require('fs').readFileSync('app/package.json')).version")
           gh release create "v$VERSION" release-assets/*.dmg release-assets/*.exe release-assets/SHA256SUMS --title "Trama $VERSION" --notes-file release-assets/RELEASE_NOTES.md --target "$GITHUB_SHA" --draft --prerelease

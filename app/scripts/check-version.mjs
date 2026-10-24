@@ -56,8 +56,8 @@ if (
     } else if (exists.status !== 1) {
       throw new Error("Could not check the release tag.");
     }
-    if (process.env.GITHUB_OUTPUT)
-      appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\n`);
   }
+  if (process.env.GITHUB_OUTPUT)
+    appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\n`);
   console.log(`App versions match ${version}.`);
 }
