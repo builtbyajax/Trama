@@ -79,3 +79,66 @@ impl Store {
         moved.and(detached.map(|_| ()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::BTreeSet;
+
+    fn project_tables(db: &Connection) -> BTreeSet<String> {
+        let mut statement = db
+            .prepare("SELECT name FROM sqlite_master WHERE type='table'")
+            .unwrap();
+        let tables: Vec<String> = statement
+            .query_map([], |r| r.get(0))
+            .unwrap()
+            .collect::<rusqlite::Result<_>>()
+            .unwrap();
+        let mut related = BTreeSet::from(["projects".to_string()]);
+        loop {
+            let before = related.len();
+            for table in &tables {
+                let mut foreign = db
+                    .prepare(&format!(
+                        "SELECT \"table\" FROM pragma_foreign_key_list('{table}')"
+                    ))
+                    .unwrap();
+                let parents = foreign
+                    .query_map([], |r| r.get::<_, String>(0))
+                    .unwrap()
+                    .collect::<rusqlite::Result<Vec<_>>>()
+                    .unwrap();
+                let direct:bool=db.query_row(&format!("SELECT EXISTS(SELECT 1 FROM pragma_table_info('{table}') WHERE name IN('project_id','task_id'))"),[],|r|r.get(0)).unwrap();
+                if direct || parents.iter().any(|p| related.contains(p)) {
+                    related.insert(table.clone());
+                }
+            }
+            if related.len() == before {
+                return related;
+            }
+        }
+    }
+
+    #[test]
+    fn every_project_related_table_is_in_the_transfer_plan() {
+        let store = Store::open(Path::new(":memory:")).unwrap();
+        let copied = PROJECT_TABLES
+            .iter()
+            .map(|(name, _)| name.to_string())
+            .collect::<BTreeSet<_>>();
+        assert_eq!(
+            project_tables(&store.db),
+            copied,
+            "Add new project tables to PROJECT_TABLES before shipping"
+        );
+        store
+            .db
+            .execute_batch("CREATE TABLE forgotten(project_id TEXT REFERENCES projects(id));")
+            .unwrap();
+        assert_ne!(
+            project_tables(&store.db),
+            copied,
+            "The guard must notice a newly added project table"
+        );
+    }
+}
