@@ -16,7 +16,7 @@
   <a href="#primeiros-passos">Primeiros passos</a> &nbsp;·&nbsp;
   <a href="docs/installation.pt-BR.md">Instalação e configuração do MCP</a> &nbsp;·&nbsp;
   <a href="#desenvolvimento">Executar pelo código-fonte</a> &nbsp;·&nbsp;
-  <a href="CHANGELOG.md">Histórico de versões</a>
+  <a href="CHANGELOG.pt-BR.md">Histórico de versões</a>
 </p>
 
 ![Quadro do Trama com tarefas atribuídas à pessoa ou ao agente em quatro colunas](docs/images/pt-BR/board.png)

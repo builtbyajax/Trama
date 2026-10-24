@@ -1,40 +1,44 @@
+<p align="center">
+  <strong>English</strong> &nbsp;·&nbsp; <a href="CHANGELOG.pt-BR.md">Português brasileiro</a>
+</p>
+
 # Changelog
 
-Mudanças entregues em cada versão do Trama. A seção **Em desenvolvimento** reúne alterações implementadas que ainda não foram lançadas; ao publicar uma versão, substitua esse título pelo número e pela data da release.
+Changes delivered in each Trama version. **Unreleased** lists implemented changes that have not shipped yet; when publishing a version, replace that heading with the release number and date.
 
-## Em desenvolvimento
+## Unreleased
 
-### Corrigido
+### Fixed
 
-- Recusa de bancos de uma versão mais nova sem alterar o arquivo principal ou os dados pendentes no WAL.
-- Abertura simultânea de um espaço durante uma migração, evitando falhas por bloqueio na ativação do WAL.
-- Proteção das notas contra atalhos simbólicos que apontam para pastas ocultas.
-- Ação de descartar e recarregar uma nota em conflito permanece disponível ao sair do editor.
-- Links de notas com escapes inválidos deixam de interromper a renderização.
-- MCP passa a informar a versão real do schema e recusa valores nulos em campos obrigatórios de uma atualização de tarefa.
+- Refuse databases from a newer version without changing the main file or pending WAL data.
+- Handle concurrent workspace opening during a migration without lock failures when enabling WAL.
+- Protect notes from symbolic links pointing to hidden folders.
+- Keep the discard and reload action available when leaving a note editor with a conflict.
+- Prevent note links with invalid escapes from interrupting rendering.
+- Report the actual schema version through MCP and reject null values in required task update fields.
 
 ## [0.2.0](https://github.com/builtbyajax/Trama/releases/tag/v0.2.0) — 2026-10-24
 
-### Adicionado
+### Added
 
-- Espaços de trabalho locais, cada um com seu próprio banco de dados.
-- Criação, edição, troca, remoção e exclusão de espaços de trabalho.
-- Transferência de projetos entre espaços, preservando tarefas e dados relacionados.
-- Objetivos por projeto, com tarefas associadas e acompanhamento do progresso.
-- Criação, consulta e edição de objetivos pelo MCP.
+- Local workspaces, each with its own database.
+- Workspace creation, editing, switching, removal and deletion.
+- Project transfer between workspaces, preserving tasks and related data.
+- Project goals with associated tasks and progress tracking.
+- Goal creation, listing and editing through MCP.
 
-### Alterado
+### Changed
 
-- Banco atualizado para o schema 10, preservando os dados existentes. Após a migração, o Trama 0.1.0 não abre esse banco.
+- Upgrade the database to schema 10 while preserving existing data. After migration, Trama 0.1.0 cannot open that database.
 
 ## [0.1.0](https://github.com/builtbyajax/Trama/releases/tag/v0.1.0) — 2026-10-23
 
-### Adicionado
+### Added
 
-- Aplicativo desktop para macOS e Windows, com armazenamento SQLite local.
-- Quadro de tarefas com responsáveis, categorias, rascunhos, atalhos e arquivamento.
-- Consulta de histórico Git, branches, diferenças de arquivos e pull requests.
-- Edição de notas Markdown com busca, prévia e anexos em tarefas.
-- Servidor MCP local e skill para conectar agentes de código ao quadro.
-- Anotações pessoais das tarefas privadas para os agentes.
-- Interface em inglês e português brasileiro.
+- Desktop app for macOS and Windows with local SQLite storage.
+- Task board with assignees, categories, drafts, shortcuts and archiving.
+- Git history, branches, file differences and pull request browsing.
+- Markdown note editing with search, preview and task attachments.
+- Local MCP server and skill to connect coding agents to the board.
+- Personal task notes kept private from agents.
+- Interface in English and Brazilian Portuguese.
