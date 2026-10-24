@@ -178,6 +178,45 @@ impl Normalize {
         }
     }
 }
+fn first_difference(actual: &Value, expected: &Value, path: &str) -> Option<String> {
+    if actual == expected {
+        return None;
+    }
+    match (actual, expected) {
+        (Value::Object(a), Value::Object(b)) => {
+            let keys = a.keys().chain(b.keys()).collect::<BTreeSet<_>>();
+            keys.into_iter().find_map(|key| {
+                let path = format!("{path}/{key}");
+                match (a.get(key), b.get(key)) {
+                    (Some(a), Some(b)) => first_difference(a, b, &path),
+                    _ => Some(format!("{path}: field presence differs")),
+                }
+            })
+        }
+        (Value::Array(a), Value::Array(b)) if a.len() == b.len() => a
+            .iter()
+            .zip(b)
+            .enumerate()
+            .find_map(|(i, (a, b))| first_difference(a, b, &format!("{path}/{i}"))),
+        (Value::Array(a), Value::Array(b)) => Some(format!(
+            "{path}: array lengths differ ({} versus {})",
+            a.len(),
+            b.len()
+        )),
+        _ => Some(format!("{path}: actual={actual}; expected={expected}")),
+    }
+}
+
+#[test]
+fn snapshot_diagnostics_locate_nested_contract_changes() {
+    let actual = json!({"tools":[{"name":"changed"}]});
+    let expected = json!({"tools":[{"name":"original"}]});
+    let difference = first_difference(&actual, &expected, "").unwrap();
+    assert!(difference.starts_with("/tools/0/name:"));
+    assert!(difference.contains("changed") && difference.contains("original"));
+    assert!(first_difference(&expected, &expected, "").is_none());
+}
+
 fn snapshot(name: &str, value: Value, root: &Path) {
     let mut normalize = Normalize {
         root: root.display().to_string(),
@@ -200,10 +239,16 @@ fn snapshot(name: &str, value: Value, root: &Path) {
             .expect("Create the initial reviewed snapshot with UPDATE_SNAPSHOTS=1"),
     )
     .unwrap();
-    assert_eq!(
-        value, expected,
-        "MCP contract changed; review the diff, skill and site before accepting a snapshot update"
-    );
+    if let Some(difference) = first_difference(&value, &expected, "") {
+        let output = Path::new(env!("CARGO_MANIFEST_DIR")).join("target/test-results");
+        std::fs::create_dir_all(&output).unwrap();
+        std::fs::write(
+            output.join(format!("{name}.actual.json")),
+            serde_json::to_string_pretty(&value).unwrap(),
+        )
+        .unwrap();
+        panic!("MCP contract changed at {difference}; review the actual artifact, skill and site before accepting a snapshot update");
+    }
 }
 
 #[test]

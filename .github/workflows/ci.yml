@@ -77,10 +77,18 @@ jobs:
       - uses: Swatinem/rust-cache@e9d7b9f1e587218970671bac74e5511ed9506e6a # v2
         with:
           workspaces: app/src-tauri -> target
+          cache-on-failure: true
       - name: Test data operations and real MCP process
         run: cargo test --locked --features agent-cli,dev-bridge
       - name: Build release binaries
         run: cargo build --locked --release --features agent-cli,dev-bridge --bins
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: failure()
+        with:
+          name: backend-failures-${{ matrix.os }}
+          path: app/src-tauri/target/test-results
+          if-no-files-found: ignore
+          retention-days: 7
 
   msrv:
     name: Rust 1.90 compatibility
