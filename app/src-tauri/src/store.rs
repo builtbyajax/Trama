@@ -284,10 +284,19 @@ impl Store {
             }
         }
         let mut db = sql(Connection::open(path))?;
+        // Closing even a rejected connection can checkpoint a newer database's WAL.
+        sql(db.set_db_config(
+            rusqlite::config::DbConfig::SQLITE_DBCONFIG_NO_CKPT_ON_CLOSE,
+            true,
+        ))?;
         let timeout = std::time::Duration::from_secs(5);
         sql(db.busy_timeout(timeout))?;
         // Refuse a newer file before even changing its journal mode.
         migrations::check_version(&db)?;
+        sql(db.set_db_config(
+            rusqlite::config::DbConfig::SQLITE_DBCONFIG_NO_CKPT_ON_CLOSE,
+            false,
+        ))?;
         sql(db.execute_batch("PRAGMA foreign_keys=ON;"))?;
         // Journal-mode lock upgrades can return BUSY without invoking SQLite's busy handler.
         let deadline = std::time::Instant::now() + timeout;

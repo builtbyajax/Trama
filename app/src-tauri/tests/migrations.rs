@@ -244,3 +244,27 @@ fn failed_migration_rolls_back_all_schema_changes() {
         .contains(&"repository_branch".to_string()));
     assert_eq!(strings(&db, "SELECT title FROM tasks"), ["Migrated task"]);
 }
+
+#[test]
+fn refusing_a_newer_wal_database_does_not_checkpoint_its_pending_data() {
+    let dir = tempfile::tempdir().unwrap();
+    let source = dir.path().join("live.sqlite");
+    let db = Connection::open(&source).unwrap();
+    db.execute_batch(&format!("PRAGMA journal_mode=WAL; PRAGMA wal_autocheckpoint=0; CREATE TABLE future_data(value TEXT); INSERT INTO future_data VALUES('preserved'); PRAGMA user_version={};", SCHEMA_VERSION + 1)).unwrap();
+    let path = dir.path().join("future-wal.sqlite");
+    let wal = format!("{}-wal", path.display());
+    fs::copy(&source, &path).unwrap();
+    fs::copy(format!("{}-wal", source.display()), &wal).unwrap();
+    drop(db);
+    let before_db = fs::read(&path).unwrap();
+    let before_wal = fs::read(&wal).unwrap();
+    assert!(Store::open(&path).err().unwrap().contains("newer version"));
+    assert!(
+        fs::read(&path).unwrap() == before_db,
+        "refusal must not checkpoint"
+    );
+    assert!(
+        fs::read(&wal).unwrap() == before_wal,
+        "pending WAL must remain intact"
+    );
+}
