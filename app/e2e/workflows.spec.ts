@@ -119,11 +119,9 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   const dragged = page
     .locator(".card[data-task-id]")
     .filter({ hasText: "First task" });
-  const reviewColumn = page
-    .locator(".column")
-    .filter({
-      has: page.getByRole("heading", { name: "In review", exact: true }),
-    });
+  const reviewColumn = page.locator(".column").filter({
+    has: page.getByRole("heading", { name: "In review", exact: true }),
+  });
   const from = await dragged.boundingBox();
   const to = await reviewColumn.locator(".column-body").boundingBox();
   await page.mouse.move(from!.x + from!.width / 2, from!.y + from!.height / 2);
