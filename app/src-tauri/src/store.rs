@@ -293,10 +293,6 @@ impl Store {
         sql(db.busy_timeout(timeout))?;
         // Refuse a newer file before even changing its journal mode.
         migrations::check_version(&db)?;
-        sql(db.set_db_config(
-            rusqlite::config::DbConfig::SQLITE_DBCONFIG_NO_CKPT_ON_CLOSE,
-            false,
-        ))?;
         sql(db.execute_batch("PRAGMA foreign_keys=ON;"))?;
         // Journal-mode lock upgrades can return BUSY without invoking SQLite's busy handler.
         let deadline = std::time::Instant::now() + timeout;
@@ -321,6 +317,10 @@ impl Store {
         let tx = sql(db.transaction_with_behavior(TransactionBehavior::Immediate))?;
         migrations::migrate(&tx)?;
         sql(tx.commit())?;
+        sql(db.set_db_config(
+            rusqlite::config::DbConfig::SQLITE_DBCONFIG_NO_CKPT_ON_CLOSE,
+            false,
+        ))?;
         Ok(Self {
             db,
             path: path.into(),
