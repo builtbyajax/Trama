@@ -160,3 +160,12 @@ fn pr_fixtures_and_provider_errors_are_handled_without_network() {
         assert!(result.unavailable.unwrap().contains(expected));
     }
 }
+
+#[test]
+fn crlf_file_content_is_preserved_inside_lf_delimited_git_patches() {
+    let raw = "diff --git a/windows.txt b/windows.txt\n--- a/windows.txt\n+++ b/windows.txt\n@@ -1 +1 @@\n-old text\r\n+new text\r\n";
+    let files = diff::parse_diff(raw);
+    assert_eq!(files[0].path, "windows.txt");
+    assert_eq!(files[0].hunks[0].lines[0].text, "old text\r");
+    assert_eq!(files[0].hunks[0].lines[1].text, "new text\r");
+}
