@@ -7,6 +7,21 @@ function localBackend(): Plugin {
     apply: "serve",
     configureServer(server) {
       server.middlewares.use("/api/command", (request, response) => {
+        const address = server.httpServer?.address();
+        const port =
+          address && typeof address === "object" ? address.port : null;
+        const host = request.headers.host?.toLowerCase();
+        // Origin and Host can agree during DNS rebinding; both must stay local.
+        if (
+          !port ||
+          !["127.0.0.1", "localhost", "[::1]"].some(
+            (name) => host === `${name}:${port}`,
+          )
+        ) {
+          response.statusCode = 403;
+          response.end();
+          return;
+        }
         if (request.method !== "POST") {
           response.statusCode = 405;
           response.end();
