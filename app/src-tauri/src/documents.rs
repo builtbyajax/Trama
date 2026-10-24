@@ -112,6 +112,11 @@ fn resolve(root: &Path, path: &str) -> Result<PathBuf> {
     if !real.starts_with(root) {
         return Err("The path is outside the notes folder.".into());
     }
+    if real.strip_prefix(root).unwrap().components().any(
+        |part| matches!(part, Component::Normal(name) if name.to_string_lossy().starts_with('.')),
+    ) {
+        return Err("Hidden files and folders aren't part of the notes.".into());
+    }
     Ok(real)
 }
 
@@ -339,7 +344,15 @@ pub fn rename(root: &Path, path: &str, name: &str) -> Result<String> {
 /// Moves a note or folder, with everything inside it, to the system's trash, where it can
 /// still be put back.
 pub fn trash(root: &Path, path: &str) -> Result<()> {
+    trash_using(root, path, system_trash)
+}
+
+fn trash_using(root: &Path, path: &str, recycle: impl FnOnce(&Path) -> Result<()>) -> Result<()> {
     let (_, real) = entry(root, path)?;
+    recycle(&real)
+}
+
+fn system_trash(real: &Path) -> Result<()> {
     #[allow(unused_mut)]
     let mut trash = trash::TrashContext::default();
     // The file manager's own call, not Finder by AppleScript: no permission prompt, no sound.
@@ -349,8 +362,35 @@ pub fn trash(root: &Path, path: &str) -> Result<()> {
         trash.set_delete_method(DeleteMethod::NsFileManager);
     }
     trash
-        .delete(&real)
+        .delete(real)
         .map_err(|e| format!("Couldn't move to Trash: {e}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn trash_delegates_a_validated_note_to_the_recycle_service() {
+        let folder = tempfile::tempdir().unwrap();
+        let root = folder.path().canonicalize().unwrap();
+        let recycle = tempfile::tempdir().unwrap();
+        fs::write(root.join("note.md"), "recoverable").unwrap();
+        trash_using(&root, "note.md", |path| {
+            assert_eq!(path, root.join("note.md"));
+            fs::rename(path, recycle.path().join("note.md")).map_err(|e| e.to_string())
+        })
+        .unwrap();
+        assert_eq!(
+            fs::read_to_string(recycle.path().join("note.md")).unwrap(),
+            "recoverable"
+        );
+        assert!(!root.join("note.md").exists());
+        trash_using(&root, "../outside.md", |_| {
+            panic!("An unsafe path reached the recycle service")
+        })
+        .unwrap_err();
+    }
 }
 
 #[derive(Debug, Serialize)]
