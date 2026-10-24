@@ -284,10 +284,29 @@ impl Store {
             }
         }
         let mut db = sql(Connection::open(path))?;
-        sql(db.busy_timeout(std::time::Duration::from_secs(5)))?;
+        let timeout = std::time::Duration::from_secs(5);
+        sql(db.busy_timeout(timeout))?;
         // Refuse a newer file before even changing its journal mode.
         migrations::check_version(&db)?;
-        sql(db.execute_batch("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;"))?;
+        sql(db.execute_batch("PRAGMA foreign_keys=ON;"))?;
+        // Journal-mode lock upgrades can return BUSY without invoking SQLite's busy handler.
+        let deadline = std::time::Instant::now() + timeout;
+        loop {
+            sql(db.busy_timeout(deadline.saturating_duration_since(std::time::Instant::now())))?;
+            match db.execute_batch("PRAGMA journal_mode=WAL;") {
+                Err(rusqlite::Error::SqliteFailure(error, _))
+                    if error.code == rusqlite::ErrorCode::DatabaseBusy
+                        && std::time::Instant::now() < deadline =>
+                {
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+                }
+                result => {
+                    sql(result)?;
+                    break;
+                }
+            }
+        }
+        sql(db.busy_timeout(timeout))?;
         // One immediate transaction for every step: a window and an agent opening an old
         // database together must not both migrate it.
         let tx = sql(db.transaction_with_behavior(TransactionBehavior::Immediate))?;

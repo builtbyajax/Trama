@@ -159,30 +159,35 @@ fn newer_database_is_refused_without_altering_its_file_or_journal() {
 #[test]
 fn simultaneous_openers_migrate_legacy_notes_only_once() {
     let dir = tempfile::tempdir().unwrap();
-    let path = dir.path().join("concurrent.sqlite");
-    Connection::open(&path)
-        .unwrap()
-        .execute_batch(FIXTURES[2])
-        .unwrap();
-    let barrier = Arc::new(Barrier::new(2));
-    let threads = (0..2)
-        .map(|_| {
-            let barrier = barrier.clone();
-            let path = path.clone();
-            std::thread::spawn(move || {
-                barrier.wait();
-                Store::open(&path).map(|_| ())
+    for round in 0..25 {
+        let path = dir.path().join(format!("concurrent-{round}.sqlite"));
+        Connection::open(&path)
+            .unwrap()
+            .execute_batch(FIXTURES[2])
+            .unwrap();
+        let barrier = Arc::new(Barrier::new(2));
+        let threads = (0..2)
+            .map(|_| {
+                let barrier = barrier.clone();
+                let path = path.clone();
+                std::thread::spawn(move || {
+                    barrier.wait();
+                    Store::open(&path).map(|_| ())
+                })
             })
-        })
-        .collect::<Vec<_>>();
-    for thread in threads {
-        thread.join().unwrap().unwrap();
+            .collect::<Vec<_>>();
+        for thread in threads {
+            thread
+                .join()
+                .unwrap()
+                .unwrap_or_else(|e| panic!("round {round}: {e}"));
+        }
+        let store = Store::open(&path).unwrap();
+        assert_eq!(
+            strings(&store.db, "SELECT body FROM task_notes"),
+            ["Private legacy note"]
+        );
     }
-    let store = Store::open(&path).unwrap();
-    assert_eq!(
-        strings(&store.db, "SELECT body FROM task_notes"),
-        ["Private legacy note"]
-    );
 }
 
 #[test]
