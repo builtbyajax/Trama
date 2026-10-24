@@ -16,6 +16,8 @@ use std::{
 use unicode_normalization::{char::is_combining_mark, UnicodeNormalization};
 
 pub type Result<T> = std::result::Result<T, String>;
+/// Latest database schema supported by this build, also advertised through MCP.
+pub const SCHEMA_VERSION: i64 = 10;
 pub const STATUSES: [&str; 6] = [
     "todo",
     "inProgress",
@@ -278,6 +280,8 @@ impl Store {
         }
         let mut db = sql(Connection::open(path))?;
         sql(db.busy_timeout(std::time::Duration::from_secs(5)))?;
+        // Refuse a newer file before even changing its journal mode.
+        migrations::check_version(&db)?;
         sql(db.execute_batch("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;"))?;
         // One immediate transaction for every step: a window and an agent opening an old
         // database together must not both migrate it.
