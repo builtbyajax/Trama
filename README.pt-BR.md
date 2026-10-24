@@ -100,6 +100,8 @@ npm run tauri dev
 
 Para abrir a interface de desenvolvimento no navegador, use `npm run dev`. Ela se conecta ao mesmo núcleo Rust por uma ponte local em `http://127.0.0.1:1420`.
 
+Os comandos de desenvolvimento usam `.trama-local/development` para os dados por padrão, evitando que mudanças de schema migrem os bancos do app instalado. `TRAMA_HOME` ou `TRAMA_DB` explícitos selecionam outro local. Use `TRAMA_DEV_PERSONAL=1` somente quando quiser usar e possivelmente migrar seus dados pessoais.
+
 Para gerar o pacote do aplicativo no seu sistema:
 
 ```sh

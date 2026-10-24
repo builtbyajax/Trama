@@ -100,6 +100,8 @@ npm run tauri dev
 
 For the browser development view, run `npm run dev` instead. It uses the same Rust core through a local development bridge at `http://127.0.0.1:1420`.
 
+Development commands use `.trama-local/development` for their data by default, so schema changes do not migrate the installed app's databases. An explicit `TRAMA_HOME` or `TRAMA_DB` selects another location. Set `TRAMA_DEV_PERSONAL=1` only when you intend to use and potentially migrate your personal data.
+
 To build a desktop package on your platform:
 
 ```sh

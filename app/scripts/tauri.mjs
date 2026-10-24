@@ -1,6 +1,8 @@
 import { resolve } from "node:path";
 import { prepare, root, run } from "./sidecar.mjs";
+import { developmentEnv } from "./dev-env.mjs";
 const args = process.argv.slice(2);
+if (args[0] === "dev") Object.assign(process.env, developmentEnv());
 if (args[0] === "dev" || args[0] === "build") {
   const index = args.indexOf("--target");
   const inline = args.find((a) => a.startsWith("--target="));
