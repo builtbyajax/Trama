@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --noEmit",
+    "test:scripts": "node --test scripts/*.test.mjs",
     "tauri": "node scripts/tauri.mjs",
     "predev": "node scripts/prepare-dev.mjs",
     "format:check": "prettier --check src scripts vite.config.ts",

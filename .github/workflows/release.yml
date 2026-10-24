@@ -50,33 +50,7 @@ jobs:
       - name: Check version and release tag
         id: version
         shell: bash
-        run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const { execFileSync, spawnSync } = require('node:child_process');
-          const app = JSON.parse(fs.readFileSync('app/package.json', 'utf8'));
-          const tauri = JSON.parse(fs.readFileSync('app/src-tauri/tauri.conf.json', 'utf8'));
-          const lock = JSON.parse(fs.readFileSync('app/package-lock.json', 'utf8'));
-          const cargo = fs.readFileSync('app/src-tauri/Cargo.toml', 'utf8');
-          const rustVersion = cargo.match(/^version\s*=\s*"([^"]+)"/m)?.[1];
-          if ([tauri.version, lock.version, lock.packages[''].version, rustVersion]
-              .some(version => version !== app.version)) {
-            throw new Error('Align the npm, Tauri, Rust, and npm lockfile versions before building.');
-          }
-          const tag = `v${app.version}`;
-          const exists = spawnSync('git', ['show-ref', '--verify', '--quiet', `refs/tags/${tag}`]);
-          if (exists.status === 0) {
-            const tagged = execFileSync('git', ['rev-parse', `${tag}^{commit}`], { encoding: 'utf8' }).trim();
-            const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-            if (tagged !== head) {
-              throw new Error(`${tag} points to another commit. Update the unpublished tag or bump the app version.`);
-            }
-          } else if (exists.status !== 1) {
-            throw new Error('Could not check the release tag.');
-          }
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${app.version}\n`);
-          console.log(`Building ${tag} from ${process.env.GITHUB_SHA}`);
-          NODE
+        run: node app/scripts/check-version.mjs --release
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
