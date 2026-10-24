@@ -99,7 +99,7 @@ Use uncovered branches to select useful tests. Percentages alone do not demonstr
 
 - `ci.yml`: push, PR to `main`, manual and reusable runs. It checks formatting/types/versions, runs frontend tests, runs Rust/MCP tests and release builds on macOS and Windows, checks Rust 1.90 and runs Chromium/WebKit workflows on macOS. It retains coverage reports and browser failure traces.
 - `audit.yml`: PRs, main pushes, weekly and manual runs. npm production and Rust audits are informational initially. Findings and execution failures remain visible in logs and the job summary.
-- `release.yml`: manual. It calls the full CI on the same commit, builds native Apple Silicon/Intel/Windows installers and runs the MCP contract against the packaged server. Windows extracts the NSIS installer with 7-Zip. No installer is uploaded until its contract passes. A draft prerelease is created only from `main`, after all platforms pass, with a combined `SHA256SUMS` file. The version/tag check rejects a tag pointing to another commit. Complete native platform QA before publication.
+- `release.yml`: manual. It calls the full CI on the same commit, builds native Apple Silicon/Intel/Windows installers and runs the MCP contract against the packaged server. macOS mounts the DMG read-only; Windows extracts the NSIS installer with 7-Zip. No installer is uploaded until its contract passes. A draft prerelease is created only from `main`, after all platforms pass, with a combined `SHA256SUMS` file. The version/tag check rejects a tag pointing to another commit. Complete native platform QA before publication.
 
 Workflow actions are pinned to commit SHAs. The PR template prompts for migration fixtures, MCP snapshots and documentation review.
 
@@ -119,4 +119,4 @@ The first remote runs exposed Windows fixture line endings, temporary-path norma
 
 `npm audit --omit=dev` reported no vulnerabilities. `cargo audit` reported seven warnings: unmaintained `proc-macro-error`, `zbus_names`, `zvariant`, `zvariant_derive`; unsoundness advisories for `glib` and `tokio`; and yanked `clipboard-win`. The warnings were not suppressed or treated as fixed.
 
-For native Apple Silicon, Intel and Windows package verification and combined checksum artifacts, see [installer workflow run 40108372410](https://github.com/builtbyajax/Trama/actions/runs/40108372410) on the same commit. The workflow tests the packaged MCP server; interactive installer and native interface QA remain separate from these automated checks.
+For native Apple Silicon, Intel and Windows package verification and combined checksum artifacts, see [installer workflow run 40109583389](https://github.com/builtbyajax/Trama/actions/runs/40109583389), which includes the subsequent fix to read the server directly from the DMG. The workflow tests the packaged MCP server; interactive installer and native interface QA remain separate from these automated checks.
