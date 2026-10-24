@@ -127,10 +127,15 @@ pub struct TaskInput {
 #[serde(rename_all = "camelCase")]
 pub struct TaskPatch {
     pub project_id: String,
+    #[serde(default, deserialize_with = "nonnullable_patch")]
     pub title: Option<String>,
+    #[serde(default, deserialize_with = "nonnullable_patch")]
     pub details: Option<String>,
+    #[serde(default, deserialize_with = "nonnullable_patch")]
     pub category: Option<String>,
+    #[serde(default, deserialize_with = "nonnullable_patch")]
     pub assignee: Option<String>,
+    #[serde(default, deserialize_with = "nonnullable_patch")]
     pub status: Option<String>,
     #[serde(default, deserialize_with = "nullable_patch")]
     pub agent_summary: Option<Option<String>>,
@@ -514,4 +519,12 @@ where
     T: Deserialize<'de>,
 {
     Option::<T>::deserialize(deserializer).map(Some)
+}
+
+fn nonnullable_patch<'de, D, T>(deserializer: D) -> std::result::Result<Option<T>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    T::deserialize(deserializer).map(Some)
 }
