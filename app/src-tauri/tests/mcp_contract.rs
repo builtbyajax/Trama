@@ -7,7 +7,7 @@ use std::{
     path::{Path, PathBuf},
     process::{Child, ChildStdin, Command, Stdio},
     sync::mpsc::{self, Receiver},
-    time::Duration,
+    time::{Duration, Instant},
 };
 use trama_lib::{store::Store, workspaces::Registry};
 
@@ -92,10 +92,25 @@ impl Mcp {
 impl Drop for Mcp {
     fn drop(&mut self) {
         self.input.take();
-        let _ = self.child.kill();
-        let _ = self.child.wait();
+        let deadline = Instant::now() + Duration::from_secs(2);
+        let graceful = loop {
+            match self.child.try_wait() {
+                Ok(Some(status)) => break status.success(),
+                Ok(None) if Instant::now() < deadline => {
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+                _ => {
+                    let _ = self.child.kill();
+                    let _ = self.child.wait();
+                    break false;
+                }
+            }
+        };
         if let Some(reader) = self.reader.take() {
             let _ = reader.join();
+        }
+        if !std::thread::panicking() {
+            assert!(graceful, "MCP must exit successfully after stdin closes");
         }
     }
 }

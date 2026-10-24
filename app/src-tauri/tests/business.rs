@@ -273,3 +273,21 @@ fn public_search_ignores_case_accents_and_private_notes() {
         .iter()
         .any(|h| h.excerpt.contains("Decisão importante") && h.excerpt.len() < 250));
 }
+
+#[test]
+fn desktop_search_finds_private_annotations_and_drafts_without_crossing_public_boundary() {
+    let s = memory();
+    let p = project(&s, "Search");
+    let t = task(&s, &p.id, "Ordinary title", "preparing");
+    s.add_note(&t.id, &p.id, "First annotation").unwrap();
+    s.add_note(&t.id, &p.id, "Anotação particular de prevenção")
+        .unwrap();
+    let results = s.search("PREVENCAO").unwrap();
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].task_id, t.id);
+    assert_eq!(results[0].kind, "draft");
+    assert!(results[0].excerpt.contains("prevenção"));
+    assert!(s.search("   ").unwrap().is_empty());
+    assert!(s.search("not present").unwrap().is_empty());
+    assert!(s.search_public(&p.id, "PREVENCAO").unwrap().is_empty());
+}
