@@ -58,9 +58,12 @@ interface Drop {
   index: number;
 }
 
-// The column under the pointer wins; the overlay rectangle is only a fallback for the gaps.
+// The bar to conclude lies over the columns and wins; otherwise the column under the pointer
+// wins, and the overlay rectangle is only a fallback for the gaps.
 const collision: CollisionDetection = (args) => {
   const hits = pointerWithin(args);
+  const done = hits.find((hit) => hit.id === "done");
+  if (done) return [done];
   return hits.length ? hits : rectIntersection(args);
 };
 // A card let go outside any column flies back upright into its outline, which it then replaces
@@ -97,14 +100,14 @@ const returnAnimation: DropAnimation = {
 };
 const cardGap = 8;
 const edge = 56;
-// Columns shrink while the area to conclude opens, so their rects are measured during the drag.
+// The bar to conclude appears when the drag starts, so rects are measured during the drag.
 const measuring = { droppable: { strategy: MeasuringStrategy.Always } };
 
 /**
  * Four columns in the stored manual order. While a card is dragged it leaves its place and a slot
  * of the same height follows the pointer between the other cards, so the slot is exactly where the
  * card will land; outside any column the slot returns to the card's original place. A card dropped
- * on the area at the right is concluded and goes to the Archive.
+ * on the bar that rises at the bottom while dragging is concluded and goes to the Archive.
  */
 export function Board({
   tasks,
@@ -126,6 +129,7 @@ export function Board({
   // Set when a drop changes the card's place: the overlay must vanish instead of flying back.
   const [landing, setLanding] = useState(false);
   const box = useRef<SVGSVGElement>(null);
+  const zone = useRef<HTMLDivElement>(null);
   const [flight, setFlight] = useState<{ task: Task; rect: DOMRect } | null>(
     null,
   );
@@ -179,9 +183,14 @@ export function Board({
       const body = status && bodies.current.get(status);
       if (point && body) {
         const rect = body.getBoundingClientRect();
+        // The bar to conclude covers the end of the column, so scrolling starts above it.
+        const bottom = Math.min(
+          rect.bottom,
+          zone.current?.getBoundingClientRect().top ?? rect.bottom,
+        );
         const inside = point.x >= rect.left && point.x <= rect.right;
         const up = point.y - rect.top;
-        const down = rect.bottom - point.y;
+        const down = bottom - point.y;
         const speed =
           inside && up < edge && up > -40
             ? -Math.ceil((edge - Math.max(0, up)) / 4)
@@ -303,46 +312,49 @@ export function Board({
           onDragCancel={finish}
           onDragEnd={end}
         >
-          <div className={`board scroll ${drag ? "dragging" : ""}`}>
-            {boardStatuses.map((status) => {
-              const preview =
-                keyboard.move?.status === status ? keyboard.move : null;
-              return (
-                <Column
-                  key={status}
-                  status={status}
-                  tasks={columns[status]}
-                  bodyRef={(node) => {
-                    if (node) bodies.current.set(status, node);
-                    else bodies.current.delete(status);
-                  }}
-                  draggedId={drag?.task.id}
-                  slot={
-                    drag && drop?.status === status && !atOrigin
-                      ? { index: drop.index, height: drag.height }
-                      : undefined
-                  }
-                  target={
-                    (drag && drop?.status === status && !atOrigin) ||
-                    Boolean(preview && keyboard.changed)
-                  }
-                  keyboardSlot={
-                    preview && keyboard.changed && keyboard.task
-                      ? { index: preview.index, task: keyboard.task }
-                      : undefined
-                  }
-                  reduceMotion={reduceMotion}
-                  keyboardId={keyboard.move?.taskId}
-                  landedId={landedId}
-                  selectedId={selectedId}
-                  menuId={menuId}
-                  onMenu={drag ? undefined : onMenu}
-                  onKeyboard={keyboard.handle}
-                  onOpen={open}
-                />
-              );
-            })}
+          <div className="board-area">
+            <div className={`board scroll ${drag ? "dragging" : ""}`}>
+              {boardStatuses.map((status) => {
+                const preview =
+                  keyboard.move?.status === status ? keyboard.move : null;
+                return (
+                  <Column
+                    key={status}
+                    status={status}
+                    tasks={columns[status]}
+                    bodyRef={(node) => {
+                      if (node) bodies.current.set(status, node);
+                      else bodies.current.delete(status);
+                    }}
+                    draggedId={drag?.task.id}
+                    slot={
+                      drag && drop?.status === status && !atOrigin
+                        ? { index: drop.index, height: drag.height }
+                        : undefined
+                    }
+                    target={
+                      (drag && drop?.status === status && !atOrigin) ||
+                      Boolean(preview && keyboard.changed)
+                    }
+                    keyboardSlot={
+                      preview && keyboard.changed && keyboard.task
+                        ? { index: preview.index, task: keyboard.task }
+                        : undefined
+                    }
+                    reduceMotion={reduceMotion}
+                    keyboardId={keyboard.move?.taskId}
+                    landedId={landedId}
+                    selectedId={selectedId}
+                    menuId={menuId}
+                    onMenu={drag ? undefined : onMenu}
+                    onKeyboard={keyboard.handle}
+                    onOpen={open}
+                  />
+                );
+              })}
+            </div>
             <ConcludeZone
+              zoneRef={zone}
               boxRef={box}
               active={Boolean(drag)}
               over={drop?.status === "done"}
@@ -517,15 +529,18 @@ function Column({
 }
 
 /**
- * The dashed area on the right of the board, with a box: a card dropped there is concluded and
- * goes into the box, whose lid opens while the card is over it.
+ * The dashed bar that rises at the bottom of the board while a card is dragged, with a box: a
+ * card dropped there is concluded and goes into the box, whose lid opens while the card is over
+ * it. It stays up until the card is inside.
  */
 function ConcludeZone({
+  zoneRef,
   boxRef,
   active,
   over,
   receiving,
 }: {
+  zoneRef: RefObject<HTMLDivElement | null>;
   boxRef: RefObject<SVGSVGElement | null>;
   active: boolean;
   over: boolean;
@@ -534,14 +549,18 @@ function ConcludeZone({
   const { setNodeRef } = useDroppable({ id: "done", disabled: !active });
   return (
     <div
-      ref={setNodeRef}
-      className={`conclude-zone ${active ? "ready" : ""} ${over || receiving ? "open" : ""}`}
+      ref={(node) => {
+        setNodeRef(node);
+        zoneRef.current = node;
+      }}
+      className={`conclude-zone ${active || receiving ? "shown" : ""} ${over || receiving ? "open" : ""}`}
+      aria-hidden={!active}
     >
       <svg
         ref={boxRef}
         className="conclude-box"
-        width="44"
-        height="40"
+        width="33"
+        height="30"
         viewBox="0 0 44 40"
         fill="none"
         stroke="currentColor"
@@ -553,7 +572,7 @@ function ConcludeZone({
         <path d="M17 23h10" strokeLinecap="round" />
         <path className="lid" d="M3 9.5h38v6.5H3z" />
       </svg>
-      <span>{active ? t("Drop to conclude") : t("Drag here to conclude")}</span>
+      <span>{t("Drop to conclude")}</span>
     </div>
   );
 }

@@ -1067,7 +1067,6 @@ export const ptBR = {
   "Concluded: {0}": "Concluída: {0}",
   Undo: "Desfazer",
   "Drop to conclude": "Solte para concluir",
-  "Drag here to conclude": "Arraste aqui para concluir",
   "Agent and MCP": "Agente e MCP",
   "The language and where your data lives.":
     "O idioma e onde ficam seus dados.",

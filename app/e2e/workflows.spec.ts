@@ -460,7 +460,7 @@ test("concluding from the board and the list, and reopening from the Archive", a
     .click();
   await openBoard(page);
 
-  // Kanban: drop a card on the area at the right, then conclude another from its menu.
+  // Kanban: drop a card on the bar at the bottom, then conclude another from its menu.
   const card = (title: string) =>
     page.locator(".card[data-task-id]").filter({ hasText: title });
   const zone = await page.locator(".conclude-zone").boundingBox();
