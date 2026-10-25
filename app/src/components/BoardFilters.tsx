@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
+  type ButtonHTMLAttributes,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -18,6 +19,7 @@ import { Select } from "./Select";
 import { goalChoices } from "./Goals";
 import { ContextMenu } from "./Sidebar";
 import { locale, t } from "../lib/i18n";
+import { Segmented, type SegmentedOption } from "./Segmented";
 
 /**
  * `branch` is "*" for every task, "" for tasks without a branch, or a branch name. `goal` is "*"
@@ -314,57 +316,37 @@ export function ProjectHeader({
             }}
           />
         )}
-        <div className="segmented" role="group" aria-label={t("Project view")}>
-          <button
-            type="button"
-            aria-pressed={mode === "project"}
-            aria-keyshortcuts={ariaKeys(shortcuts.projectPage)}
-            data-tooltip={t("Project  {0}", [
-              shortcutLabel(shortcuts.projectPage),
-            ])}
-            className={mode === "project" ? "on" : ""}
-            onClick={() => onMode("project")}
-          >
-            {t("Project")}
-            <KeyHint keys={shortcuts.projectPage} />
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode === "board"}
-            aria-keyshortcuts={ariaKeys(shortcuts.board)}
-            data-tooltip={t("Board  {0}", [shortcutLabel(shortcuts.board)])}
-            className={mode === "board" ? "on" : ""}
-            onClick={() => onMode("board")}
-          >
-            {t("Board")}
-            <KeyHint keys={shortcuts.board} />
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode === "git"}
-            aria-keyshortcuts={ariaKeys(shortcuts.git)}
-            data-tooltip={t("Git history  {0}", [shortcutLabel(shortcuts.git)])}
-            className={mode === "git" ? "on" : ""}
-            onClick={() => onMode("git")}
-          >
-            {t("History")}
-            <KeyHint keys={shortcuts.git} />
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode === "notes"}
-            aria-keyshortcuts={ariaKeys(shortcuts.projectNotes)}
-            data-tooltip={t("Project notes  {0}", [
-              shortcutLabel(shortcuts.projectNotes),
-            ])}
-            data-tooltip-align="end"
-            className={mode === "notes" ? "on" : ""}
-            onClick={() => onMode("notes")}
-          >
-            {t("Notes")}
-            <KeyHint keys={shortcuts.projectNotes} />
-          </button>
-        </div>
+        <Segmented
+          label={t("Project view")}
+          options={[
+            tab(
+              "project",
+              t("Project"),
+              shortcuts.projectPage,
+              t("Project  {0}", [shortcutLabel(shortcuts.projectPage)]),
+            ),
+            tab(
+              "board",
+              t("Board"),
+              shortcuts.board,
+              t("Board  {0}", [shortcutLabel(shortcuts.board)]),
+            ),
+            tab(
+              "git",
+              t("History"),
+              shortcuts.git,
+              t("Git history  {0}", [shortcutLabel(shortcuts.git)]),
+            ),
+            tab(
+              "notes",
+              t("Notes"),
+              shortcuts.projectNotes,
+              t("Project notes  {0}", [shortcutLabel(shortcuts.projectNotes)]),
+            ),
+          ]}
+          value={mode}
+          onChange={onMode}
+        />
       </div>
       {mode === "board" && (
         <div className="filter-row">
@@ -384,33 +366,60 @@ export function ProjectHeader({
               onChange={(branch) => onFilter({ branch })}
             />
           )}
-          <div
-            className="segmented small"
-            role="radiogroup"
-            aria-label={t("Assignee")}
-          >
-            {(["all", "user", "agent"] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                role="radio"
-                aria-checked={filter.assignee === value}
-                className={filter.assignee === value ? "on" : ""}
-                onClick={() => onFilter({ assignee: value })}
-              >
-                {value !== "all" && <Glyph who={value} />}
-                {value === "all"
-                  ? t("Everyone")
-                  : value === "user"
-                    ? t("You")
-                    : t("Agent")}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            size="small"
+            label={t("Assignee")}
+            options={[
+              { value: "all", label: t("Everyone") },
+              {
+                value: "user",
+                label: (
+                  <>
+                    <Glyph who="user" />
+                    {t("You")}
+                  </>
+                ),
+              },
+              {
+                value: "agent",
+                label: (
+                  <>
+                    <Glyph who="agent" />
+                    {t("Agent")}
+                  </>
+                ),
+              },
+            ]}
+            value={filter.assignee}
+            onChange={(assignee) => onFilter({ assignee })}
+          />
         </div>
       )}
     </div>
   );
+}
+
+/** A project tab with its shortcut shown inline and in the tooltip. */
+function tab(
+  value: ProjectMode,
+  label: string,
+  keys: (typeof shortcuts)[keyof typeof shortcuts],
+  tooltip: string,
+): SegmentedOption<ProjectMode> {
+  return {
+    value,
+    label: (
+      <>
+        {label}
+        <KeyHint keys={keys} />
+      </>
+    ),
+    props: {
+      "aria-keyshortcuts": ariaKeys(keys),
+      "data-tooltip": tooltip,
+      ...(value === "notes" && { "data-tooltip-align": "end" }),
+    } as ButtonHTMLAttributes<HTMLButtonElement>,
+  };
 }
 
 type Chip = { value: string; label: string; count: number };

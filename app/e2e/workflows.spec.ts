@@ -202,7 +202,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
     documentsFolder: home,
   });
   await page.reload();
-  await page.getByRole("button", { name: "Notes", exact: true }).click();
+  await page.getByRole("radio", { name: "Notes", exact: true }).click();
   await page.getByRole("button", { name: `note-${run}`, exact: true }).click();
   await page.getByRole("button", { name: /^Edit / }).click();
   const editor = page.getByRole("textbox", { name: "Note text in Markdown" });
@@ -224,7 +224,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   await expect(editor).toHaveValue("# External change\n");
   await editor.fill("# Saved edit\n");
   await expect.poll(() => readFile(note, "utf8")).toBe("# Saved edit\n");
-  await page.getByRole("button", { name: "Board", exact: true }).click();
+  await page.getByRole("radio", { name: "Board", exact: true }).click();
   for (const title of ["First task", "Second task"]) {
     await page
       .locator(".card[data-task-id]")

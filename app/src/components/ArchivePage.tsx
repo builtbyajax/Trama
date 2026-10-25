@@ -3,6 +3,7 @@ import { Icon } from "./Icon";
 import { projectColor } from "./Sidebar";
 import { menuRequest, type MenuRequest } from "./TaskMenu";
 import { locale, t } from "../lib/i18n";
+import { Segmented } from "./Segmented";
 
 export type ArchiveGrouping = "goal" | "month" | "project";
 /** What the Archive shows: a search, one project or all of them, and how rows are grouped. */
@@ -322,28 +323,17 @@ export function ArchivePage({
               )}
               <div className="archive-group-by">
                 <span id="archive-group-by">{t("Group by")}</span>
-                <div
-                  className="segmented small"
-                  role="radiogroup"
-                  aria-labelledby="archive-group-by"
-                >
-                  {(["goal", "month", "project"] as const).map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      role="radio"
-                      aria-checked={view.group === value}
-                      className={view.group === value ? "on" : ""}
-                      onClick={() => onView({ group: value })}
-                    >
-                      {value === "goal"
-                        ? t("Goal")
-                        : value === "month"
-                          ? t("Month")
-                          : t("Project")}
-                    </button>
-                  ))}
-                </div>
+                <Segmented
+                  size="small"
+                  labelledBy="archive-group-by"
+                  options={[
+                    { value: "goal", label: t("Goal") },
+                    { value: "month", label: t("Month") },
+                    { value: "project", label: t("Project") },
+                  ]}
+                  value={view.group}
+                  onChange={(group) => onView({ group })}
+                />
               </div>
             </div>
             {sections.length === 0 || sections[0].groups.length === 0 ? (
