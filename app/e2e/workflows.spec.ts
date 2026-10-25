@@ -54,6 +54,12 @@ async function selectWorkspaceAction(
   await page.keyboard.press("Enter");
 }
 
+// A project opens on its Project tab; the board is one tab over.
+const openBoard = (page: Page) =>
+  page
+    .getByLabel("Project view", { exact: true })
+    .locator("button", { hasText: /^Board/ })
+    .click();
 test("workspace, board, goals, transfer and note conflicts persist through the real backend", async ({
   page,
   request,
@@ -129,6 +135,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
     .last()
     .click();
   await page.reload();
+  await openBoard(page);
   let data = await command<Snapshot>(request, "load_snapshot");
   expect(data.tasks.find((t) => t.title === "First task")?.status).toBe(
     "inProgress",
@@ -145,6 +152,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   await page.keyboard.press("ArrowUp");
   await page.keyboard.press("Space");
   await page.reload();
+  await openBoard(page);
   data = await command<Snapshot>(request, "load_snapshot");
   expect(data.tasks.find((t) => t.title === "Second task")?.status).toBe(
     "inProgress",
@@ -181,6 +189,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
     )
     .toBe("review");
   await page.reload();
+  await openBoard(page);
   await expect(
     reviewColumn.locator(".card").filter({ hasText: "First task" }),
   ).toBeVisible();
