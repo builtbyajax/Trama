@@ -138,11 +138,8 @@ export const ptBR = {
   "Checks when the app opens and once a day.":
     "Procura ao abrir o app e uma vez por dia.",
   "Checking for updates…": "Procurando atualizações…",
-  "Choose when Trama checks for updates.":
-    "Escolha quando o Trama procura atualizações.",
   "Dismiss restart notice": "Dispensar aviso sobre sessões de agentes",
   "Dismiss update notice": "Dispensar aviso de atualização",
-  "Installed version": "Versão instalada",
   "Installing update…": "Instalando atualização…",
   "Restart agent sessions to reconnect them to the MCP included with this version of Trama.":
     "Reinicie as sessões dos agentes para reconectá-las ao MCP incluído nesta versão do Trama.",
@@ -641,14 +638,9 @@ export const ptBR = {
 
   // preferences
   "Copy ID of {0}": "Copiar ID de {0}",
-  "Each agent connects to a single project using the ID below.":
-    "Cada agente se conecta a um único projeto pelo ID abaixo.",
   "ID copied.": "ID copiado.",
   Language: "Idioma",
   "No projects created yet.": "Nenhum projeto criado ainda.",
-  "Projects and MCP integration": "Projetos e integração MCP",
-  "The language, where your data lives and how the agent connects.":
-    "O idioma, onde ficam os seus dados e como o agente se conecta.",
   "Trama reloads to show everything in the chosen language.":
     "O Trama abre de novo para mostrar tudo no idioma escolhido.",
 
@@ -1008,8 +1000,6 @@ export const ptBR = {
   "Move to stage": "Mover para etapa",
   "No tasks with these filters": "Nenhuma tarefa com esses filtros",
   "Board view": "Visualização do quadro",
-  "How tasks show in the Board tab, in every project and goal. Stages and order are the same in both.":
-    "Como as tarefas aparecem na aba Quadro, em todos os projetos e objetivos. As etapas e a ordem são as mesmas nas duas.",
   Kanban: "Kanban",
   "Move to goal": "Mover para objetivo",
   "“{0}” moved to “{1}”.": "“{0}” movida para “{1}”.",
@@ -1078,6 +1068,37 @@ export const ptBR = {
   Undo: "Desfazer",
   "Drop to conclude": "Solte para concluir",
   "Drag here to conclude": "Arraste aqui para concluir",
+  "Agent and MCP": "Agente e MCP",
+  "The language and where your data lives.":
+    "O idioma e onde ficam seus dados.",
+  "Applies to the board of every project and goal.":
+    "Vale para o quadro de todos os projetos e objetivos.",
+  "The projects of the open workspace, in sidebar order.":
+    "Os projetos do espaço aberto, na ordem da barra lateral.",
+  "How Claude Code, Codex and other agents reach Trama.":
+    "Como o Claude Code, o Codex e outros agentes chegam ao Trama.",
+  "Installed version: {0}.": "Versão instalada: {0}.",
+  "How tasks show in the Board tab. Stages and order are the same in both.":
+    "Como as tarefas aparecem na aba Quadro. Etapas e ordem são as mesmas nas duas.",
+  "Switch with the shortcut": "Trocar pelo atalho",
+  "Works anywhere in Trama, and opens the board when a project is open.":
+    "Funciona em qualquer lugar do Trama e abre o quadro quando há um projeto aberto.",
+  "No repository": "Sem repositório",
+  "One column per stage. Drag a card to move it or conclude it.":
+    "Uma coluna por etapa. Arraste um cartão para movê-lo ou concluí-lo.",
+  "One row per task, grouped by stage, with category, goal and who has it.":
+    "Uma linha por tarefa, agrupada por etapa, com categoria, objetivo e com quem está.",
+  "Connect every project": "Conectar todos os projetos",
+  "The agent sees every project of the open workspace and picks one by its ID. This is the command for Claude Code; other agents take the same program and arguments.":
+    "O agente vê todos os projetos do espaço aberto e escolhe um pelo ID. Este é o comando do Claude Code; outros agentes usam o mesmo programa e argumentos.",
+  "Copy command": "Copiar comando",
+  "Command copied.": "Comando copiado.",
+  "Project IDs": "IDs dos projetos",
+  "To connect an agent to a single project, use --project-id with its ID instead of --workspace.":
+    "Para conectar um agente a um só projeto, use --project-id com o ID dele no lugar de --workspace.",
+  "Trama restarts to finish installing.":
+    "O Trama reinicia para terminar a instalação.",
+  "Switch between kanban and list": "Alternar entre kanban e lista",
 };
 
 /** The interface's text, in English; `t()` only takes text that has its Portuguese above. */

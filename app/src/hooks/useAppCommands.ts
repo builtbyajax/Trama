@@ -10,6 +10,8 @@ type AppCommands = {
   /** Opens the nth project of the sidebar, if there is one. */
   openProjectAt: (index: number) => void;
   setProjectMode: (mode: ProjectMode) => void;
+  /** Switches every board between kanban and list. */
+  toggleBoardView: () => void;
   openShortcuts: () => void;
   openSearch: () => void;
   openSwitcher: () => void;
@@ -63,6 +65,9 @@ export function useAppCommands(commands: AppCommands) {
         break;
       case "project_notes":
         commands.setProjectMode("notes");
+        break;
+      case "board_view":
+        commands.toggleBoardView();
         break;
       case "switch_project":
         commands.openSwitcher();

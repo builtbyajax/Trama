@@ -31,7 +31,7 @@ Write the briefing, attach the context, and put the task in your agent's queue. 
 
 Trama is in early development. Download test installers from [GitHub Releases](https://github.com/builtbyajax/Trama/releases), with a `.dmg` for macOS and an `.exe` for Windows, or [run it from source](#development). Read the [installation guide](docs/installation.md) before opening the app.
 
-The interface is available in English and Brazilian Portuguese. Choose your language in **Preferences → Language**. The screenshots show the real interface with demonstration data.
+The interface is available in English and Brazilian Portuguese. Choose your language in **Preferences → General → Language**. The screenshots show the real interface with demonstration data.
 
 ## A board for you and your agents
 
@@ -138,7 +138,8 @@ Use ⌘ on macOS and Ctrl on Windows. Project tabs use ⌃ on macOS and Alt on W
 | `⌘1…9` | Switch project |
 | `⌘T` | Find a project by name |
 | `⌥⌘1` / `⌥⌘2` / `⌥⌘3` | Overview / Archive / Vaults |
-| `⌃1` / `⌃2` / `⌃3` | Board / Git history / Notes |
+| `⌃1` / `⌃2` / `⌃3` / `⌃4` | Project / Board / Git history / Notes |
+| `⇧⌘L` | Switch the board between Kanban and List |
 | `⌘[` / `⌘]` | Back / Forward |
 | `⌘B` | Toggle sidebar |
 | `⌘,` | Preferences |

@@ -552,13 +552,124 @@ button.holder:hover {
   align-items: center;
   gap: var(--sp-3);
   min-width: 0;
-  cursor: pointer;
 }
 .settings-toggle input {
   flex: none;
   width: 16px;
   height: 16px;
   accent-color: var(--accent);
+}
+
+.settings-row > code.selectable {
+  font-family: var(--mono);
+  overflow-wrap: anywhere;
+}
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+/* Kanban and List as cards: a miniature, a radio dot, the name and one sentence. */
+.option-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.option-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--line-subtle);
+  background: var(--bg-raised);
+  color: var(--ink);
+  text-align: left;
+}
+.option-card:hover {
+  border-color: var(--line);
+}
+.option-card[aria-checked="true"] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.option-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 650;
+}
+.option-radio {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-off);
+}
+.option-card[aria-checked="true"] .option-radio {
+  border: 4px solid var(--accent);
+}
+.option-note {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+.option-preview {
+  display: flex;
+  gap: 5px;
+  height: 76px;
+  padding: 7px;
+  border-radius: 6px;
+  border: 1px solid var(--line-subtle);
+  background: var(--bg-window);
+  overflow: hidden;
+}
+.option-preview.list {
+  flex-direction: column;
+  gap: 3px;
+}
+.preview-column,
+.preview-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.preview-column {
+  flex: 1;
+}
+.preview-head {
+  height: 3px;
+  width: 60%;
+  border-radius: 2px;
+  background: var(--status, var(--s-todo));
+}
+.preview-group .preview-head {
+  width: 22%;
+}
+.preview-head.s-backlog {
+  --status: var(--s-backlog);
+}
+.preview-head.s-todo {
+  --status: var(--s-todo);
+}
+.preview-head.s-inProgress {
+  --status: var(--s-inProgress);
+}
+.preview-head.s-review {
+  --status: var(--s-review);
+}
+.preview-card {
+  height: 13px;
+  border-radius: 3px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line-subtle);
+}
+.preview-row {
+  height: 6px;
+  border-radius: 2px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line-subtle);
 }
 
 /* ───── search ───── */

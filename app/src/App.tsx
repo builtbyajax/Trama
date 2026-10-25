@@ -13,7 +13,7 @@ import { ProjectNotesSetup } from "./components/notes/NotesSetup";
 import { Vaults } from "./components/notes/Vaults";
 import { CategoryManager } from "./components/CategoryManager";
 import { Topbar, type Crumb } from "./components/Topbar";
-import { Preferences } from "./components/Preferences";
+import { Preferences, PreferencesNav } from "./components/Preferences";
 import { useAppCommands } from "./hooks/useAppCommands";
 import { useBoardMoves } from "./hooks/useBoardMoves";
 import { useBranches } from "./hooks/useBranches";
@@ -258,6 +258,11 @@ export function App() {
       if (target) navigate({ kind: "project", id: target.id });
     },
     setProjectMode,
+    toggleBoardView: () => {
+      setBoardView((view) => (view === "list" ? "kanban" : "list"));
+      // On another tab of a project, show the board that just changed.
+      if (project && mode !== "board") setProjectMode("board");
+    },
     openShortcuts: () => setShortcutsOpen(true),
     openSearch: () => setSearch(true),
     openSwitcher: () => {
@@ -586,57 +591,76 @@ export function App() {
           onClose={closePeek}
           onEnd={endPeek}
         >
-          <Sidebar
-            projects={data.projects}
-            openCounts={openCounts}
-            workingCount={data.tasks.filter(isAgentWorking).length}
-            updateAvailable={updater.updateNoticeDismissed}
-            destination={destination}
-            onNavigate={navigate}
-            onAddProject={() => setProjectComposer({})}
-            onEditProject={(project) => setProjectComposer({ project })}
-            onDeleteProject={setProjectDelete}
-            onMoveProject={setProjectMove}
-            projectExtra={
-              project && (
-                <SidebarGoals
-                  key={project.id}
-                  goals={projectGoals}
-                  tasks={data.tasks}
-                  activeId={activeGoal?.id ?? null}
-                  onSelect={(goalId) => {
-                    if (mode !== "board") setProjectMode("board");
-                    changeFilter({ goal: goalId ?? "*" });
-                  }}
-                  onNew={() => setGoalComposer({ projectId: project.id })}
-                  onEdit={(goal) =>
-                    setGoalComposer({ projectId: project.id, goal })
-                  }
-                  onComplete={setGoalComplete}
-                  onReopen={reopenGoal}
-                  onDelete={setGoalDelete}
-                  onShowConcluded={() => setConcludedOpen(true)}
-                />
-              )
-            }
-            workspace={
-              workspaces.list && (
-                <WorkspaceButton
-                  list={workspaces.list}
-                  rail={Boolean(panel)}
-                  onSwitch={workspaces.switchTo}
-                  onEdit={(workspace) => workspaces.setComposer({ workspace })}
-                  onCreate={() => workspaces.setComposer({})}
-                  onOpen={workspaces.open}
-                  onManage={() => navigate({ kind: "preferences" })}
-                />
-              )
-            }
-            onShortcuts={() => setShortcutsOpen(true)}
-            rail={Boolean(panel)}
-            onPeek={rail && notesTreeHidden ? showPeekSoon : undefined}
-            onPeekLeave={rail && notesTreeHidden ? hidePeek : undefined}
-          />
+          {destination.kind === "preferences" ? (
+            <PreferencesNav
+              section={destination.section ?? "general"}
+              updateAvailable={Boolean(updater.availableUpdate)}
+              // Sections replace each other in place, so Back leaves Preferences.
+              onSection={(section) =>
+                setPlace({
+                  ...place,
+                  destination: { kind: "preferences", section },
+                })
+              }
+              onBack={() =>
+                canBack ? nav.back() : navigate({ kind: "overview" })
+              }
+            />
+          ) : (
+            <Sidebar
+              projects={data.projects}
+              openCounts={openCounts}
+              workingCount={data.tasks.filter(isAgentWorking).length}
+              updateAvailable={updater.updateNoticeDismissed}
+              destination={destination}
+              onNavigate={navigate}
+              onAddProject={() => setProjectComposer({})}
+              onEditProject={(project) => setProjectComposer({ project })}
+              onDeleteProject={setProjectDelete}
+              onMoveProject={setProjectMove}
+              projectExtra={
+                project && (
+                  <SidebarGoals
+                    key={project.id}
+                    goals={projectGoals}
+                    tasks={data.tasks}
+                    activeId={activeGoal?.id ?? null}
+                    onSelect={(goalId) => {
+                      if (mode !== "board") setProjectMode("board");
+                      changeFilter({ goal: goalId ?? "*" });
+                    }}
+                    onNew={() => setGoalComposer({ projectId: project.id })}
+                    onEdit={(goal) =>
+                      setGoalComposer({ projectId: project.id, goal })
+                    }
+                    onComplete={setGoalComplete}
+                    onReopen={reopenGoal}
+                    onDelete={setGoalDelete}
+                    onShowConcluded={() => setConcludedOpen(true)}
+                  />
+                )
+              }
+              workspace={
+                workspaces.list && (
+                  <WorkspaceButton
+                    list={workspaces.list}
+                    rail={Boolean(panel)}
+                    onSwitch={workspaces.switchTo}
+                    onEdit={(workspace) =>
+                      workspaces.setComposer({ workspace })
+                    }
+                    onCreate={() => workspaces.setComposer({})}
+                    onOpen={workspaces.open}
+                    onManage={() => navigate({ kind: "preferences" })}
+                  />
+                )
+              }
+              onShortcuts={() => setShortcutsOpen(true)}
+              rail={Boolean(panel)}
+              onPeek={rail && notesTreeHidden ? showPeekSoon : undefined}
+              onPeekLeave={rail && notesTreeHidden ? hidePeek : undefined}
+            />
+          )}
         </SidebarSlot>
         <main className="island">
           <UpdateNotices
@@ -823,6 +847,7 @@ export function App() {
               />
             ) : destination.kind === "preferences" ? (
               <Preferences
+                section={destination.section ?? "general"}
                 data={data}
                 workspaces={workspaces.list}
                 onEditWorkspace={(workspace) =>

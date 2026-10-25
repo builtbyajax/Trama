@@ -74,6 +74,7 @@ function UpdaterPreferences() {
         boardView="kanban"
         onBoardView={vi.fn()}
         updater={updater}
+        section="updates"
       />
     </>
   );

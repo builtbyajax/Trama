@@ -101,6 +101,11 @@ pub fn set(app: &AppHandle, language: &str) -> tauri::Result<()> {
         text("Project notes", "Notas do projeto"),
         Some(&format!("{tab}+4")),
     )?;
+    let board_view = item(
+        "board_view",
+        text("Kanban or List", "Kanban ou Lista"),
+        Some("CmdOrCtrl+Shift+L"),
+    )?;
     let back = item("back", text("Back", "Voltar"), Some("CmdOrCtrl+["))?;
     let forward = item("forward", text("Forward", "Avançar"), Some("CmdOrCtrl+]"))?;
     let view = Submenu::with_items(
@@ -123,6 +128,8 @@ pub fn set(app: &AppHandle, language: &str) -> tauri::Result<()> {
             &board,
             &git,
             &project_notes,
+            &PredefinedMenuItem::separator(app)?,
+            &board_view,
         ],
     )?;
     let compact = item(

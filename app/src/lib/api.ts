@@ -179,6 +179,8 @@ export async function chooseDatabase(
   });
 }
 export const listWorkspaces = () => call<Workspaces>("list_workspaces");
+/** Where the MCP server is, next to the app. */
+export const agentPath = () => call<string>("agent_path");
 /** Creates `<folder>/<name>.sqlite` and opens it. */
 export const createWorkspace = (
   name: string,

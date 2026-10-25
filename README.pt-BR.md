@@ -31,7 +31,7 @@ Escreva o briefing, anexe o contexto e coloque a tarefa na fila do agente. O Tra
 
 O Trama está em desenvolvimento inicial. Baixe os instaladores de teste no [GitHub Releases](https://github.com/builtbyajax/Trama/releases), com um `.dmg` para macOS e um `.exe` para Windows, ou [execute pelo código-fonte](#desenvolvimento). Leia o [guia de instalação](docs/installation.pt-BR.md) antes de abrir o app.
 
-A interface está disponível em inglês e português brasileiro. Escolha o idioma em **Preferências → Idioma**. As capturas mostram a interface real com dados de demonstração.
+A interface está disponível em inglês e português brasileiro. Escolha o idioma em **Preferências → Geral → Idioma**. As capturas mostram a interface real com dados de demonstração.
 
 ## Um quadro para você e seus agentes
 
@@ -138,7 +138,8 @@ Use ⌘ no macOS e Ctrl no Windows. As abas do projeto usam ⌃ no macOS e Alt n
 | `⌘1…9` | Trocar de projeto |
 | `⌘T` | Encontrar um projeto pelo nome |
 | `⌥⌘1` / `⌥⌘2` / `⌥⌘3` | Visão geral / Arquivo / Cofres |
-| `⌃1` / `⌃2` / `⌃3` | Quadro / Histórico Git / Notas |
+| `⌃1` / `⌃2` / `⌃3` / `⌃4` | Projeto / Quadro / Histórico Git / Notas |
+| `⇧⌘L` | Alternar o quadro entre Kanban e Lista |
 | `⌘[` / `⌘]` | Voltar / Avançar |
 | `⌘B` | Mostrar ou ocultar a barra lateral |
 | `⌘,` | Preferências |

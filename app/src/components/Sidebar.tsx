@@ -23,12 +23,13 @@ import { KeyHint } from "./KeyHint";
 import { ProjectMark } from "./ProjectMark";
 import { t } from "../lib/i18n";
 import { SidebarLeaving } from "./SidebarSlot";
+import type { PreferencesSection } from "./Preferences";
 
 export type Destination =
   | { kind: "overview" }
   | { kind: "archive" }
   | { kind: "notes" }
-  | { kind: "preferences" }
+  | { kind: "preferences"; section?: PreferencesSection }
   | { kind: "project"; id: string };
 
 interface SidebarProps {
@@ -243,7 +244,12 @@ export function Sidebar({
           notice={updateAvailable}
           keys={shortcuts.preferences}
           selected={destination.kind === "preferences"}
-          onClick={() => onNavigate({ kind: "preferences" })}
+          onClick={() =>
+            onNavigate({
+              kind: "preferences",
+              ...(updateAvailable && { section: "updates" }),
+            })
+          }
         />
         <NavItem
           rail={rail}
@@ -277,7 +283,7 @@ interface NavItemProps {
 }
 
 /** Sidebar row. Its shortcut shows in a tooltip on hover and as a badge while ⌘ is held. */
-function NavItem({
+export function NavItem({
   label,
   icon,
   leading,

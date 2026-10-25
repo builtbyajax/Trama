@@ -88,6 +88,7 @@ export const shortcuts = {
   board: [tab, "2"],
   git: [tab, "3"],
   projectNotes: [tab, "4"],
+  boardView: ["shift", "mod", "l"],
   switchProject: ["mod", "t"],
   sidebar: ["mod", "b"],
   back: ["mod", "["],
@@ -160,6 +161,10 @@ export const shortcutGroups: ShortcutGroup[] = [
   {
     title: t("Board"),
     items: [
+      {
+        label: t("Switch between kanban and list"),
+        keys: [shortcuts.boardView],
+      },
       { label: t("Open card details"), keys: [["enter"]] },
       { label: t("Pick up or drop the card"), keys: [["space"]] },
       { label: t("Choose the column"), keys: [["left"], ["right"]] },
