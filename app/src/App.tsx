@@ -193,6 +193,10 @@ export function App() {
     hidePeek,
     endPeek,
   } = useSidebarLayout(reading ? "diff" : panel);
+  // Preferences keep their sections in the sidebar, which can't be hidden there.
+  const sidebarFixed = destination.kind === "preferences";
+  const navHidden = sidebarHidden && !panel && !sidebarFixed;
+  const toggleNav = sidebarFixed ? () => {} : toggleSidebar;
   const selectedTask = data?.tasks.find((t) => t.id === selected?.id);
   // Local branches of the open project and, from the Archive, of the open task's project.
   const branches = useBranches(project, revision);
@@ -268,7 +272,7 @@ export function App() {
     openSwitcher: () => {
       if (snapshot?.projects.length) setSwitcher(true);
     },
-    toggleSidebar,
+    toggleSidebar: toggleNav,
     reload: () => void refresh(),
     back,
     forward: nav.forward,
@@ -536,8 +540,9 @@ export function App() {
               ? diffFilesHidden
               : panel
                 ? historyHidden
-                : sidebarHidden
+                : navHidden
         }
+        sidebarFixed={sidebarFixed}
         sidebarName={
           rail
             ? t("notes list")
@@ -572,19 +577,17 @@ export function App() {
             onSelect: () => navigate({ kind: "preferences" }),
           },
         ]}
-        onToggleSidebar={toggleSidebar}
-        onSidebarHover={showPeek}
+        onToggleSidebar={toggleNav}
+        onSidebarHover={sidebarFixed ? () => {} : showPeek}
         onSidebarLeave={hidePeek}
         onBack={back}
         onForward={nav.forward}
         onSearch={() => setSearch(true)}
         onNewTask={() => newTask()}
       />
-      <div
-        className={`window-body ${sidebarHidden && !panel ? "sidebar-hidden" : ""}`}
-      >
+      <div className={`window-body ${navHidden ? "sidebar-hidden" : ""}`}>
         <SidebarSlot
-          hidden={sidebarHidden && !panel}
+          hidden={navHidden}
           peek={peek}
           onShow={showPeek}
           onHide={hidePeek}

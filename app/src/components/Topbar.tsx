@@ -41,6 +41,7 @@ export interface MenuEntry {
 export function Topbar({
   sidebarHidden,
   sidebarName = t("sidebar"),
+  sidebarFixed = false,
   canBack,
   canForward,
   crumbs,
@@ -56,6 +57,8 @@ export function Topbar({
   sidebarHidden: boolean;
   /** What the sidebar button hides: the sidebar, or the notes list beside the icon rail. */
   sidebarName?: string;
+  /** The sidebar can't be hidden here, as in Preferences. */
+  sidebarFixed?: boolean;
   canBack: boolean;
   canForward: boolean;
   crumbs: Crumb[];
@@ -77,6 +80,7 @@ export function Topbar({
         type="button"
         className="icon-button sidebar-button"
         onClick={onToggleSidebar}
+        disabled={sidebarFixed}
         onMouseEnter={onSidebarHover}
         onMouseLeave={onSidebarLeave}
         aria-label={sidebarLabel}
