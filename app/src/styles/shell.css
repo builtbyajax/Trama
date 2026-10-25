@@ -671,7 +671,6 @@ button.crumb:hover {
 }
 .page-repo > span {
   position: relative;
-  padding-bottom: 2px;
 }
 .page-repo > span::after {
   content: "";
