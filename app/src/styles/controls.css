@@ -557,10 +557,12 @@ input[type="checkbox"]:checked::after {
 }
 
 /* ───── toast ───── */
+/* At the top, over the head of the content island, clear of the bar to conclude below. */
 .toast {
   position: fixed;
   left: 50%;
-  bottom: 22px;
+  top: calc(var(--topbar-h) + 10px);
+  overflow: hidden;
   z-index: 300;
   display: flex;
   align-items: center;
@@ -594,9 +596,46 @@ input[type="checkbox"]:checked::after {
 .toast.error .icon {
   color: var(--danger);
 }
+/* The time left for the action, which stops while the toast is pointed at or focused. */
+.toast-time {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--accent-text);
+  opacity: 0.7;
+  transform-origin: left;
+  animation: toast-time var(--toast-time) linear forwards;
+}
+.toast:hover .toast-time,
+.toast:focus-within .toast-time {
+  animation-play-state: paused;
+}
+@keyframes toast-time {
+  from {
+    transform: scaleX(0);
+  }
+}
+/* It tells how long is left, so it keeps its pace even with reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .toast-time {
+    animation-duration: var(--toast-time) !important;
+  }
+}
+.toast.leaving {
+  pointer-events: none;
+  animation: toast-out 0.16s var(--ease) forwards;
+}
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+}
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translate(-50%, 6px);
+    transform: translate(-50%, -6px);
   }
 }

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { Board } from "./components/Board";
 import { BrandMark } from "./components/BrandMark";
 import { Icon, StatusIcon } from "./components/Icon";
@@ -99,7 +99,7 @@ import {
 import { t } from "./lib/i18n";
 
 export function App() {
-  const { toast, notify, dismiss } = useToast();
+  const { toast, notify, dismiss, hold, release } = useToast();
   const updater = useAppUpdater();
   const [gitFocus, setGitFocus] = useState<GitFocus | null>(null);
   const { place, setPlace, canBack, canForward, visit, go, forget, ...nav } =
@@ -952,8 +952,19 @@ export function App() {
       </div>
       {toast && (
         <div
-          className={`toast ${toast.error ? "error" : ""}`}
+          key={toast.id}
+          className={[
+            "toast",
+            toast.error && "error",
+            toast.leaving && "leaving",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           role={toast.error ? "alert" : "status"}
+          onMouseEnter={hold}
+          onMouseLeave={release}
+          onFocus={hold}
+          onBlur={release}
         >
           {toast.error && <Icon name="warning" size={14} />}
           {toast.text}
@@ -968,6 +979,14 @@ export function App() {
             >
               {toast.action.label}
             </button>
+          )}
+          {toast.action && (
+            // Fills up while the action can still be used.
+            <span
+              className="toast-time"
+              style={{ "--toast-time": `${toast.duration}ms` } as CSSProperties}
+              aria-hidden="true"
+            />
           )}
         </div>
       )}
