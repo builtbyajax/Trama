@@ -138,6 +138,40 @@ INSERT INTO task_messages VALUES('draft-message','draft-a','user','Kept with the
 }
 
 #[test]
+fn backlog_migration_accepts_the_spaced_schema_of_the_first_releases() {
+    // Databases created by the first releases keep the table text as typed, with spaces.
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("spaced.sqlite");
+    let db = Connection::open(&path).unwrap();
+    db.execute_batch(&V11.replace(
+        "CHECK(status IN('todo','inProgress','review','done','preparing','reserved'))",
+        "CHECK (status IN ('todo', 'inProgress', 'review', 'done', 'preparing', 'reserved'))",
+    ))
+    .unwrap();
+    db.execute(
+        "INSERT INTO tasks(id,project_id,title,category,assignee,status,created_at,updated_at) VALUES('spaced','00000000-0000-4000-8000-000000000001','Spaced','Feature','agent','reserved',1.0,1.0)",
+        [],
+    )
+    .unwrap();
+    drop(db);
+    let store = Store::open(&path).unwrap();
+    assert_eq!(
+        strings(&store.db, "SELECT status FROM tasks WHERE id='spaced'"),
+        ["backlog"]
+    );
+    assert!(strings(
+        &store.db,
+        "SELECT sql FROM sqlite_schema WHERE name='tasks'"
+    )[0]
+    .contains("CHECK(status IN('backlog','todo','inProgress','review','done'))"));
+    assert!(store
+        .db
+        .execute("UPDATE tasks SET status='reserved' WHERE id='spaced'", [])
+        .is_err());
+    assert!(strings(&store.db, "PRAGMA integrity_check") == ["ok"]);
+}
+
+#[test]
 fn historical_fixtures_upgrade_without_losing_existing_rows() {
     assert_eq!(
         FIXTURES.len() as i64,

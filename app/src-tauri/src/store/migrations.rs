@@ -219,14 +219,18 @@ DROP TABLE draft_shift;"))?;
         [],
         |r| r.get(0),
     ))?;
-    if table.matches(OLD).count() != 1 {
+    let Some(check) = status_check(&table, OLD) else {
         return Err("The tasks table doesn't have the expected statuses.".into());
-    }
+    };
     let version: i64 = sql(tx.query_row("PRAGMA schema_version", [], |r| r.get(0)))?;
     sql(tx.execute_batch("PRAGMA writable_schema=ON;"))?;
     sql(tx.execute(
         "UPDATE sqlite_schema SET sql=? WHERE type='table' AND name='tasks'",
-        [table.replace(OLD, NEW)],
+        [format!(
+            "{}{NEW}{}",
+            &table[..check.start],
+            &table[check.end..]
+        )],
     ))?;
     sql(tx.execute_batch(&format!(
         "PRAGMA schema_version={}; PRAGMA writable_schema=OFF;",
@@ -238,4 +242,32 @@ UPDATE task_events SET value='backlog' WHERE kind='status' AND value IN('prepari
 PRAGMA user_version=12;",
     ))?;
     Ok(())
+}
+
+/// Where `check` is in the table's schema text, compared without spaces: databases created by the
+/// first releases keep the text as it was typed, with `CHECK (status IN ('todo', …))`. `None`
+/// when it isn't there exactly once.
+fn status_check(table: &str, check: &str) -> Option<std::ops::Range<usize>> {
+    let squeeze = |text: &str| text.split_whitespace().collect::<String>();
+    let wanted = squeeze(check);
+    let mut found = None;
+    for (start, _) in table.match_indices("CHECK") {
+        let mut depth = 0;
+        let end = table[start..].char_indices().find_map(|(i, c)| {
+            match c {
+                '(' => depth += 1,
+                ')' if depth == 1 => return Some(start + i + 1),
+                ')' => depth -= 1,
+                _ => {}
+            }
+            None
+        })?;
+        if squeeze(&table[start..end]) == wanted {
+            if found.is_some() {
+                return None;
+            }
+            found = Some(start..end);
+        }
+    }
+    found
 }
