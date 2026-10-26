@@ -1,6 +1,6 @@
 [package]
 name = "trama"
-version = "0.3.0"
+version = "0.3.1"
 description = "Trama: quadro de tarefas local com agentes"
 edition = "2021"
 rust-version = "1.90"
