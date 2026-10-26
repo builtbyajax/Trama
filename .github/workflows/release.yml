@@ -69,6 +69,9 @@ jobs:
       - name: Build installers without uploading
         id: bundle
         uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: app
           tauriScript: npm run tauri
@@ -108,9 +111,12 @@ jobs:
           path: release-assets
           merge-multiple: true
       - name: Generate checksums and release notes
+        shell: bash
         run: |
-          node app/scripts/release-assets.mjs checksums release-assets
+          VERSION=$(node -p "JSON.parse(require('fs').readFileSync('app/package.json')).version")
           node app/scripts/release-notes.mjs
+          node app/scripts/release-assets.mjs manifest "$VERSION" "$GITHUB_REPOSITORY" release-assets
+          node app/scripts/release-assets.mjs checksums release-assets
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: verified-installers
@@ -139,4 +145,4 @@ jobs:
         shell: bash
         run: |
           VERSION=$(node -p "JSON.parse(require('fs').readFileSync('app/package.json')).version")
-          gh release create "v$VERSION" release-assets/*.dmg release-assets/*.exe release-assets/SHA256SUMS --title "Trama $VERSION" --notes-file release-assets/RELEASE_NOTES.md --target "$GITHUB_SHA" --draft --prerelease
+          gh release create "v$VERSION" release-assets/*.dmg release-assets/*.exe release-assets/*.app.tar.gz release-assets/*.nsis.zip release-assets/*.sig release-assets/latest.json release-assets/SHA256SUMS --title "Trama $VERSION" --notes-file release-assets/RELEASE_NOTES.md --target "$GITHUB_SHA" --draft --prerelease
