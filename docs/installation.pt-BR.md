@@ -145,11 +145,33 @@ O servidor MCP não pode ler nem alterar as anotações privadas das tarefas. As
 
 ## Dados locais
 
-| Sistema | Banco de tarefas |
+O Trama guarda seus dados em uma pasta:
+
+| Sistema | Pasta do Trama |
 | --- | --- |
-| macOS | `~/Library/Application Support/Trama/trama.sqlite` |
-| Windows | `%APPDATA%\Trama\trama.sqlite` |
+| macOS | `~/Library/Application Support/Trama` |
+| Windows | `%APPDATA%\Trama` |
+
+Cada espaço criado no app tem uma pasta própria, `Workspaces/<id>/`, com o banco, `workspace.sqlite`, e as cópias em `Backups/`. O id é curto e nunca muda; o nome do espaço fica só na lista, `workspaces.json`, então renomear um espaço não move arquivos. Um banco aberto com **Abrir espaço…** fica onde está, com as cópias em uma pasta `Backups` ao lado dele. Excluir um espaço apaga o banco, as cópias e a pasta que o Trama criou para ele.
+
+Na primeira vez que o Trama 0.3.1 abre, ele move os espaços que as versões anteriores deixavam soltos na pasta do Trama, como `trama.sqlite`, cada um para uma pasta própria, e pede para reiniciar as sessões dos agentes. Um arquivo que ainda não pode ser movido fica onde está, e o Trama tenta de novo na próxima vez que abrir. Bancos abertos de outras pastas não são movidos.
 
 As notas dos projetos continuam nas pastas que você escolheu no app. São arquivos Markdown comuns e ficam fora do banco de tarefas.
 
-Defina `TRAMA_DB` para usar outro caminho de SQLite no desenvolvimento. Ao mudar esse caminho, faça o app e o servidor MCP apontarem para o mesmo banco.
+Defina `TRAMA_DB` para usar outro caminho de SQLite no desenvolvimento. Ao mudar esse caminho, faça o app e o servidor MCP apontarem para o mesmo banco. Sem `TRAMA_DB` e antes de você criar um espaço, o servidor MCP conecta mesmo assim, mas cada ferramenta pede para abrir o Trama e criar um; assim que você cria, ele passa a usar o espaço, sem reconectar.
+
+### Restaurar uma cópia do banco
+
+A partir do Trama 0.3.1, abrir um espaço existente que precisa de atualização de schema salva uma cópia consistente do banco antes de alterar seu schema. A cópia inclui as alterações já confirmadas que ainda estão no arquivo WAL do SQLite. Cada atualização guarda o schema original uma vez, mesmo que execute várias etapas de migration ou que o app e o MCP abram o espaço juntos. Abrir um banco já atualizado ou criar um banco vazio não gera cópia.
+
+As cópias ficam na pasta `Backups` ao lado do banco do espaço, com o nome do banco, a versão do Trama que a salvou e o schema antes da migration, por exemplo `workspace.sqlite.v0.3.1.schema-12.bak`. Se esse nome já existir, um identificador extra preserva a cópia anterior. O Trama mantém as três cópias mais recentes por espaço e remove as antigas depois de salvar uma nova. Se não for possível salvar a cópia, a atualização do schema para com um erro; confira o espaço livre em disco e as permissões da pasta antes de tentar novamente.
+
+A restauração é manual:
+
+1. Confira o caminho do banco do espaço em **Preferências → Geral → Espaços**. Depois, feche o Trama e os clientes MCP conectados, ou desative a conexão deles com o Trama, garantindo que não reste nenhum processo `trama-agent`.
+2. Mova o banco atual para uma pasta de segurança separada. Se restarem arquivos com o mesmo nome seguido de `-wal` ou `-shm`, mova-os para essa pasta também. Guarde esse conjunto junto; esses arquivos não devem ficar ao lado do banco restaurado.
+3. Copie o `.bak` escolhido de `Backups` para a pasta do espaço e renomeie essa cópia para o nome original do banco. Por exemplo, copie `Backups/workspace.sqlite.v0.3.1.schema-12.bak` como `workspace.sqlite`. Preserve o próprio `.bak`.
+4. Para voltar a uma versão anterior do Trama, instale uma versão que aceite o schema da cópia antes de reabrir o app. Por exemplo, o schema 12 é aceito pelo Trama 0.3.0 e 0.3.1, enquanto o Trama 0.2.2 aceita somente até o schema 10. Um app mais novo pode abrir uma cópia antiga, mas fará a migration novamente; um app anterior ao schema da cópia se recusa a abri-la.
+5. Abra o Trama e confira os projetos e as tarefas do espaço antes de reiniciar os agentes. Alterações feitas depois da cópia escolhida não estarão no banco restaurado.
+
+As cópias do banco não incluem as pastas de notas Markdown dos projetos. Guarde cópias separadas dessas pastas se também precisar restaurar seus arquivos.

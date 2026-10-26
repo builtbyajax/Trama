@@ -6,7 +6,19 @@
 
 Mudanças entregues em cada versão do Trama. A seção **Em desenvolvimento** reúne alterações implementadas que ainda não foram lançadas; ao publicar uma versão, substitua esse título pelo número e pela data da release.
 
-## [Em desenvolvimento]
+## [0.3.1](https://github.com/builtbyajax/Trama/releases/tag/v0.3.1) — 2026-10-26
+
+### Alterado
+
+- Guardar cada espaço em uma pasta própria, `Workspaces/<id>/` dentro da pasta do Trama, para que renomear um espaço não mova arquivos. Na primeira abertura, mover os espaços que versões anteriores deixavam soltos na pasta do Trama e pedir uma vez para reiniciar as sessões dos agentes. Reabrir o arquivo de um espaço pede o nome dele, já que todo arquivo se chama `workspace.sqlite`. Veja [dados locais](docs/installation.pt-BR.md#dados-locais).
+- Criar espaços sem escolher pasta; **Abrir espaço…** continua abrindo um banco em qualquer lugar.
+- Pedir o primeiro espaço numa instalação nova em vez de criar um, e fazer o servidor MCP pedir para abrir o Trama e criar um até lá.
+
+### Corrigido
+
+- Antes de atualizar o schema de um espaço, guardar uma cópia recuperável do banco numa pasta `Backups` ao lado dele, incluindo os dados confirmados no WAL, com a versão do Trama e o schema no nome; manter as últimas três cópias e interromper a migration se não for possível salvá-la. Excluir um espaço apaga as cópias também. Veja [como restaurar uma cópia](docs/installation.pt-BR.md#restaurar-uma-cópia-do-banco).
+
+## [0.3.0](https://github.com/builtbyajax/Trama/releases/tag/v0.3.0) — 2026-10-25
 
 ### Adicionado
 
