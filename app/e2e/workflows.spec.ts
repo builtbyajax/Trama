@@ -21,6 +21,21 @@ async function command<T>(
   return body.result;
 }
 
+async function openWorkspaceActions(page: Page, workspace: string) {
+  const button = page.getByRole("button", {
+    name: `Actions for ${workspace}`,
+    exact: true,
+  });
+  await button.scrollIntoViewIfNeeded();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
+  await button.click();
+}
+
 async function selectWorkspaceAction(
   page: Page,
   workspace: string,
@@ -299,9 +314,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
     moved.tasks.map((t) => [t.id, t.position, t.status, t.goalId]),
   ).toEqual(data.tasks.map((t) => [t.id, t.position, t.status, t.goalId]));
   await page.getByRole("button", { name: "Preferences", exact: true }).click();
-  await page
-    .getByRole("button", { name: `Actions for ${name}`, exact: true })
-    .click();
+  await openWorkspaceActions(page, name);
   await selectWorkspaceAction(page, name, "Remove from list…");
   await page
     .getByRole("dialog")
@@ -318,9 +331,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   await command(request, "switch_workspace", { path: destination.active });
   await page.reload();
   await page.getByRole("button", { name: "Preferences", exact: true }).click();
-  await page
-    .getByRole("button", { name: `Actions for ${name}`, exact: true })
-    .click();
+  await openWorkspaceActions(page, name);
   await selectWorkspaceAction(page, name, "Delete…");
   await expect(
     page.getByRole("button", { name: "Delete workspace", exact: true }),
@@ -341,12 +352,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
     })
     .toBe(false);
 
-  await page
-    .getByRole("button", {
-      name: `Actions for Destination ${run}`,
-      exact: true,
-    })
-    .click();
+  await openWorkspaceActions(page, `Destination ${run}`);
   await selectWorkspaceAction(page, `Destination ${run}`, "Remove from list…");
   await Promise.all([
     page.waitForEvent("load"),
@@ -362,12 +368,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   await command(request, "open_workspace", { path: destination.active });
   await page.reload();
   await page.getByRole("button", { name: "Preferences", exact: true }).click();
-  await page
-    .getByRole("button", {
-      name: `Actions for Destination ${run}`,
-      exact: true,
-    })
-    .click();
+  await openWorkspaceActions(page, `Destination ${run}`);
   await selectWorkspaceAction(page, `Destination ${run}`, "Delete…");
   await page
     .getByRole("dialog")

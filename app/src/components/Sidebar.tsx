@@ -390,7 +390,7 @@ export function ContextMenu({
     (
       menu.querySelector<HTMLElement>("[aria-checked=true]") ??
       menu.querySelector<HTMLElement>("[role^=menuitem]")
-    )?.focus();
+    )?.focus({ preventScroll: true });
   }, [x, y]);
   useEffect(() => {
     const outside = (event: Event) => {
