@@ -47,7 +47,7 @@ it("shows and dismisses the restart notice", () => {
 
   expect(
     screen.getByText(
-      "Restart agent sessions to connect them to the updated version of Trama.",
+      "Restart agent sessions to reconnect them to the MCP included with this version of Trama.",
     ),
   ).toBeTruthy();
   fireEvent.click(

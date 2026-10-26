@@ -11,7 +11,8 @@ import {
 
 const autoCheckKey = "trama.updater.auto-check";
 const installedVersionKey = "trama.updater.installed-version";
-const dismissedRestartVersionKey = "trama.updater.dismissed-restart-version";
+const pendingRestartVersionKey = "trama.updater.pending-restart-version";
+const dismissedUpdateVersionKey = "trama.updater.dismissed-update-version";
 const checkIntervalMs = 24 * 60 * 60 * 1000;
 
 export type UpdateStatus =
@@ -23,27 +24,35 @@ export function useAppUpdater() {
   );
   const [status, setStatus] = useState<UpdateStatus>("idle");
   const [availableUpdate, setAvailableUpdate] = useState<Update | null>(null);
+  const [dismissedUpdateVersion, setDismissedUpdateVersion] = useState(() =>
+    stored(dismissedUpdateVersionKey),
+  );
   const [installedVersion, setInstalledVersion] = useState<string | null>(null);
   const [restartNotice, setRestartNotice] = useState(false);
   const [installing, setInstalling] = useState(false);
-  const checking = useRef(false);
+  const busy = useRef(false);
   const updateRef = useRef<Update | null>(null);
 
   const check = useCallback(async () => {
-    if (checking.current) return;
-    checking.current = true;
+    if (busy.current) return;
+    busy.current = true;
     setStatus("checking");
     try {
       const next = await checkAppUpdate();
       if (updateRef.current && updateRef.current !== next)
         await updateRef.current.close().catch(() => undefined);
+      const dismissedVersion = stored(dismissedUpdateVersionKey);
+      if (dismissedVersion !== (next?.version ?? null)) {
+        store(dismissedUpdateVersionKey, "");
+        setDismissedUpdateVersion(null);
+      }
       updateRef.current = next;
       setAvailableUpdate(next);
       setStatus(next ? "available" : "current");
     } catch {
       setStatus("error");
     } finally {
-      checking.current = false;
+      busy.current = false;
     }
   }, []);
 
@@ -53,32 +62,35 @@ export function useAppUpdater() {
   }, []);
 
   const dismissUpdate = useCallback(() => {
-    const update = updateRef.current;
-    updateRef.current = null;
-    setAvailableUpdate(null);
-    setStatus("idle");
-    if (update) void update.close().catch(() => undefined);
+    const version = updateRef.current?.version;
+    if (!version) return;
+    store(dismissedUpdateVersionKey, version);
+    setDismissedUpdateVersion(version);
   }, []);
 
   const dismissRestartNotice = useCallback(() => {
-    if (installedVersion) store(dismissedRestartVersionKey, installedVersion);
+    store(pendingRestartVersionKey, "");
     setRestartNotice(false);
-  }, [installedVersion]);
+  }, []);
 
   const install = useCallback(async () => {
     const update = updateRef.current;
-    if (!update) return;
+    if (!update || busy.current) return;
+    busy.current = true;
     setInstalling(true);
     try {
       await installAppUpdate(update);
       updateRef.current = null;
       setAvailableUpdate(null);
       setStatus("idle");
+      store(dismissedUpdateVersionKey, "");
+      setDismissedUpdateVersion(null);
       await restartUpdatedApp();
     } catch (error) {
       setStatus("error");
       throw error;
     } finally {
+      busy.current = false;
       setInstalling(false);
     }
   }, []);
@@ -89,10 +101,10 @@ export function useAppUpdater() {
       .then((version) => {
         if (!active || !version) return;
         const previous = stored(installedVersionKey);
-        const dismissed = stored(dismissedRestartVersionKey);
         setInstalledVersion(version);
-        if (previous && previous !== version && dismissed !== version)
-          setRestartNotice(true);
+        if (previous && previous !== version)
+          store(pendingRestartVersionKey, version);
+        setRestartNotice(stored(pendingRestartVersionKey) === version);
         store(installedVersionKey, version);
       })
       .catch(() => undefined);
@@ -123,6 +135,9 @@ export function useAppUpdater() {
     check,
     dismissRestartNotice,
     dismissUpdate,
+    updateNoticeDismissed:
+      Boolean(availableUpdate) &&
+      dismissedUpdateVersion === availableUpdate?.version,
     install,
     installing,
     installedVersion,

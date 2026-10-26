@@ -148,8 +148,9 @@ export const ptBR = {
   "Dismiss update notice": "Dispensar aviso de atualização",
   "Installed version": "Versão instalada",
   "Installing update…": "Instalando atualização…",
-  "Restart agent sessions to connect them to the updated version of Trama.":
-    "Reinicie as sessões dos agentes para conectá-las à versão atualizada do Trama.",
+  "Restart agent sessions to reconnect them to the MCP included with this version of Trama.":
+    "Reinicie as sessões dos agentes para reconectá-las ao MCP incluído nesta versão do Trama.",
+  "Update available": "Atualização disponível",
   "Trama is up to date.": "O Trama está atualizado.",
   "Update and restart": "Atualizar e reiniciar",
   Updates: "Atualizações",

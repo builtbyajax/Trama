@@ -23,7 +23,7 @@ export function UpdateNotices({
         <div className="update-notice restart-notice" role="status">
           <span>
             {t(
-              "Restart agent sessions to connect them to the updated version of Trama.",
+              "Restart agent sessions to reconnect them to the MCP included with this version of Trama.",
             )}
           </span>
           <button

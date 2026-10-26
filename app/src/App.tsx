@@ -588,6 +588,7 @@ export function App() {
             openCounts={openCounts}
             draftCount={drafts.length}
             workingCount={data.tasks.filter(isAgentWorking).length}
+            updateAvailable={updater.updateNoticeDismissed}
             destination={destination}
             onNavigate={navigate}
             onAddProject={() => setProjectComposer({})}
@@ -637,7 +638,11 @@ export function App() {
         </SidebarSlot>
         <main className="island">
           <UpdateNotices
-            availableVersion={updater.availableUpdate?.version ?? null}
+            availableVersion={
+              updater.updateNoticeDismissed
+                ? null
+                : (updater.availableUpdate?.version ?? null)
+            }
             installing={updater.installing}
             restartNotice={updater.restartNotice}
             onDismissRestart={updater.dismissRestartNotice}

@@ -158,23 +158,41 @@ export function Preferences({
               <div className="settings-text" role="status" aria-live="polite">
                 {updater.status === "checking"
                   ? t("Checking for updates…")
-                  : updater.status === "current"
-                    ? t("Trama is up to date.")
-                    : updater.status === "available" && updater.availableUpdate
-                      ? t("Version {0} is available.", [
-                          updater.availableUpdate.version,
-                        ])
+                  : updater.availableUpdate
+                    ? t("Version {0} is available.", [
+                        updater.availableUpdate.version,
+                      ])
+                    : updater.status === "current"
+                      ? t("Trama is up to date.")
                       : updater.status === "error"
                         ? t("Couldn't check for updates. Try again later.")
                         : t("Check for a newer version of Trama.")}
               </div>
+              {updater.availableUpdate && (
+                <button
+                  type="button"
+                  className="button"
+                  disabled={updater.status === "checking" || updater.installing}
+                  onClick={() => void updater.check()}
+                >
+                  {t("Check now")}
+                </button>
+              )}
               <button
                 type="button"
-                className="button"
+                className={`button ${updater.availableUpdate ? "primary" : ""}`}
                 disabled={updater.status === "checking" || updater.installing}
-                onClick={() => void updater.check()}
+                onClick={() =>
+                  updater.availableUpdate
+                    ? void updater.install().catch(fail)
+                    : void updater.check()
+                }
               >
-                {t("Check now")}
+                {updater.availableUpdate
+                  ? updater.installing
+                    ? t("Installing update…")
+                    : t("Update and restart")
+                  : t("Check now")}
               </button>
             </li>
           </ul>
