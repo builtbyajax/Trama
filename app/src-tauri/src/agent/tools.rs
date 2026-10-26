@@ -65,7 +65,7 @@ impl Agent {
         let task = || required(args, "task_id");
         match name {
             "get_context" => Ok(
-                json!({"project":project_value(&self.store.project(&project)?),"categories":self.categories(&project)?,"statuses":STATUSES,"assignees":["user","agent"],"private_notes_accessible":false,"schema_version":7,"scope":if self.project_id.is_some(){"project"}else{"workspace"},"briefing_field":"details","agent_execution":"external","working_indicator":"assignee=agent and status=inProgress"}),
+                json!({"project":project_value(&self.store.project(&project)?),"categories":self.categories(&project)?,"statuses":STATUSES,"assignees":["user","agent"],"private_notes_accessible":false,"schema_version":crate::store::SCHEMA_VERSION,"scope":if self.project_id.is_some(){"project"}else{"workspace"},"briefing_field":"details","agent_execution":"external","working_indicator":"assignee=agent and status=inProgress"}),
             ),
             "update_project" => {
                 require_changes(args, &["project_id"])?;

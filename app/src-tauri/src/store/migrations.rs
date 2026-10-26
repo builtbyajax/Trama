@@ -3,14 +3,22 @@
 use super::*;
 
 /// The version of the schema this build writes.
-const LATEST: i64 = 10;
+const LATEST: i64 = SCHEMA_VERSION;
 
-/// Brings the database up to `LATEST`; refuses one written by a newer build.
-pub(super) fn migrate(tx: &Transaction) -> Result<()> {
-    let version: i64 = sql(tx.query_row("PRAGMA user_version", [], |r| r.get(0)))?;
+pub(super) fn check_version(db: &Connection) -> Result<i64> {
+    let version: i64 = sql(db.query_row("PRAGMA user_version", [], |r| r.get(0)))?;
+    if version < 0 {
+        return Err("The database has an invalid schema version.".into());
+    }
     if version > LATEST {
         return Err("This database uses a newer version of Trama. Update the app.".into());
     }
+    Ok(version)
+}
+
+/// Brings the database up to `LATEST`; refuses one written by a newer build.
+pub(super) fn migrate(tx: &Transaction) -> Result<()> {
+    let version = check_version(tx)?;
     let steps: [fn(&Transaction) -> Result<()>; LATEST as usize] =
         [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10];
     for step in &steps[version as usize..] {

@@ -422,3 +422,40 @@ fn preview_file(name: &str, path: &Path) -> FileDiff {
         });
     untracked_file(name, data.as_deref())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn remotes_become_safe_github_links_without_credentials() {
+        for remote in [
+            "git@github.com:owner/repo.git",
+            "ssh://git@github.com/owner/repo.git",
+            "https://token@github.com/owner/repo.git",
+        ] {
+            assert_eq!(
+                github_web(remote).as_deref(),
+                Some("https://github.com/owner/repo")
+            );
+        }
+        for remote in [
+            "https://github.com.evil/owner/repo",
+            "https://example.com/owner/repo",
+            "git@github.com:owner/repo/extra",
+            "",
+        ] {
+            assert!(github_web(remote).is_none());
+        }
+    }
+    #[test]
+    fn history_parser_rejects_corrupt_records_and_preserves_bodies() {
+        let raw=format!("{}\x1f\x1faaaaaaa\x1fSubject\x1fSynthetic author\x1f123\x1fHEAD -> main, tag: v1\x1fSubject\n\nBody\x1e","a".repeat(40));
+        let parsed = parse_log(&raw).unwrap();
+        assert_eq!(parsed[0].date, 123.0);
+        assert_eq!(parsed[0].refs, ["HEAD -> main", "tag: v1"]);
+        assert_eq!(parsed[0].body, "Subject\n\nBody");
+        assert!(parse_log("invalid").is_err());
+        assert!(parse_log(&raw.replace("\x1f123\x1f", "\x1fnot-date\x1f")).is_err());
+        assert!(parse_log(&raw.replacen(&"a".repeat(40), "invalid", 1)).is_err());
+    }
+}

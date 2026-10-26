@@ -1,0 +1,54 @@
+name: Dependency audit
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "23 9 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - working-directory: app
+        run: npm ci --ignore-scripts
+      - name: Audit production JavaScript dependencies (informational)
+        id: npm
+        continue-on-error: true
+        working-directory: app
+        run: npm audit --omit=dev
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - name: Install Cargo auditor
+        id: install
+        continue-on-error: true
+        run: cargo install cargo-audit --locked
+      - name: Audit Rust dependencies (informational)
+        id: cargo
+        if: steps.install.outcome == 'success'
+        continue-on-error: true
+        working-directory: app/src-tauri
+        run: cargo audit
+      - name: Summarize audit outcomes
+        if: always()
+        env:
+          NPM_OUTCOME: ${{ steps.npm.outcome }}
+          CARGO_OUTCOME: ${{ steps.cargo.outcome }}
+          INSTALL_OUTCOME: ${{ steps.install.outcome }}
+        run: |
+          echo "### Dependency audits (informational)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- npm: $NPM_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
+          echo "- cargo-audit installation: $INSTALL_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Cargo: $CARGO_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$NPM_OUTCOME" != success ] || [ "$CARGO_OUTCOME" != success ]; then
+            echo "::warning::Review audit findings or execution failures in this run."
+          fi

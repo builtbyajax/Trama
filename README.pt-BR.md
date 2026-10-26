@@ -15,7 +15,8 @@
   <a href="https://trama.ajaxdev.com.br/pt/">Site de apresentação</a> &nbsp;·&nbsp;
   <a href="#primeiros-passos">Primeiros passos</a> &nbsp;·&nbsp;
   <a href="docs/installation.pt-BR.md">Instalação e configuração do MCP</a> &nbsp;·&nbsp;
-  <a href="#desenvolvimento">Executar pelo código-fonte</a>
+  <a href="#desenvolvimento">Executar pelo código-fonte</a> &nbsp;·&nbsp;
+  <a href="CHANGELOG.pt-BR.md">Histórico de versões</a>
 </p>
 
 ![Quadro do Trama com tarefas atribuídas à pessoa ou ao agente em quatro colunas](docs/images/pt-BR/board.png)
@@ -28,7 +29,7 @@ Escreva o briefing, anexe o contexto e coloque a tarefa na fila do agente. O Tra
 
 ## Primeiros passos
 
-O Trama está em desenvolvimento inicial. Os instaladores ainda não foram publicados; por enquanto, você pode [executar pelo código-fonte](#desenvolvimento). O canal de download planejado é o GitHub Releases, com um `.dmg` para macOS e um `.exe` para Windows.
+O Trama está em desenvolvimento inicial. Baixe os instaladores de teste no [GitHub Releases](https://github.com/builtbyajax/Trama/releases), com um `.dmg` para macOS e um `.exe` para Windows, ou [execute pelo código-fonte](#desenvolvimento). Leia o [guia de instalação](docs/installation.pt-BR.md) antes de abrir o app.
 
 A interface está disponível em inglês e português brasileiro. Escolha o idioma em **Preferências → Idioma**. As capturas mostram a interface real com dados de demonstração.
 
@@ -100,6 +101,8 @@ npm run tauri dev
 
 Para abrir a interface de desenvolvimento no navegador, use `npm run dev`. Ela se conecta ao mesmo núcleo Rust por uma ponte local em `http://127.0.0.1:1420`.
 
+Os comandos de desenvolvimento usam `.trama-local/development` para os dados por padrão, evitando que mudanças de schema migrem os bancos do app instalado. `TRAMA_HOME` ou `TRAMA_DB` explícitos selecionam outro local. Use `TRAMA_DEV_PERSONAL=1` somente quando quiser usar e possivelmente migrar seus dados pessoais.
+
 Para gerar o pacote do aplicativo no seu sistema:
 
 ```sh
@@ -113,10 +116,14 @@ Antes de enviar mudanças, execute estas verificações a partir de `app/`:
 ```sh
 npm run typecheck
 npm run format:check
+npm test
+cargo test --locked --manifest-path src-tauri/Cargo.toml --features agent-cli,dev-bridge
 cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --features agent-cli,dev-bridge -- -D warnings
 ```
 
 Use `TRAMA_DB` para apontar uma sessão de desenvolvimento para um banco separado.
+
+[Testes e CI](docs/testing.md)
 
 <details>
 <summary>Atalhos de teclado</summary>
