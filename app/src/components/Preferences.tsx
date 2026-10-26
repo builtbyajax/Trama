@@ -1,20 +1,91 @@
 import { useState } from "react";
-import { copyText } from "../lib/api";
-import type { Project, Snapshot } from "../lib/types";
-import { Icon } from "./Icon";
+import { copyText, errorMessage, revealLabel, revealPath } from "../lib/api";
+import type { Project, Snapshot, Workspace, Workspaces } from "../lib/types";
+import { CopyIcon, Icon } from "./Icon";
+import { ContextMenu, type MenuItem } from "./Sidebar";
+import { workspaceName } from "./Workspaces";
 import { language, languages, setLanguage, t } from "../lib/i18n";
 
 export function Preferences({
   data,
+  workspaces,
+  onEditWorkspace,
+  onLeaveWorkspace,
+  notify,
   onEdit,
+  onAddProject,
 }: {
   data: Snapshot;
+  workspaces: Workspaces | null;
+  onEditWorkspace: (workspace: Workspace) => void;
+  /** Asks before the workspace leaves the list or is deleted, the open one included. */
+  onLeaveWorkspace: (workspace: Workspace, mode: "remove" | "delete") => void;
+  notify: (message: string, error?: boolean) => void;
   onEdit: (project: Project) => void;
+  onAddProject: () => void;
 }) {
   const [copied, setCopied] = useState("");
+  /** The value just copied, whose button shows a check for a moment. */
+  const [justCopied, setJustCopied] = useState("");
+  const [menu, setMenu] = useState<{
+    workspace: Workspace;
+    x: number;
+    y: number;
+    trigger: HTMLElement;
+  } | null>(null);
+  const fail = (e: unknown) => notify(errorMessage(e), true);
+  const list = workspaces?.workspaces ?? [];
+  // Any workspace can go as long as one remains; the open one also needs another to switch to.
+  const canLeave = (workspace: Workspace) =>
+    workspace.path === workspaces?.active
+      ? list.some((w) => w.path !== workspace.path && !w.missing)
+      : list.length > 1;
+  const actions = (workspace: Workspace): MenuItem[] => [
+    {
+      label: t("Edit…"),
+      icon: "rename",
+      onSelect: () => onEditWorkspace(workspace),
+    },
+    ...(workspace.missing
+      ? []
+      : [
+          {
+            label: revealLabel(),
+            icon: "reveal" as const,
+            onSelect: () => void revealPath(workspace.path).catch(fail),
+          },
+        ]),
+    ...(!canLeave(workspace)
+      ? []
+      : [
+          {
+            label: t("Remove from list…"),
+            icon: "close" as const,
+            separated: true,
+            onSelect: () => onLeaveWorkspace(workspace, "remove"),
+          },
+          ...(workspace.missing
+            ? []
+            : [
+                {
+                  label: t("Delete…"),
+                  icon: "trash" as const,
+                  danger: true,
+                  onSelect: () => onLeaveWorkspace(workspace, "delete"),
+                },
+              ]),
+        ]),
+  ];
   const copy = (value: string, label: string) =>
     void copyText(value)
-      .then(() => setCopied(label))
+      .then(() => {
+        setCopied(label);
+        setJustCopied(value);
+        window.setTimeout(
+          () => setJustCopied((now) => (now === value ? "" : now)),
+          1400,
+        );
+      })
       .catch(() => setCopied(t("Couldn't copy.")));
   return (
     <div className="page scroll">
@@ -54,25 +125,92 @@ export function Preferences({
           </div>
         </section>
         <section className="settings-group">
-          <h2>{t("Database")}</h2>
+          <h2>{t("Workspaces")}</h2>
           <p className="muted">
-            {t(
-              "This Trama's data stays on this computer. The Git screen is read-only: Trama doesn't change branches or push anything.",
-            )}
+            {workspaces?.pinned
+              ? t("TRAMA_DB chose this database, so workspaces can't change.")
+              : t(
+                  "Each workspace is a database file on this computer, with its own projects. Agents follow the open one. The Git screen is read-only: Trama doesn't change branches or push anything.",
+                )}
           </p>
-          <div className="settings-row">
-            <code className="path-text" title={data.databasePath}>
-              {data.databasePath}
-            </code>
-            <button
-              type="button"
-              className="icon-button"
-              aria-label={t("Copy database path")}
-              onClick={() => copy(data.databasePath, t("Path copied."))}
-            >
-              <Icon name="copy" size={14} />
-            </button>
-          </div>
+          <ul className="settings-list">
+            {(workspaces && !workspaces.pinned
+              ? workspaces.workspaces
+              : [
+                  {
+                    name: "",
+                    path: data.databasePath,
+                    missing: false,
+                    color: null,
+                    icon: null,
+                  },
+                ]
+            ).map((workspace) => (
+              <li className="settings-row" key={workspace.path}>
+                <div className="settings-text">
+                  <span className="truncate">
+                    {workspaceName(workspace)}
+                    {workspace.path === data.databasePath && (
+                      <span className="settings-tag">{t("Open now")}</span>
+                    )}
+                    {workspace.missing && (
+                      <span className="settings-tag warning">
+                        {t("Not found")}
+                      </span>
+                    )}
+                  </span>
+                  <code className="selectable" title={workspace.path}>
+                    {workspace.path}
+                  </code>
+                </div>
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label={t("Copy path of {0}", [workspaceName(workspace)])}
+                  onClick={() => copy(workspace.path, t("Path copied."))}
+                >
+                  <CopyIcon copied={justCopied === workspace.path} size={14} />
+                </button>
+                {workspaces && !workspaces.pinned && (
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label={t("Actions for {0}", [
+                      workspaceName(workspace),
+                    ])}
+                    aria-haspopup="menu"
+                    aria-expanded={menu?.workspace.path === workspace.path}
+                    onClick={(event) => {
+                      if (menu?.workspace.path === workspace.path)
+                        return setMenu(null);
+                      const rect = event.currentTarget.getBoundingClientRect();
+                      setMenu({
+                        workspace,
+                        x: rect.left,
+                        y: rect.bottom + 4,
+                        trigger: event.currentTarget,
+                      });
+                    }}
+                  >
+                    <Icon name="more" size={14} />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+          {menu && (
+            <ContextMenu
+              x={menu.x}
+              y={menu.y}
+              label={t("Actions for {0}", [workspaceName(menu.workspace)])}
+              anchor={{ current: menu.trigger }}
+              items={actions(menu.workspace)}
+              onClose={(restoreFocus) => {
+                if (restoreFocus) menu.trigger.focus();
+                setMenu(null);
+              }}
+            />
+          )}
         </section>
         <section className="settings-group">
           <h2>{t("Projects and MCP integration")}</h2>
@@ -92,7 +230,7 @@ export function Preferences({
                   aria-label={t("Copy ID of {0}", [project.name])}
                   onClick={() => copy(project.id, t("ID copied."))}
                 >
-                  <Icon name="copy" size={14} />
+                  <CopyIcon copied={justCopied === project.id} size={14} />
                 </button>
                 <button
                   type="button"
@@ -103,10 +241,18 @@ export function Preferences({
                 </button>
               </li>
             ))}
+            {data.projects.length === 0 && (
+              <li className="settings-row">
+                <span className="settings-text muted">
+                  {t("No projects created yet.")}
+                </span>
+                <button type="button" className="button" onClick={onAddProject}>
+                  <Icon name="plus" size={14} />
+                  {t("Add project")}
+                </button>
+              </li>
+            )}
           </ul>
-          {data.projects.length === 0 && (
-            <p className="muted">{t("No projects created.")}</p>
-          )}
         </section>
         <p className="muted small" role="status">
           {copied}

@@ -91,9 +91,12 @@
   --toolbar-h: 44px;
   --island-gap: 8px;
   --page-x: 24px;
-  /* The scrollbar takes room beside the content, so an area that scrolls reserves it and gives
-     it back from its right padding: both sides keep the same inset, scrolling or not. */
-  --bar: 8px;
+  /* The scrollbar's width, and the room it takes beside the content. An area that scrolls
+     reserves that room and gives it back from its right padding: both sides keep the same
+     inset, scrolling or not. The macOS WebKit only takes the room while the area scrolls, so the
+     board's lanes measure it themselves (`useScrollbarRoom`). */
+  --bar-width: 8px;
+  --bar: var(--bar-width);
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --radius-card: 10px;
   --radius-control: 7px;

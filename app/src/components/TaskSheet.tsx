@@ -17,6 +17,7 @@ import {
   isAgentWorking,
   statusTitle,
   type GitFocus,
+  type Goal,
   type Project,
   type Task,
   type TaskStatus,
@@ -33,7 +34,7 @@ import { Icon } from "./Icon";
 import { KeyHint } from "./KeyHint";
 import { Select } from "./Select";
 import { TaskDelete } from "./TaskDelete";
-import { statusOptions } from "./TaskFields";
+import { goalOptions, statusOptions } from "./TaskFields";
 import { TaskDocuments } from "./notes/TaskDocuments";
 import { t } from "../lib/i18n";
 
@@ -78,6 +79,7 @@ export function TaskSheet({
   project,
   categories,
   branches,
+  goals,
   onOpenNote,
   mode,
   backLabel,
@@ -96,6 +98,8 @@ export function TaskSheet({
   categories: string[];
   /** The project's local branches; null while unknown. */
   branches: string[] | null;
+  /** The project's goals. */
+  goals: Goal[];
   onOpenNote: (path: string) => void;
   mode: SheetMode;
   /** Where the page's back button returns to. */
@@ -320,6 +324,21 @@ export function TaskSheet({
                   categories={categories}
                   onChange={(category) => save.change({ category }, 0)}
                 />
+                {(goals.length > 0 || value.goalId) && (
+                  <Select
+                    label={t("Goal")}
+                    size="sm"
+                    className={`prop-chip goal-chip ${value.goalId ? "" : "empty"}`}
+                    value={value.goalId ?? ""}
+                    options={goalOptions(goals, value.goalId).map((o) => ({
+                      ...o,
+                      icon: <Icon name="target" size={12} />,
+                    }))}
+                    onChange={(goalId) =>
+                      save.change({ goalId: goalId || null }, 0)
+                    }
+                  />
+                )}
                 {repository ? (
                   <BranchMenu
                     projectId={task.projectId}

@@ -4,31 +4,38 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
+  type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
 import { usePopover } from "../hooks/usePopover";
-import type { Project, Task, TaskAssignee } from "../lib/types";
+import { revealLabel } from "../lib/api";
+import type { Goal, Project, Task, TaskAssignee } from "../lib/types";
 import { ariaKeys, shortcutLabel, shortcuts } from "../lib/shortcuts";
 import { Icon } from "./Icon";
 import { KeyHint } from "./KeyHint";
 import { ProjectMark } from "./ProjectMark";
 import { Select } from "./Select";
+import { goalChoices } from "./Goals";
+import { ContextMenu } from "./Sidebar";
 import { locale, t } from "../lib/i18n";
 
 /**
- * `branch` is "*" for every task, "" for tasks without a branch, or a branch name. `archived`
- * swaps the board for the list of archived tasks (see `isArchived`).
+ * `branch` is "*" for every task, "" for tasks without a branch, or a branch name. `goal` is "*"
+ * or the id of the goal the board is open on. `archived` swaps the board for the list of archived
+ * tasks (see `isArchived`).
  */
 export type BoardFilter = {
   assignee: "all" | TaskAssignee;
   category: string;
   branch: string;
+  goal: string;
   archived: boolean;
 };
 export const defaultFilter: BoardFilter = {
   assignee: "all",
   category: "*",
   branch: "*",
+  goal: "*",
   archived: false,
 };
 
@@ -49,24 +56,88 @@ export function ProjectHeader({
   color,
   tasks,
   archivedCount,
+  goals,
+  goal,
   mode,
   filter,
   onMode,
   onFilter,
   onManageCategories,
+  onReveal,
+  onShowConcluded,
+  onNewGoal,
 }: {
   project: Project;
   color: string;
   /** The project's board tasks, or its archived ones while those are shown; unfiltered. */
   tasks: Task[];
   archivedCount: number;
+  /** The project's goals. */
+  goals: Goal[];
+  /**
+   * The goal the board is filtered by: its name follows the project's in the title and switches
+   * to another goal or edits it, its progress and date sit beside it, its description ends the
+   * line below and concluding or reopening it sits beside the view switch.
+   */
+  goal?: {
+    id: string;
+    name: string;
+    description: string;
+    summary: ReactNode;
+    actions: ReactNode;
+    onEdit: () => void;
+    onDelete: () => void;
+    onClear: () => void;
+  };
   mode: ProjectMode;
   filter: BoardFilter;
   onMode: (mode: ProjectMode) => void;
   onFilter: (patch: Partial<BoardFilter>) => void;
   onManageCategories: () => void;
+  /** Shows the folder in Finder (Explorer elsewhere). */
+  onReveal: (path: string) => void;
+  /** Opens every concluded goal, from the goal menus. */
+  onShowConcluded: () => void;
+  onNewGoal: () => void;
 }) {
-  const withAgent = tasks.filter(
+  const goalSwitch = useRef<HTMLButtonElement>(null);
+  const [goalMenu, setGoalMenu] = useState<{ x: number; y: number } | null>(
+    null,
+  );
+  const goalPicker = useRef<HTMLButtonElement>(null);
+  const [pickerMenu, setPickerMenu] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  // The folder under the goal menu stays still while the menu is open, and until the pointer leaves
+  // it once the menu closes; the press that closes the menu, outside it, doesn't reveal it either.
+  const [quiet, setQuiet] = useState(false);
+  const overFolder = useRef(false);
+  const menuClosedAt = useRef(-1);
+  const pressedAt = useRef(0);
+  const reveal = (path: string) => ({
+    className: `page-repo ${quiet ? "quiet" : ""}`,
+    "data-tooltip": quiet ? undefined : path,
+    onPointerEnter: () => {
+      overFolder.current = true;
+    },
+    onPointerLeave: () => {
+      overFolder.current = false;
+      if (!pickerMenu) setQuiet(false);
+    },
+    onPointerDown: (event: { timeStamp: number }) => {
+      pressedAt.current = event.timeStamp;
+    },
+    onClick: (event: { detail: number }) => {
+      if (event.detail > 0 && menuClosedAt.current >= pressedAt.current) return;
+      onReveal(path);
+    },
+  });
+  // With a goal open, the summary line counts that goal's tasks.
+  const counted = goal
+    ? tasks.filter((task) => task.goalId === goal.id)
+    : tasks;
+  const withAgent = counted.filter(
     (task) => task.assignee === "agent" && task.status !== "done",
   ).length;
   const categories = [...new Set(tasks.map((task) => task.category))].sort(
@@ -100,33 +171,161 @@ export function ProjectHeader({
         <div className="page-title">
           <h1>
             <ProjectMark project={project} color={color} size="large" />
-            <span className="truncate">{project.name}</span>
+            {goal ? (
+              <>
+                <button
+                  type="button"
+                  className="page-crumb truncate"
+                  data-tooltip={t("Show every task")}
+                  onClick={goal.onClear}
+                >
+                  {project.name}
+                </button>
+                <Icon name="chevronRight" size={14} />
+                <button
+                  ref={goalSwitch}
+                  type="button"
+                  className="page-goal-switch"
+                  aria-haspopup="menu"
+                  aria-expanded={!!goalMenu}
+                  onClick={() => {
+                    if (goalMenu) return setGoalMenu(null);
+                    const rect = goalSwitch.current!.getBoundingClientRect();
+                    setGoalMenu({ x: rect.left, y: rect.bottom + 6 });
+                  }}
+                >
+                  <span className="truncate">{goal.name}</span>
+                  <Icon name="chevronUpDown" size={14} />
+                </button>
+                {goal.summary}
+              </>
+            ) : (
+              <>
+                <span className="truncate">{project.name}</span>
+                {mode === "board" && goals.length > 0 && (
+                  <button
+                    ref={goalPicker}
+                    type="button"
+                    className="icon-button small page-goal-open"
+                    aria-label={t("Open a goal")}
+                    aria-haspopup="menu"
+                    aria-expanded={!!pickerMenu}
+                    data-tooltip={pickerMenu ? undefined : t("Open a goal")}
+                    onClick={() => {
+                      if (pickerMenu) return setPickerMenu(null);
+                      const rect = goalPicker.current!.getBoundingClientRect();
+                      setPickerMenu({ x: rect.left, y: rect.bottom + 6 });
+                      setQuiet(true);
+                    }}
+                  >
+                    <Icon name="target" size={14} />
+                  </button>
+                )}
+              </>
+            )}
           </h1>
           <p>
             {filter.archived
-              ? tasks.length === 1
+              ? counted.length === 1
                 ? t("1 archived task")
-                : t("{0} archived tasks", [tasks.length])
-              : tasks.length === 1
+                : t("{0} archived tasks", [counted.length])
+              : counted.length === 1
                 ? t("1 task")
-                : t("{0} tasks", [tasks.length])}
+                : t("{0} tasks", [counted.length])}
             {!filter.archived &&
               withAgent > 0 &&
               t(", {0} with the agent", [withAgent])}
-            {mode === "notes" && project.documentsFolder && (
-              <span className="page-repo" title={project.documentsFolder}>
+            {!goal && mode === "notes" && project.documentsFolder && (
+              <button
+                type="button"
+                aria-label={`${revealLabel()}: ${project.documentsFolder}`}
+                {...reveal(project.documentsFolder)}
+              >
                 <Icon name="vault" size={12} />
-                {project.documentsFolder.split(/[\\/]/).filter(Boolean).pop()}
-              </span>
+                <span className="truncate">
+                  {project.documentsFolder.split(/[\\/]/).filter(Boolean).pop()}
+                </span>
+              </button>
             )}
-            {mode === "board" && project.repositoryPath && (
-              <span className="page-repo" title={project.repositoryPath}>
+            {!goal && mode === "board" && project.repositoryPath && (
+              <button
+                type="button"
+                aria-label={`${revealLabel()}: ${project.repositoryPath}`}
+                {...reveal(project.repositoryPath)}
+              >
                 <Icon name="folder" size={12} />
-                {project.repositoryPath.split(/[\\/]/).filter(Boolean).pop()}
+                <span className="truncate">
+                  {project.repositoryPath.split(/[\\/]/).filter(Boolean).pop()}
+                </span>
+              </button>
+            )}
+            {goal?.description && (
+              <span
+                className="page-goal-description truncate"
+                title={goal.description}
+              >
+                {goal.description}
               </span>
             )}
           </p>
         </div>
+        {goal?.actions}
+        {goal && goalMenu && (
+          <ContextMenu
+            x={goalMenu.x}
+            y={goalMenu.y}
+            anchor={goalSwitch}
+            label={t("Goals")}
+            items={[
+              ...goalChoices(goals, goal.id, (id) => onFilter({ goal: id }), {
+                recent: 3,
+                onShowAll: onShowConcluded,
+                onNew: onNewGoal,
+              }),
+              {
+                label: t("Edit goal…"),
+                icon: "pencil" as const,
+                separated: true,
+                onSelect: goal.onEdit,
+              },
+              {
+                label: t("Show every task"),
+                icon: "board" as const,
+                onSelect: goal.onClear,
+              },
+              {
+                label: t("Delete goal…"),
+                icon: "trash" as const,
+                danger: true,
+                separated: true,
+                onSelect: goal.onDelete,
+              },
+            ]}
+            onClose={(restoreFocus) => {
+              if (restoreFocus) goalSwitch.current?.focus();
+              setGoalMenu(null);
+            }}
+          />
+        )}
+        {pickerMenu && (
+          <ContextMenu
+            x={pickerMenu.x}
+            y={pickerMenu.y}
+            anchor={goalPicker}
+            label={t("Open a goal")}
+            items={goalChoices(goals, null, (id) => onFilter({ goal: id }), {
+              recent: 3,
+              onShowAll: onShowConcluded,
+              onNew: onNewGoal,
+            })}
+            onClose={(restoreFocus) => {
+              if (restoreFocus) goalPicker.current?.focus();
+              menuClosedAt.current = performance.now();
+              setQuiet(overFolder.current);
+              setPickerMenu(null);
+            }}
+          />
+        )}
         <div className="segmented" role="group" aria-label={t("Project view")}>
           <button
             type="button"

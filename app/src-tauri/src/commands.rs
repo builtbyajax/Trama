@@ -2,6 +2,7 @@
 use crate::{
     documents, git,
     store::{self, Store},
+    workspaces,
 };
 use serde_json::{json, Value};
 fn text<'a>(args: &'a Value, name: &str) -> store::Result<&'a str> {
@@ -13,6 +14,39 @@ fn encoded<T: serde::Serialize>(value: store::Result<T>) -> store::Result<Value>
     serde_json::to_value(value?).map_err(|e| e.to_string())
 }
 pub fn execute(command: &str, args: Value) -> store::Result<Value> {
+    // Workspace commands come before opening the database: they choose which one that is.
+    let workspace = || text(&args, "path");
+    match command {
+        "list_workspaces" => return encoded(Ok(workspaces::list())),
+        "create_workspace" => {
+            return encoded(workspaces::create(
+                text(&args, "name")?,
+                text(&args, "folder")?,
+                args["color"].as_i64(),
+                args["icon"].as_str(),
+            ))
+        }
+        "open_workspace" => return encoded(workspaces::open(workspace()?)),
+        "switch_workspace" => return encoded(workspaces::switch(workspace()?)),
+        "edit_workspace" => {
+            return encoded(workspaces::edit(
+                workspace()?,
+                text(&args, "name")?,
+                args["color"].as_i64(),
+                args["icon"].as_str(),
+            ))
+        }
+        "remove_workspace" => return encoded(workspaces::remove(workspace()?)),
+        "delete_workspace" => return encoded(workspaces::delete(workspace()?)),
+        "relocate_workspace" => {
+            return encoded(workspaces::relocate(workspace()?, text(&args, "folder")?))
+        }
+        #[cfg(feature = "dev-bridge")]
+        "choose_file" => {
+            return encoded(choose_file(args["title"].as_str().unwrap_or("Choose file")))
+        }
+        _ => {}
+    }
     let store = Store::open_default()?;
     let project = || text(&args, "projectId");
     let task = || text(&args, "taskId");
@@ -43,6 +77,9 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
             ))
         }
         "delete_project" => encoded(store.delete_project(project()?)),
+        "move_project" => {
+            encoded(store.move_project_to(project()?, std::path::Path::new(workspace()?)))
+        }
         "save_task" => {
             let input: store::TaskInput =
                 serde_json::from_value(args["input"].clone()).map_err(|e| e.to_string())?;
@@ -78,6 +115,23 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
             text(&args, "name")?,
             args["replacement"].as_str(),
         )),
+        "save_goal" => encoded(store.save_goal(
+            args["goalId"].as_str(),
+            project()?,
+            text(&args, "name")?,
+            args["description"].as_str().unwrap_or(""),
+            args["targetDate"].as_str(),
+        )),
+        "complete_goal" => encoded(
+            store.complete_goal(
+                text(&args, "goalId")?,
+                project()?,
+                args["completed"]
+                    .as_bool()
+                    .ok_or("Missing argument: completed")?,
+            ),
+        ),
+        "delete_goal" => encoded(store.delete_goal(text(&args, "goalId")?, project()?)),
         "promote_draft" => encoded(store.promote_draft(task()?, project()?)),
         "delete_task" => encoded(store.delete_task(task()?, project()?)),
         "archive_task" => encoded(
@@ -186,4 +240,22 @@ fn choose_directory(title: &str, default: Option<&str>) -> store::Result<Option<
     }
     let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
     Ok((!path.is_empty()).then(|| path.trim_end_matches('/').to_string()))
+}
+
+/// The browser preview's stand-in for the app's file dialog: a database file from Finder.
+#[cfg(feature = "dev-bridge")]
+fn choose_file(title: &str) -> store::Result<Option<String>> {
+    if !cfg!(target_os = "macos") {
+        return Err("The browser's file picker only exists on macOS.".into());
+    }
+    let script = format!(
+        "POSIX path of (choose file with prompt \"{}\" of type {{\"sqlite\", \"db\"}})",
+        title.replace('\\', "\\\\").replace('"', "\\\"")
+    );
+    let output = std::process::Command::new("osascript")
+        .args(["-e", &script])
+        .output()
+        .map_err(|e| e.to_string())?;
+    let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    Ok((output.status.success() && !path.is_empty()).then_some(path))
 }

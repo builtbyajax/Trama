@@ -2,7 +2,7 @@
 use super::Agent;
 use crate::{
     git,
-    store::{Category, Message, Project, Result, Task, TaskInput, TaskPatch, STATUSES},
+    store::{Category, Goal, Message, Project, Result, Task, TaskInput, TaskPatch, STATUSES},
 };
 use serde::Serialize;
 use serde_json::{json, Map, Value};
@@ -107,6 +107,11 @@ impl Agent {
                             && text(args, "category")
                                 .is_none_or(|v| t.category.eq_ignore_ascii_case(v))
                             && text(args, "assignee").is_none_or(|v| t.assignee == v)
+                            && text(args, "goal_id").is_none_or(|v| {
+                                t.goal_id
+                                    .as_deref()
+                                    .is_some_and(|g| g.eq_ignore_ascii_case(v))
+                            })
                     })
                     .collect();
                 // The board's order: column by column, top card first.
@@ -150,6 +155,7 @@ impl Agent {
                     commit_hash: nullable_text(args, "commit_hash").flatten(),
                     pull_request_url: nullable_text(args, "pull_request_url").flatten(),
                     pull_request_number: args.get("pull_request_number").and_then(Value::as_i64),
+                    goal_id: nullable_text(args, "goal_id").flatten(),
                 };
                 Ok(task_value(&self.store.save_task_as(None, input, "agent")?))
             }
@@ -169,6 +175,7 @@ impl Agent {
                     commit_hash: nullable_text(args, "commit_hash"),
                     pull_request_url: nullable_text(args, "pull_request_url"),
                     pull_request_number: args.get("pull_request_number").map(Value::as_i64),
+                    goal_id: nullable_text(args, "goal_id"),
                 };
                 Ok(task_value(&self.store.edit_task_as(
                     task()?,
@@ -192,6 +199,37 @@ impl Agent {
                     text(args, "after_id"),
                     "agent",
                 )?))
+            }
+            "list_goals" => {
+                let tasks = self.store.tasks(Some(&project))?;
+                let goals = self.store.goals(Some(&project))?;
+                Ok(json!({"goals":goals.iter().map(|g| goal_value(g, &tasks)).collect::<Vec<_>>()}))
+            }
+            "create_goal" => {
+                let goal = self.store.save_goal(
+                    None,
+                    &project,
+                    required(args, "name")?,
+                    text(args, "description").unwrap_or(""),
+                    text(args, "target_date"),
+                )?;
+                Ok(goal_value(&goal, &[]))
+            }
+            "update_goal" => {
+                require_changes(args, &["project_id", "goal_id"])?;
+                let goal = self.store.goal(required(args, "goal_id")?, &project)?;
+                let target_date = match args.get("target_date") {
+                    Some(value) => value.as_str(),
+                    None => goal.target_date.as_deref(),
+                };
+                let goal = self.store.save_goal(
+                    Some(&goal.id),
+                    &project,
+                    text(args, "name").unwrap_or(&goal.name),
+                    text(args, "description").unwrap_or(&goal.description),
+                    target_date,
+                )?;
+                Ok(goal_value(&goal, &self.store.tasks(Some(&project))?))
             }
             "promote_draft" => {
                 let t = self.store.task(task()?, &project)?;
@@ -367,7 +405,19 @@ fn project_value(p: &Project) -> Value {
     json!({"id":p.id,"name":p.name,"repository_path":p.repository_path,"notes_folder":p.documents_folder,"created_at":timestamp(p.created_at)})
 }
 fn task_value(t: &Task) -> Value {
-    json!({"id":t.id,"project_id":t.project_id,"title":t.title,"details":t.details,"category":t.category,"assignee":t.assignee,"status":t.status,"position":t.position,"agent_summary":t.agent_summary,"repository_branch":t.repository_branch,"commit_hash":t.commit_hash,"pull_request_url":t.pull_request_url,"pull_request_number":t.pull_request_number,"checks_total":t.checks_total,"checks_done":t.checks_done,"message_count":t.message_count,"document_count":t.document_count,"created_at":timestamp(t.created_at),"updated_at":timestamp(t.updated_at)})
+    json!({"id":t.id,"project_id":t.project_id,"title":t.title,"details":t.details,"category":t.category,"assignee":t.assignee,"status":t.status,"position":t.position,"agent_summary":t.agent_summary,"repository_branch":t.repository_branch,"commit_hash":t.commit_hash,"pull_request_url":t.pull_request_url,"pull_request_number":t.pull_request_number,"goal_id":t.goal_id,"checks_total":t.checks_total,"checks_done":t.checks_done,"message_count":t.message_count,"document_count":t.document_count,"created_at":timestamp(t.created_at),"updated_at":timestamp(t.updated_at)})
+}
+/// A goal with its progress among `tasks`: drafts aren't on the board yet, so they don't count.
+fn goal_value(g: &Goal, tasks: &[Task]) -> Value {
+    let counted: Vec<&Task> = tasks
+        .iter()
+        .filter(|t| {
+            t.goal_id.as_deref() == Some(g.id.as_str())
+                && !["preparing", "reserved"].contains(&t.status.as_str())
+        })
+        .collect();
+    let done = counted.iter().filter(|t| t.status == "done").count();
+    json!({"id":g.id,"project_id":g.project_id,"name":g.name,"description":g.description,"target_date":g.target_date,"completed_at":g.completed_at.map(timestamp),"tasks_total":counted.len(),"tasks_done":done,"created_at":timestamp(g.created_at)})
 }
 fn message_value(m: &Message) -> Value {
     json!({"id":m.id,"task_id":m.task_id,"author":m.author,"body":m.body,"created_at":timestamp(m.created_at)})

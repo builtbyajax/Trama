@@ -1,4 +1,6 @@
 import {
+  Fragment,
+  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -6,6 +8,7 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
 import type { Project } from "../lib/types";
@@ -19,6 +22,8 @@ import { Icon, type IconName } from "./Icon";
 import { KeyHint } from "./KeyHint";
 import { ProjectMark } from "./ProjectMark";
 import { t } from "../lib/i18n";
+import { useScrollbarRoom } from "../hooks/useScrollbarRoom";
+import { SidebarLeaving } from "./SidebarSlot";
 
 export type Destination =
   | { kind: "overview" }
@@ -38,6 +43,11 @@ interface SidebarProps {
   onAddProject: () => void;
   onEditProject: (project: Project) => void;
   onDeleteProject: (project: Project) => void;
+  onMoveProject: (project: Project) => void;
+  /** Under the open project's row: its goals. */
+  projectExtra?: ReactNode;
+  /** The workspace switcher, above everything else. */
+  workspace?: ReactNode;
   onShortcuts: () => void;
   /** Icons only, with names in tooltips: the Notes tab keeps it beside its own notes list. */
   rail?: boolean;
@@ -73,11 +83,16 @@ export function Sidebar({
   onAddProject,
   onEditProject,
   onDeleteProject,
+  onMoveProject,
+  projectExtra,
+  workspace,
   onShortcuts,
   rail = false,
   onPeek,
   onPeekLeave,
 }: SidebarProps) {
+  const projectList = useRef<HTMLDivElement>(null);
+  useScrollbarRoom(projectList);
   const [menu, setMenu] = useState<{
     project: Project;
     x: number;
@@ -93,6 +108,7 @@ export function Sidebar({
       className={`sidebar ${rail ? "rail" : ""}`}
       aria-label={t("Navigation")}
     >
+      {workspace}
       <div className="sidebar-group">
         <NavItem
           rail={rail}
@@ -136,36 +152,38 @@ export function Sidebar({
           <Icon name="plus" size={13} />
         </button>
       </div>
-      <div className="sidebar-group grow scroll">
+      <div ref={projectList} className="sidebar-group grow scroll">
         {projects.map((project, index) => {
           const open =
             destination.kind === "project" && destination.id === project.id;
           return (
-            <NavItem
-              rail={rail}
-              onHover={open ? onPeek : undefined}
-              onLeave={open ? onPeekLeave : undefined}
-              key={project.id}
-              label={project.name}
-              keys={projectShortcut(index)}
-              count={openCounts[project.id] || undefined}
-              leading={<ProjectMark project={project} />}
-              menuOpen={menu?.project.id === project.id}
-              onContextMenu={(event) => {
-                event.preventDefault();
-                const rect = event.currentTarget.getBoundingClientRect();
-                // The context-menu key reports no pointer position; open under the row then.
-                const keyboard = event.clientX === 0 && event.clientY === 0;
-                setMenu({
-                  project,
-                  x: keyboard ? rect.left + 12 : event.clientX,
-                  y: keyboard ? rect.bottom : event.clientY,
-                  trigger: event.currentTarget,
-                });
-              }}
-              selected={open}
-              onClick={() => onNavigate({ kind: "project", id: project.id })}
-            />
+            <Fragment key={project.id}>
+              <NavItem
+                rail={rail}
+                onHover={open ? onPeek : undefined}
+                onLeave={open ? onPeekLeave : undefined}
+                label={project.name}
+                keys={projectShortcut(index)}
+                count={openCounts[project.id] || undefined}
+                leading={<ProjectMark project={project} />}
+                menuOpen={menu?.project.id === project.id}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  // The context-menu key reports no pointer position; open under the row then.
+                  const keyboard = event.clientX === 0 && event.clientY === 0;
+                  setMenu({
+                    project,
+                    x: keyboard ? rect.left + 12 : event.clientX,
+                    y: keyboard ? rect.bottom : event.clientY,
+                    trigger: event.currentTarget,
+                  });
+                }}
+                selected={open}
+                onClick={() => onNavigate({ kind: "project", id: project.id })}
+              />
+              {open && !rail && projectExtra}
+            </Fragment>
           );
         })}
         {projects.length === 0 && (
@@ -174,6 +192,7 @@ export function Sidebar({
             className="sidebar-empty"
             onClick={onAddProject}
           >
+            <DashedOutline />
             {t("Add your first project")}
           </button>
         )}
@@ -200,6 +219,11 @@ export function Sidebar({
               label: t("Edit project…"),
               icon: "pencil",
               onSelect: () => onEditProject(menu.project),
+            },
+            {
+              label: t("Move to another workspace…"),
+              icon: "arrowRight",
+              onSelect: () => onMoveProject(menu.project),
             },
             {
               label: t("Delete project…"),
@@ -301,12 +325,21 @@ function NavItem({
 
 export interface MenuItem {
   label: string;
-  icon: IconName;
+  /** Left out, the row keeps the icon's room so labels stay aligned. */
+  icon?: IconName;
+  /** Drawn in the icon's place, for rows that stand for something with its own mark. */
+  leading?: ReactNode;
+  /** The current choice among the rows: a check at the end. */
+  checked?: boolean;
   /** A shortcut or gesture that does the same, shown at the end. */
   hint?: string;
   danger?: boolean;
+  /** Grayed, for rows that stand for something finished. */
+  muted?: boolean;
   /** Starts a new group: a line is drawn above it. */
   separated?: boolean;
+  /** Names the group it starts, above its first row. */
+  section?: string;
   onSelect: () => void;
 }
 
@@ -320,13 +353,24 @@ export function ContextMenu({
   label,
   items,
   onClose,
+  anchor,
+  heading,
+  width,
+  className = "",
 }: {
   x: number;
   y: number;
   label: string;
   items: MenuItem[];
   onClose: (restoreFocus: boolean) => void;
+  /** The button that opened the menu: pressing it again is left to its own click, which closes. */
+  anchor?: RefObject<HTMLElement | null>;
+  /** A quiet title above the rows. */
+  heading?: string;
+  width?: number;
+  className?: string;
 }) {
+  const leaving = useContext(SidebarLeaving);
   const ref = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ left: x, top: y });
   useLayoutEffect(() => {
@@ -343,11 +387,17 @@ export function ContextMenu({
         Math.min(y, window.innerHeight - menu.offsetHeight - margin),
       ),
     });
-    menu.querySelector<HTMLElement>("[role=menuitem]")?.focus();
+    (
+      menu.querySelector<HTMLElement>("[aria-checked=true]") ??
+      menu.querySelector<HTMLElement>("[role^=menuitem]")
+    )?.focus();
   }, [x, y]);
   useEffect(() => {
     const outside = (event: Event) => {
-      if (!ref.current?.contains(event.target as Node)) onClose(false);
+      const target = event.target as Node;
+      if (ref.current?.contains(target) || anchor?.current?.contains(target))
+        return;
+      onClose(false);
     };
     const dismiss = () => onClose(false);
     document.addEventListener("pointerdown", outside, true);
@@ -361,10 +411,10 @@ export function ContextMenu({
       window.removeEventListener("blur", dismiss);
       window.removeEventListener("resize", dismiss);
     };
-  }, [onClose]);
+  }, [onClose, anchor]);
   function keyDown(event: KeyboardEvent<HTMLDivElement>) {
     const options = [
-      ...event.currentTarget.querySelectorAll<HTMLElement>("[role=menuitem]"),
+      ...event.currentTarget.querySelectorAll<HTMLElement>("[role^=menuitem]"),
     ];
     const index = options.indexOf(document.activeElement as HTMLElement);
     const move = (next: number) => {
@@ -389,11 +439,16 @@ export function ContextMenu({
       ref={ref}
       role="menu"
       aria-label={label}
-      className="popover-list context-menu"
-      style={{ position: "fixed", ...position }}
+      className={`popover-list context-menu ${leaving ? "leaving" : ""} ${className}`}
+      style={{ position: "fixed", ...position, width }}
       onKeyDown={keyDown}
       onContextMenu={(event) => event.preventDefault()}
     >
+      {heading && (
+        <div className="menu-heading" aria-hidden="true">
+          {heading}
+        </div>
+      )}
       {items.map((item, index) => [
         item.separated && index > 0 && (
           <div
@@ -402,23 +457,62 @@ export function ContextMenu({
             className="menu-separator"
           />
         ),
+        item.section && (
+          <div
+            key={`${item.label}-section`}
+            className="menu-heading"
+            aria-hidden="true"
+          >
+            {item.section}
+          </div>
+        ),
         <button
           key={item.label}
           type="button"
-          role="menuitem"
+          role={item.checked === undefined ? "menuitem" : "menuitemradio"}
+          aria-checked={item.checked}
           tabIndex={-1}
-          className={`popover-option ${item.danger ? "danger" : ""}`}
+          className={`popover-option ${item.danger ? "danger" : ""} ${item.muted ? "muted" : ""}`}
           onClick={() => {
             onClose(false);
             item.onSelect();
           }}
         >
-          <Icon name={item.icon} size={14} />
+          {item.leading ??
+            (item.icon ? (
+              <Icon name={item.icon} size={14} />
+            ) : (
+              <span className="menu-icon-space" aria-hidden="true" />
+            ))}
           <span className="popover-label">{item.label}</span>
           {item.hint && <kbd className="popover-hint">{item.hint}</kbd>}
+          {item.checked && (
+            <span className="menu-check" aria-hidden="true">
+              <Icon name="check" size={14} />
+            </span>
+          )}
         </button>,
       ])}
     </div>,
     document.body,
+  );
+}
+
+/**
+ * A dashed border whose dashes always close evenly: CSS spaces them at a fixed length and leaves a
+ * gap where the perimeter runs out. `pathLength` makes the dash count fixed instead, so they
+ * stretch a little to fit. Drawn on the half pixel, so the 1px line stays sharp.
+ */
+function DashedOutline() {
+  return (
+    <svg className="dashed-outline" aria-hidden="true">
+      <rect
+        width="100%"
+        height="100%"
+        rx="6.5"
+        pathLength="100"
+        strokeDasharray="0.8 0.6286"
+      />
+    </svg>
   );
 }

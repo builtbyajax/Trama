@@ -16,6 +16,8 @@ import type {
   DocumentHit,
   DocumentListing,
   TaskDocument,
+  Workspaces,
+  Goal,
 } from "./types";
 import { known, t } from "./i18n";
 import { isMac, isWindows } from "./shortcuts";
@@ -78,6 +80,30 @@ export const moveTask = (
     status,
     afterId,
   });
+/** Creates a goal, or edits one when `goalId` is given. */
+export const saveGoal = (
+  projectId: string,
+  name: string,
+  description: string,
+  targetDate: string | null,
+  goalId: string | null = null,
+) =>
+  call<Goal>("save_goal", {
+    goalId,
+    projectId,
+    name,
+    description,
+    targetDate,
+  });
+export const completeGoal = (goal: Goal, completed: boolean) =>
+  call<Goal>("complete_goal", {
+    goalId: goal.id,
+    projectId: goal.projectId,
+    completed,
+  });
+/** Deletes the goal; its tasks stay, without one. */
+export const deleteGoal = (goal: Goal) =>
+  call<null>("delete_goal", { goalId: goal.id, projectId: goal.projectId });
 export const createCategory = (projectId: string, name: string) =>
   call<Category>("create_category", { projectId, name });
 export const deleteCategory = (
@@ -147,6 +173,48 @@ export async function chooseDirectory(
   const { open } = await import("@tauri-apps/plugin-dialog");
   return open({ directory: true, multiple: false, title, defaultPath });
 }
+/** A Trama database file from the system's picker; null when cancelled. */
+export async function chooseDatabase(
+  title = t("Open workspace"),
+): Promise<string | null> {
+  if (!inTauri()) return call<string | null>("choose_file", { title });
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  return open({
+    multiple: false,
+    directory: false,
+    title,
+    filters: [{ name: "Trama", extensions: ["sqlite", "db"] }],
+  });
+}
+export const listWorkspaces = () => call<Workspaces>("list_workspaces");
+/** Creates `<folder>/<name>.sqlite` and opens it. */
+export const createWorkspace = (
+  name: string,
+  folder: string,
+  color: number | null,
+  icon: string | null,
+) => call<Workspaces>("create_workspace", { name, folder, color, icon });
+/** Opens an existing database file, adding it to the list. */
+export const openWorkspace = (path: string) =>
+  call<Workspaces>("open_workspace", { path });
+export const switchWorkspace = (path: string) =>
+  call<Workspaces>("switch_workspace", { path });
+/** Renames it and saves its color and icon inside its file. */
+export const editWorkspace = (
+  path: string,
+  name: string,
+  color: number | null,
+  icon: string | null,
+) => call<Workspaces>("edit_workspace", { path, name, color, icon });
+/** Takes it off the list; the file stays. */
+export const removeWorkspace = (path: string) =>
+  call<Workspaces>("remove_workspace", { path });
+/** Takes it off the list and deletes its file, with every project and task in it. */
+export const deleteWorkspace = (path: string) =>
+  call<Workspaces>("delete_workspace", { path });
+/** Moves a project, with everything in it, to the workspace at `path`. */
+export const moveProject = (projectId: string, path: string) =>
+  call<null>("move_project", { projectId, path });
 /** Notes and images of the project's notes folder. */
 export const listDocuments = (projectId: string) =>
   call<DocumentListing>("list_documents", { projectId });

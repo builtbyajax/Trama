@@ -82,11 +82,33 @@ pub fn tools(workspace: bool) -> Vec<Value> {
         false,
     );
     add("delete_category","Deletes a category; replacement is required when it has tasks. Logs the change in the activity.",json!({"name":text,"replacement":nullable}),vec!["name"],true,false,true);
-    add("list_tasks","Lists the project's tasks and drafts in board order: by column, top to bottom. Optional filters; paginated with limit/offset (at most 200).",json!({"status":status,"category":text,"assignee":assignee,"limit":limit,"offset":offset}),vec![],true,true,false);
+    add("list_tasks","Lists the project's tasks and drafts in board order: by column, top to bottom. Optional filters; paginated with limit/offset (at most 200).",json!({"status":status,"category":text,"assignee":assignee,"goal_id":{"type":"string","format":"uuid"},"limit":limit,"offset":offset}),vec![],true,true,false);
+    add("list_goals","Lists the project's goals with their progress (done tasks over tasks on the board, drafts left out). Concluded goals have completed_at.",json!({}),vec![],true,true,false);
+    let date =
+        json!({"type":["string","null"],"description":"A day, YYYY-MM-DD; null removes it."});
+    add(
+        "create_goal",
+        "Creates a goal in the project: what a group of its tasks is for.",
+        json!({"name":text,"description":text,"target_date":date}),
+        vec!["name"],
+        true,
+        false,
+        false,
+    );
+    add(
+        "update_goal",
+        "Edits only the goal fields sent. Concluding a goal is left to the person.",
+        json!({"goal_id":uuid,"name":text,"description":text,"target_date":date}),
+        vec!["goal_id"],
+        true,
+        false,
+        false,
+    );
     add("search_tasks","Searches public context and messages, ignoring accents. Never searches private annotations.",json!({"query":text,"limit":limit,"offset":offset}),vec!["query"],true,true,false);
     add("get_task","Reads a task: Markdown context, category, assignee, position, counts and delivery metadata.",json!({"task_id":uuid}),vec!["task_id"],true,true,false);
     add("get_task_details","Reads the full task, public messages, checklist and event history. Leaves out private annotations.",json!({"task_id":uuid}),vec!["task_id"],true,true,false);
-    let task_fields = json!({"title":text,"details":text,"category":text,"assignee":assignee,"status":status,"agent_summary":nullable,"repository_branch":{"type":["string","null"],"description":"Existing local branch in the project's repository where the task is worked on. Trama doesn't create branches; null removes it."},"commit_hash":nullable,"pull_request_url":nullable,"pull_request_number":{"type":["integer","null"],"minimum":1}});
+    let goal_ref = json!({"type":["string","null"],"format":"uuid","description":"A goal of the same project (list_goals); null takes the task out of its goal."});
+    let task_fields = json!({"goal_id":goal_ref,"title":text,"details":text,"category":text,"assignee":assignee,"status":status,"agent_summary":nullable,"repository_branch":{"type":["string","null"],"description":"Existing local branch in the project's repository where the task is worked on. Trama doesn't create branches; null removes it."},"commit_hash":nullable,"pull_request_url":nullable,"pull_request_number":{"type":["integer","null"],"minimum":1}});
     add("create_task","Creates a task or draft with optional context and delivery; by default assignee agent, status todo, category Feature.",task_fields.clone(),vec!["title"],true,false,false);
     let mut patch = task_fields;
     patch["task_id"] = uuid.clone();
