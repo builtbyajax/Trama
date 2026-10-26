@@ -278,9 +278,9 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   await page
     .getByRole("button", { name: `Actions for ${name}`, exact: true })
     .click();
-  await page
-    .getByRole("menuitem", { name: "Remove from list…", exact: true })
-    .click();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "Remove from list", exact: true })
@@ -299,7 +299,10 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   await page
     .getByRole("button", { name: `Actions for ${name}`, exact: true })
     .click();
-  await page.getByRole("menuitem", { name: "Delete…", exact: true }).click();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
   await expect(
     page.getByRole("button", { name: "Delete workspace", exact: true }),
   ).toBeDisabled();
@@ -325,9 +328,9 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
       exact: true,
     })
     .click();
-  await page
-    .getByRole("menuitem", { name: "Remove from list…", exact: true })
-    .click();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
   await Promise.all([
     page.waitForEvent("load"),
     page
@@ -348,7 +351,10 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
       exact: true,
     })
     .click();
-  await page.getByRole("menuitem", { name: "Delete…", exact: true }).click();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
   await page
     .getByRole("dialog")
     .getByRole("textbox")
