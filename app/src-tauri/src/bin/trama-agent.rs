@@ -2,7 +2,6 @@ use std::{
     io::{self, BufRead, Write},
     path::PathBuf,
 };
-type Database = Result<PathBuf, String>;
 use trama_lib::{agent::Agent, store::Store};
 fn run() -> Result<(), String> {
     let mut project = None;
@@ -29,37 +28,38 @@ fn run() -> Result<(), String> {
             "Uso: trama-agent (--project-id UUID | --workspace) [--database CAMINHO]".into(),
         );
     }
-    // In workspace mode without --database, the agent follows the workspace open in the app: the
-    // file is checked before each request and reopened when the person switched. A project-bound
-    // agent stays with the database that holds its project.
-    // Following the app, it connects even while there is no workspace: tool calls then say to create
-    // one, and the request after the person does finds it.
+    // In workspace mode without --database, the agent follows the workspace open in the app. It
+    // opens it for each request and closes it after, so the person can switch, or delete it even on
+    // Windows, while the agent waits. With no workspace, or one it can't open, the tool calls say
+    // why and the agent stays connected. A project-bound agent keeps the database of its project.
     let follow = workspace && database.is_none();
-    let mut path: Database = match database {
-        Some(path) => Ok(path),
-        None if follow => trama_lib::store::default_database_path(),
-        None => Ok(trama_lib::store::default_database_path()?),
-    };
     let agent = if follow {
         None
-    } else if workspace {
-        Some(workspace_agent(&path)?)
     } else {
-        let id = uuid::Uuid::parse_str(project.as_deref().unwrap())
-            .map_err(|_| "Uso: trama-agent --project-id UUID [--database CAMINHO]".to_string())?;
-        Some(Agent::new(Store::open(path.as_ref()?)?, &id.to_string())?)
+        let path = match database {
+            Some(path) => path,
+            None => trama_lib::store::default_database_path()?,
+        };
+        let store = Store::open(&path)?;
+        Some(if workspace {
+            Agent::workspace(store)
+        } else {
+            let id = uuid::Uuid::parse_str(project.as_deref().unwrap()).map_err(|_| {
+                "Uso: trama-agent --project-id UUID [--database CAMINHO]".to_string()
+            })?;
+            Agent::new(store, &id.to_string())?
+        })
     };
     let stdin = io::stdin();
     let mut stdout = io::stdout().lock();
     for line in stdin.lock().lines() {
         let line = line.map_err(|e| e.to_string())?;
         let response = match serde_json::from_str(&line) {
-            Ok(request) if follow => {
-                path = trama_lib::store::default_database_path();
-                // Close SQLite between calls so Windows can delete a workspace while the agent is idle.
-                let agent = workspace_agent(&path)?;
-                agent.handle(request)
-            }
+            Ok(request) if follow => trama_lib::store::default_database_path()
+                .and_then(|path| Store::open(&path))
+                .map(Agent::workspace)
+                .or_else(|reason| Agent::without_workspace(&reason))?
+                .handle(request),
             Ok(request) => agent.as_ref().unwrap().handle(request),
             Err(_) => Some(
                 serde_json::json!({"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"Parse error"}}),
@@ -71,12 +71,6 @@ fn run() -> Result<(), String> {
         }
     }
     Ok(())
-}
-fn workspace_agent(path: &Database) -> Result<Agent, String> {
-    match path {
-        Ok(path) => Ok(Agent::workspace(Store::open(path)?)),
-        Err(reason) => Agent::without_workspace(reason),
-    }
 }
 fn main() {
     if let Err(error) = run() {

@@ -599,6 +599,24 @@ fn without_a_workspace_the_agent_asks_for_one_and_finds_it_once_created() {
         agent.ok("list_projects", json!({}))["projects"][0]["name"],
         "Alpha"
     );
+    rusqlite::Connection::open(&created)
+        .unwrap()
+        .pragma_update(None, "user_version", trama_lib::store::SCHEMA_VERSION + 1)
+        .unwrap();
+    let unavailable = agent.call("list_projects", json!({}));
+    assert_eq!(unavailable["result"]["isError"], true);
+    assert!(unavailable["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("newer version of Trama"));
+    rusqlite::Connection::open(&created)
+        .unwrap()
+        .pragma_update(None, "user_version", trama_lib::store::SCHEMA_VERSION)
+        .unwrap();
+    assert_eq!(
+        agent.ok("list_projects", json!({}))["projects"][0]["name"],
+        "Alpha"
+    );
     // Deleting the last one leaves the agent connected, waiting for the next.
     registry.delete(&created).unwrap();
     assert_eq!(
