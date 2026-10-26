@@ -33,6 +33,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": "all",
     "category": "DeveloperTool",
     "icon": [
@@ -49,5 +50,13 @@
     "externalBin": [
       "binaries/trama-agent"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "untrusted comment: minisign public key: 1AAD22D6D888A556\nRWRWpYjY1iKtGqWVfFedylQnzEZHoaSP3GXcO0v2qh2GhKw/hBqG7olf",
+      "endpoints": [
+        "https://github.com/builtbyajax/Trama/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

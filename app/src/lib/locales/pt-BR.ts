@@ -127,6 +127,10 @@ export const ptBR = {
   "Copying isn't available in this browser.":
     "A cópia não está disponível neste navegador.",
   "Couldn't copy.": "Não foi possível copiar.",
+  "Couldn't check for updates. Try again later.":
+    "Não foi possível buscar atualizações. Tente de novo mais tarde.",
+  "Couldn't install the update. Try again later.":
+    "Não foi possível instalar a atualização. Tente de novo mais tarde.",
   "Couldn't move “{0}”; it stays in {1}. {2}":
     "Não foi possível mover “{0}”; ela continua em {1}. {2}",
   "Couldn't reorder “{0}”; it went back to its place. {1}":
