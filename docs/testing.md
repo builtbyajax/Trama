@@ -120,3 +120,9 @@ The first remote runs exposed Windows fixture line endings, temporary-path norma
 `npm audit --omit=dev` reported no vulnerabilities. `cargo audit` reported seven warnings: unmaintained `proc-macro-error`, `zbus_names`, `zvariant`, `zvariant_derive`; unsoundness advisories for `glib` and `tokio`; and yanked `clipboard-win`. The warnings were not suppressed or treated as fixed.
 
 For native Apple Silicon, Intel and Windows package verification and combined checksum artifacts, see [installer workflow run 40109583389](https://github.com/builtbyajax/Trama/actions/runs/40109583389), which includes the subsequent fix to read the server directly from the DMG. The workflow tests the packaged MCP server; interactive installer and native interface QA remain separate from these automated checks.
+
+## macOS updater relaunch
+
+`npm run test:scripts` includes a macOS-only native relaunch regression. It compiles the helper for the host architecture and Intel, uses a disposable background app with an isolated data directory, and checks that relaunch waits for the old PID, preserves arguments and data overrides, and removes its temporary helper. It skips on other platforms.
+
+For manual updater QA, use a separate bundle ID and explicit `TRAMA_HOME`; the production workspace directory does not follow the bundle ID. Check that the previous process and its LaunchServices registration are gone before relaunch, that a pinned or recent Dock icon is reused, and that project, task and note data remain intact. Do not reset Dock preferences to make the test pass. A helper compilation on Intel does not replace an Intel installer check or interactive platform QA.

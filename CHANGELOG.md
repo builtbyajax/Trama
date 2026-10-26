@@ -11,14 +11,18 @@ Changes delivered in each Trama version. **Unreleased** lists implemented change
 ### Added
 
 - Check for signed updates from the app, with automatic checks and a manual check in Preferences.
-- Install an available update and restart the app from the update notice.
-- After updating, show the notice: “Restart agent sessions to connect them to the updated version of Trama.”
+- Install an available update and restart the app from the update notice or Preferences. Keep a blue indicator in Preferences after dismissing the notice.
+- After a version change, recommend restarting agent sessions to reconnect to the MCP included with the installed version, including after a downgrade.
 
 ### Changed
 
 - Sort files and folders together by name in the notes explorer, including natural numeric order.
 
 ### Fixed
+
+- Reuse the existing macOS Dock icon when relaunching after an update.
+- Keep dismissed updates installable from Preferences, preserve retries after a failed download, and prevent concurrent update operations.
+- Keep manual checking available when an update has already been found.
 
 - Refuse MCP tool calls from an agent connected to a database migrated by a newer app.
 - Prevent installing an update on Windows while `trama-agent.exe` is in use.

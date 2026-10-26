@@ -11,14 +11,18 @@ Mudanças entregues em cada versão do Trama. A seção **Em desenvolvimento** r
 ### Adicionado
 
 - Busca por atualizações assinadas no app, com verificação automática e manual nas Preferências.
-- Instalação da atualização disponível e reinício do app pelo aviso.
-- Depois de atualizar, mostrar o aviso: “Reinicie as sessões dos agentes para conectá-las à versão atualizada do Trama.”
+- Instalação da atualização disponível e reinício do app pelo aviso ou pelas Preferências, com indicador azul após dispensar o aviso.
+- Após uma troca de versão, recomendar reiniciar as sessões dos agentes para reconectar ao MCP incluído na versão instalada, inclusive após um downgrade.
 
 ### Alterado
 
 - Arquivos e pastas agora são ordenados juntos por nome no explorador de notas, com ordem numérica natural.
 
 ### Corrigido
+
+- Reutilização do ícone existente no Dock do macOS ao reiniciar após uma atualização.
+- Atualização disponível nas Preferências mesmo após dispensar o aviso, nova tentativa após falha no download e bloqueio de operações simultâneas.
+- Busca manual continua disponível quando uma atualização já foi encontrada.
 
 - Chamadas MCP de agentes conectados a um banco migrado por um app mais novo são recusadas.
 - No Windows, a instalação é bloqueada enquanto o `trama-agent.exe` estiver em uso.
