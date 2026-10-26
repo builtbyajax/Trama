@@ -115,10 +115,14 @@ Antes de enviar mudanças, execute estas verificações a partir de `app/`:
 ```sh
 npm run typecheck
 npm run format:check
+npm test
+cargo test --locked --manifest-path src-tauri/Cargo.toml --features agent-cli,dev-bridge
 cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --features agent-cli,dev-bridge -- -D warnings
 ```
 
 Use `TRAMA_DB` para apontar uma sessão de desenvolvimento para um banco separado.
+
+[Testes e CI](docs/testing.md)
 
 <details>
 <summary>Atalhos de teclado</summary>
