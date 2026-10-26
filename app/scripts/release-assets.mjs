@@ -210,7 +210,8 @@ if (
     stageInstaller(paths, version, platform, destination);
     stageUpdaterArtifact(paths, version, platform, destination);
   } else if (mode === "manifest") {
-    createLatestManifest(...args);
+    const [version, repository, directory, tag] = args;
+    createLatestManifest(directory, version, repository, tag);
   } else if (mode === "checksums") checksums(args[0]);
   else throw new Error(`Unknown release operation: ${basename(mode ?? "")}`);
 }

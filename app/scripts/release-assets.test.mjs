@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import {
   mkdtempSync,
   mkdirSync,
@@ -9,6 +10,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import {
   checksums,
@@ -43,7 +45,14 @@ test("stages signed update bundles, emits latest.json and checksums all assets",
     stageUpdaterArtifact([updater, `${updater}.sig`], "0.2.2", platform, dest);
   }
   writeFileSync(join(dest, "RELEASE_NOTES.md"), "Update notes");
-  const manifest = createLatestManifest(dest, "0.2.2", "builtbyajax/Trama");
+  execFileSync(process.execPath, [
+    fileURLToPath(new URL("./release-assets.mjs", import.meta.url)),
+    "manifest",
+    "0.2.2",
+    "builtbyajax/Trama",
+    dest,
+  ]);
+  const manifest = JSON.parse(readFileSync(join(dest, "latest.json"), "utf8"));
 
   assert.equal(manifest.version, "0.2.2");
   assert.equal(manifest.notes, "Update notes");
