@@ -561,6 +561,42 @@ button.crumb:hover {
 .error-banner .button {
   margin-left: auto;
 }
+.update-notice {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 42px;
+  padding: 6px 12px 6px var(--page-x);
+  border-bottom: 1px solid var(--line-subtle);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+}
+.update-notice > span {
+  flex: 1;
+  min-width: 0;
+}
+.restart-notice {
+  background: var(--bg-raised);
+}
+.available-notice {
+  background: var(--accent-soft);
+}
+.update-notice .icon-button {
+  flex: none;
+}
+@media (max-width: 620px) {
+  .update-notice {
+    flex-wrap: wrap;
+    padding-left: 12px;
+  }
+  .update-notice > span {
+    flex-basis: calc(100% - 36px);
+  }
+  .available-notice .button:first-of-type {
+    margin-left: auto;
+  }
+}
 
 /* ───── project head ───── */
 .page-head {

@@ -76,3 +76,55 @@ pub fn output(command: &mut Command) -> io::Result<Output> {
         stderr,
     })
 }
+
+/// Checks whether the bundled MCP executable is still open by an agent client on Windows.
+pub fn agent_is_running() -> Result<bool, String> {
+    #[cfg(windows)]
+    {
+        let output = output(Command::new("tasklist").args([
+            "/FI",
+            "IMAGENAME eq trama-agent.exe",
+            "/FO",
+            "CSV",
+            "/NH",
+        ]))
+        .map_err(|_| "couldn't inspect running agent processes".to_string())?;
+        if !output.status.success() {
+            return Err("couldn't inspect running agent processes".into());
+        }
+        Ok(task_list_has_agent(&String::from_utf8_lossy(
+            &output.stdout,
+        )))
+    }
+    #[cfg(not(windows))]
+    {
+        Ok(false)
+    }
+}
+
+#[cfg(any(windows, test))]
+fn task_list_has_agent(output: &str) -> bool {
+    output.lines().any(|line| {
+        line.trim_start()
+            .to_ascii_lowercase()
+            .starts_with("\"trama-agent.exe\"")
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::task_list_has_agent;
+
+    #[test]
+    fn detects_the_agent_process_in_tasklist_csv() {
+        assert!(task_list_has_agent(
+            "\"trama-agent.exe\",\"4312\",\"Console\",\"1\",\"12,340 K\"\n"
+        ));
+        assert!(!task_list_has_agent(
+            "INFO: No tasks are running which match the specified criteria.\n"
+        ));
+        assert!(!task_list_has_agent(
+            "\"Trama.exe\",\"4312\",\"Console\",\"1\",\"12,340 K\"\n"
+        ));
+    }
+}

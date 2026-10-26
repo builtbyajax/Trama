@@ -5,6 +5,7 @@ import { CopyIcon, Icon } from "./Icon";
 import { ContextMenu, type MenuItem } from "./Sidebar";
 import { workspaceName } from "./Workspaces";
 import { language, languages, setLanguage, t } from "../lib/i18n";
+import type { AppUpdater } from "../hooks/useAppUpdater";
 
 export function Preferences({
   data,
@@ -14,6 +15,7 @@ export function Preferences({
   notify,
   onEdit,
   onAddProject,
+  updater,
 }: {
   data: Snapshot;
   workspaces: Workspaces | null;
@@ -23,6 +25,7 @@ export function Preferences({
   notify: (message: string, error?: boolean) => void;
   onEdit: (project: Project) => void;
   onAddProject: () => void;
+  updater: AppUpdater;
 }) {
   const [copied, setCopied] = useState("");
   /** The value just copied, whose button shows a check for a moment. */
@@ -123,6 +126,58 @@ export function Preferences({
               </button>
             ))}
           </div>
+        </section>
+        <section className="settings-group">
+          <h2>{t("Updates")}</h2>
+          <p className="muted">{t("Choose when Trama checks for updates.")}</p>
+          <ul className="settings-list">
+            <li className="settings-row">
+              <div className="settings-text">
+                <span>{t("Installed version")}</span>
+                <code>{updater.installedVersion ?? "—"}</code>
+              </div>
+            </li>
+            <li className="settings-row">
+              <label className="settings-toggle">
+                <span className="settings-text">
+                  <span>{t("Check for updates automatically")}</span>
+                  <span className="muted small">
+                    {t("Checks when the app opens and once a day.")}
+                  </span>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={updater.autoCheck}
+                  onChange={(event) =>
+                    updater.setAutoCheck(event.target.checked)
+                  }
+                />
+              </label>
+            </li>
+            <li className="settings-row">
+              <div className="settings-text" role="status" aria-live="polite">
+                {updater.status === "checking"
+                  ? t("Checking for updates…")
+                  : updater.status === "current"
+                    ? t("Trama is up to date.")
+                    : updater.status === "available" && updater.availableUpdate
+                      ? t("Version {0} is available.", [
+                          updater.availableUpdate.version,
+                        ])
+                      : updater.status === "error"
+                        ? t("Couldn't check for updates. Try again later.")
+                        : t("Check for a newer version of Trama.")}
+              </div>
+              <button
+                type="button"
+                className="button"
+                disabled={updater.status === "checking" || updater.installing}
+                onClick={() => void updater.check()}
+              >
+                {t("Check now")}
+              </button>
+            </li>
+          </ul>
         </section>
         <section className="settings-group">
           <h2>{t("Workspaces")}</h2>

@@ -26,6 +26,15 @@ fn set_menu_language(app: tauri::AppHandle, language: String) -> Result<(), Stri
     let _ = (app, language);
     Ok(())
 }
+/// Restarts the desktop process after the updater has installed a verified package.
+#[tauri::command]
+fn restart_app(app: tauri::AppHandle) {
+    app.restart()
+}
+#[tauri::command]
+fn has_running_agent() -> Result<bool, String> {
+    process::agent_is_running()
+}
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
@@ -44,7 +53,12 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![call, set_menu_language])
+        .invoke_handler(tauri::generate_handler![
+            call,
+            has_running_agent,
+            restart_app,
+            set_menu_language
+        ])
         .run(tauri::generate_context!())
         .expect("failed to start Trama");
 }

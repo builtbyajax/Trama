@@ -547,6 +547,20 @@ button.holder:hover {
   color: var(--ink-3);
   overflow-wrap: anywhere;
 }
+.settings-toggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+  cursor: pointer;
+}
+.settings-toggle input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
 
 /* ───── search ───── */
 .search-modal {

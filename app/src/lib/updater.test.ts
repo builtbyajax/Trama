@@ -4,8 +4,12 @@ import { checkAppUpdate, installAppUpdate } from "./updater";
 vi.mock("@tauri-apps/plugin-updater", () => ({
   check: vi.fn(),
 }));
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn(),
+}));
 
 import { check } from "@tauri-apps/plugin-updater";
+import { invoke } from "@tauri-apps/api/core";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -47,5 +51,20 @@ describe("app updater", () => {
     );
     expect(update.downloadAndInstall).toHaveBeenCalledOnce();
     expect(update.close).toHaveBeenCalledOnce();
+  });
+
+  it("leaves the update pending while a Windows agent session uses the binary", async () => {
+    vi.stubGlobal("window", { __TAURI_INTERNALS__: {} });
+    vi.mocked(invoke).mockResolvedValue(true);
+    const update = {
+      downloadAndInstall: vi.fn(),
+      close: vi.fn(),
+    };
+
+    await expect(installAppUpdate(update as never)).rejects.toThrow(
+      "Close all agent sessions before updating.",
+    );
+    expect(update.downloadAndInstall).not.toHaveBeenCalled();
+    expect(update.close).not.toHaveBeenCalled();
   });
 });

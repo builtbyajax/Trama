@@ -129,8 +129,32 @@ export const ptBR = {
   "Couldn't copy.": "Não foi possível copiar.",
   "Couldn't check for updates. Try again later.":
     "Não foi possível buscar atualizações. Tente de novo mais tarde.",
+  "Couldn't check whether agent sessions are closed.":
+    "Não foi possível verificar se as sessões dos agentes estão fechadas.",
+  "Close all agent sessions before updating.":
+    "Feche todas as sessões dos agentes antes de atualizar.",
   "Couldn't install the update. Try again later.":
     "Não foi possível instalar a atualização. Tente de novo mais tarde.",
+  "Check for updates automatically": "Procurar atualizações automaticamente",
+  "Check for a newer version of Trama.":
+    "Procurar uma versão mais recente do Trama.",
+  "Check now": "Procurar agora",
+  "Checks when the app opens and once a day.":
+    "Procura ao abrir o app e uma vez por dia.",
+  "Checking for updates…": "Procurando atualizações…",
+  "Choose when Trama checks for updates.":
+    "Escolha quando o Trama procura atualizações.",
+  "Dismiss restart notice": "Dispensar aviso sobre sessões de agentes",
+  "Dismiss update notice": "Dispensar aviso de atualização",
+  "Installed version": "Versão instalada",
+  "Installing update…": "Instalando atualização…",
+  "Restart agent sessions to connect them to the updated version of Trama.":
+    "Reinicie as sessões dos agentes para conectá-las à versão atualizada do Trama.",
+  "Trama is up to date.": "O Trama está atualizado.",
+  "Update and restart": "Atualizar e reiniciar",
+  Updates: "Atualizações",
+  "Version {0} is available.": "A versão {0} está disponível.",
+  "View release notes": "Ver novidades",
   "Couldn't move “{0}”; it stays in {1}. {2}":
     "Não foi possível mover “{0}”; ela continua em {1}. {2}",
   "Couldn't reorder “{0}”; it went back to its place. {1}":
