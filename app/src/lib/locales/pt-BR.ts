@@ -631,23 +631,30 @@ export const ptBR = {
   "You took the task": "Você pegou a tarefa",
 
   // preferences
-  "Copy database path": "Copiar caminho do banco",
   "Copy ID of {0}": "Copiar ID de {0}",
-  Database: "Banco de dados",
   "Each agent connects to a single project using the ID below.":
     "Cada agente se conecta a um único projeto pelo ID abaixo.",
   "ID copied.": "ID copiado.",
   Language: "Idioma",
-  "No projects created.": "Nenhum projeto criado.",
+  "No projects created yet.": "Nenhum projeto criado ainda.",
   "Projects and MCP integration": "Projetos e integração MCP",
   "The language, where your data lives and how the agent connects.":
     "O idioma, onde ficam os seus dados e como o agente se conecta.",
-  "This Trama's data stays on this computer. The Git screen is read-only: Trama doesn't change branches or push anything.":
-    "Os dados deste Trama ficam neste computador. A tela Git é somente de consulta: o Trama não altera branches nem envia conteúdo.",
   "Trama reloads to show everything in the chosen language.":
     "O Trama abre de novo para mostrar tudo no idioma escolhido.",
 
   // projects
+  "Move to another workspace…": "Mover para outro espaço…",
+  "Move to another workspace": "Mover para outro espaço",
+  "There's no other workspace yet. Create one from the menu at the top of the sidebar.":
+    "Ainda não existe outro espaço. Crie um pelo menu no topo da barra lateral.",
+  "“{0}” leaves this workspace with 1 task and everything in it: activity, checklist, annotations and categories.":
+    "“{0}” sai deste espaço com 1 tarefa e tudo o que está nela: atividade, checklist, anotações e categorias.",
+  "“{0}” leaves this workspace with {1} tasks and everything in them: activity, checklists, annotations and categories.":
+    "“{0}” sai deste espaço com {1} tarefas e tudo o que está nelas: atividade, checklists, anotações e categorias.",
+  Destination: "Destino",
+  "Move project": "Mover projeto",
+  "“{0}” moved to {1}.": "“{0}” foi para {1}.",
   ". The repository folder is not touched. This can't be undone.":
     ". A pasta do repositório não é tocada. Não é possível desfazer.",
   "” leaves Trama with": "” sai do Trama com",
@@ -712,6 +719,50 @@ export const ptBR = {
     "Sem repositório, o quadro funciona normalmente; o histórico Git fica indisponível.",
   Work: "Trabalho",
 
+  // workspaces
+  Personal: "Pessoal",
+  Workspaces: "Espaços",
+  "Workspace: {0}": "Espaço: {0}",
+  "Edit workspace…": "Editar espaço…",
+  "New workspace…": "Novo espaço…",
+  "Open workspace…": "Abrir espaço…",
+  "Open workspace": "Abrir espaço",
+  "New workspace": "Novo espaço",
+  "Edit workspace": "Editar espaço",
+  "Save workspace": "Salvar espaço",
+  "Delete workspace?": "Excluir espaço?",
+  "Remove from list?": "Remover da lista?",
+  "Remove from list…": "Remover da lista…",
+  "Removing…": "Removendo…",
+  "Manage workspaces…": "Gerenciar espaços…",
+  "“{0}” leaves the list. Its file stays in the folder, and Open workspace… brings it back.":
+    "“{0}” sai da lista. O arquivo continua na pasta, e Abrir espaço… traz de volta.",
+  "Trama switches to “{0}” first.": "Antes, o Trama troca para “{0}”.",
+  "Delete workspace": "Excluir espaço",
+  "Workspace “{0}” deleted.": "Espaço “{0}” excluído.",
+  "Type “{0}” to confirm": "Digite “{0}” para confirmar",
+  "“{0}” and every project and task in it are deleted from this computer, along with its file. This can't be undone.":
+    "“{0}” e todos os projetos e tarefas dele são apagados deste computador, junto com o arquivo. Isso não pode ser desfeito.",
+  "Workspace name": "Nome do espaço",
+  "E.g. Work": "Ex.: Trabalho",
+  Folder: "Pasta",
+  "The workspace is one file in this folder. Copy or move it like any other file.":
+    "O espaço é um arquivo nesta pasta. Copie ou mova como qualquer outro arquivo.",
+  "Choose workspace folder": "Escolher pasta do espaço",
+  "Workspace folder": "Pasta do espaço",
+  "Each workspace has its own projects and tasks.":
+    "Cada espaço tem os próprios projetos e tarefas.",
+  "Create workspace": "Criar espaço",
+  "Edit…": "Editar…",
+  "Remove from list": "Remover da lista",
+  "“{0}” left the list. The file wasn't touched.":
+    "“{0}” saiu da lista. O arquivo não foi alterado.",
+  "TRAMA_DB chose this database, so workspaces can't change.":
+    "O TRAMA_DB escolheu este banco, então os espaços não podem mudar.",
+  "Each workspace is a database file on this computer, with its own projects. Agents follow the open one. The Git screen is read-only: Trama doesn't change branches or push anything.":
+    "Cada espaço é um arquivo de banco neste computador, com os próprios projetos. Os agentes seguem o espaço aberto. A tela Git é somente de consulta: o Trama não altera branches nem envia conteúdo.",
+  "Not found": "Não encontrado",
+  "Copy path of {0}": "Copiar caminho de {0}",
   // search
   "{0} results": "{0} resultados",
   Draft: "Rascunho",
@@ -885,6 +936,81 @@ export const ptBR = {
   "Write something just for you…": "Anotar algo só para você…",
   "Write the briefing": "Escrever o briefing",
   "Write, or type / for blocks": "Escreva, ou digite / para blocos",
+  "Goal “{0}” reopened.": "Objetivo “{0}” reaberto.",
+  "Goal “{0}” created.": "Objetivo “{0}” criado.",
+  "Goal saved.": "Objetivo salvo.",
+  "Goal “{0}” concluded.": "Objetivo “{0}” concluído.",
+  "Goal “{0}” deleted.": "Objetivo “{0}” excluído.",
+  "Goal:": "Objetivo:",
+  "Removed the goal": "Removeu o objetivo",
+  "Goal changed to": "Objetivo alterado para",
+  "Goal removed": "Objetivo removido",
+  "Open a goal": "Abrir um objetivo",
+  "No goal": "Sem objetivo",
+  "{0}, {1} of {2} done": "{0}, {1} de {2} concluídas",
+  "Edit goal…": "Editar objetivo…",
+  "Reopen goal": "Reabrir objetivo",
+  "Conclude goal…": "Concluir objetivo…",
+  "Delete goal…": "Excluir objetivo…",
+  "Delete goal {0}…": "Excluir objetivo {0}…",
+  "See all {0}…": "Ver todos os {0}…",
+  "Concluded goals": "Objetivos concluídos",
+  "Search goals": "Buscar objetivos",
+  "No concluded goals.": "Nenhum objetivo concluído.",
+  "No goal matches “{0}”.": "Nenhum objetivo com “{0}”.",
+  "Concluded on {0} · 1 task": "Concluído em {0} · 1 tarefa",
+  "Concluded on {0} · {1} tasks": "Concluído em {0} · {1} tarefas",
+  Reopen: "Reabrir",
+  Goals: "Objetivos",
+  "New goal": "Novo objetivo",
+  Concluded: "Concluídos",
+  "1 concluded": "1 concluído",
+  "{0} concluded": "{0} concluídos",
+  "Goal {0}": "Objetivo {0}",
+  "Concluded|goal": "Concluído",
+  "The target date passed": "A data-alvo já passou",
+  "{0} of 1 task done": "{0} de 1 tarefa concluída",
+  "{0} of {1} tasks done": "{0} de {1} tarefas concluídas",
+  "Conclude goal": "Concluir objetivo",
+  "Edit goal": "Editar objetivo",
+  "Show every task": "Mostrar todas as tarefas",
+  Name: "Nome",
+  "E.g. Release 1": "Ex.: Release 1",
+  "Description, optional": "Descrição, opcional",
+  "What the goal delivers when its tasks are done.":
+    "O que o objetivo entrega quando suas tarefas estiverem prontas.",
+  "Target date, optional": "Data-alvo, opcional",
+  "No date": "Sem data",
+  "Save goal": "Salvar objetivo",
+  "Create goal": "Criar objetivo",
+  "Conclude goal?": "Concluir objetivo?",
+  "“{0}” leaves the list of goals and waits under Concluded. Its tasks stay where they are.":
+    "“{0}” sai da lista de objetivos e fica em Concluídos. As tarefas continuam onde estão.",
+  "Delete goal?": "Excluir objetivo?",
+  "“{0}” is deleted. This can't be undone.":
+    "“{0}” será excluído. Isso não pode ser desfeito.",
+  "“{0}” is deleted; its task stays on the board, without a goal. This can't be undone.":
+    "“{0}” será excluído; sua tarefa continua no quadro, sem objetivo. Isso não pode ser desfeito.",
+  "“{0}” is deleted; its {1} tasks stay on the board, without a goal. This can't be undone.":
+    "“{0}” será excluído; suas {1} tarefas continuam no quadro, sem objetivo. Isso não pode ser desfeito.",
+  "Delete goal": "Excluir objetivo",
+  Goal: "Objetivo",
+  "Move to goal…": "Mover para objetivo…",
+  "Move to goal": "Mover para objetivo",
+  "“{0}” moved to “{1}”.": "“{0}” movida para “{1}”.",
+  "“{0}” left its goal.": "“{0}” saiu do objetivo.",
+  tomorrow: "amanhã",
+  "in {0} days": "em {0} dias",
+  "{0} days ago|late": "há {0} dias",
+  "late|goal": "atrasado",
+  "End of this week": "Fim desta semana",
+  "End of the month": "Fim do mês",
+  "In 2 weeks": "Em 2 semanas",
+  "End of next month": "Fim do próximo mês",
+  "Choose a day": "Escolher um dia",
+  "Previous month": "Mês anterior",
+  "Next month": "Próximo mês",
+  Today: "Hoje",
 };
 
 /** The interface's text, in English; `t()` only takes text that has its Portuguese above. */
@@ -895,6 +1021,26 @@ export type Key = keyof typeof ptBR;
  * the core filled in, such as a name or a path.
  */
 export const errors: Record<string, string> = {
+  "TRAMA_DB chooses the database, so workspaces can't be changed.":
+    "O TRAMA_DB escolhe o banco, então os espaços não podem mudar.",
+  "The workspace isn't in the list.": "O espaço não está na lista.",
+  "The workspace needs a name.": "O espaço precisa de um nome.",
+  "The name can't have slashes, colons or start with a dot.":
+    "O nome não pode ter barras, dois-pontos ou começar com ponto.",
+  "A file with that name already exists in the folder.":
+    "Já existe um arquivo com esse nome na pasta.",
+  "The workspace file doesn't exist.": "O arquivo do espaço não existe.",
+  "Switch to another workspace before removing this one.":
+    "Troque para outro espaço antes de remover este.",
+  "The default workspace stays in the list.":
+    "O espaço padrão continua na lista.",
+  "The default workspace stays in Trama's folder.":
+    "O espaço padrão fica na pasta do Trama.",
+  "Invalid workspace path.": "Caminho de espaço inválido.",
+  "The project is already in this workspace.":
+    "O projeto já está neste espaço.",
+  "The other workspace already has this project.":
+    "O outro espaço já tem este projeto.",
   "“{0}” already exists in this folder.": "Já existe “{0}” nesta pasta.",
   "“{0}” already exists in this project.": "“{0}” já existe neste projeto.",
   "“{0}” isn't a folder.": "“{0}” não é uma pasta.",
@@ -1008,4 +1154,12 @@ export const errors: Record<string, string> = {
     "Use um nome sem barras e que não comece com ponto.",
   "Use a path inside the notes folder.":
     "Use um caminho dentro da pasta de notas.",
+  "The goal doesn't exist or isn't in this project.":
+    "O objetivo não existe ou não está neste projeto.",
+  "The goal needs a name.": "O objetivo precisa ter um nome.",
+  "The goal name can be up to 80 characters.":
+    "O nome do objetivo pode ter até 80 caracteres.",
+  "The target date must be a day, as YYYY-MM-DD.":
+    "A data-alvo deve ser um dia, no formato AAAA-MM-DD.",
+  "The task is already in this project.": "A tarefa já está neste projeto.",
 };

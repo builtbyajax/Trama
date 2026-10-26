@@ -16,7 +16,7 @@ import {
   type ListItem,
   type MarkdownDocument,
 } from "../lib/markdown";
-import { Icon } from "./Icon";
+import { CopyIcon, Icon } from "./Icon";
 import { t } from "../lib/i18n";
 
 /** What links and images of a note resolve against, and what the reader can do. */
@@ -272,7 +272,7 @@ function CodeBlock({
             )
           }
         >
-          <Icon name={copied ? "check" : "copy"} size={13} />
+          <CopyIcon copied={copied} size={13} />
         </button>
       </figcaption>
       <pre className="scroll">

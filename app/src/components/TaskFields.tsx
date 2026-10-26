@@ -3,6 +3,7 @@ import {
   isDraft,
   statusTitle,
   type Category,
+  type Goal,
   type TaskAssignee,
   type TaskInput,
   type TaskStatus,
@@ -25,6 +26,14 @@ export const statusOptions = (statuses: TaskStatus[]) =>
     dot: `var(--s-${status})`,
   }));
 
+/** Choices for a task's goal: none, then the project's open goals and the task's own. */
+export const goalOptions = (goals: Goal[], current: string | null) => [
+  { value: "", label: t("No goal") },
+  ...goals
+    .filter((goal) => goal.completedAt === null || goal.id === current)
+    .map((goal) => ({ value: goal.id, label: goal.name })),
+];
+
 /** The project's known categories, alphabetically. */
 export const categoryNames = (categories: Category[], projectId: string) =>
   categories
@@ -40,6 +49,7 @@ export function TaskFields({
   allStates = true,
   autoFocus = false,
   branches,
+  goals = [],
 }: {
   input: TaskInput;
   onChange: (value: TaskInput) => void;
@@ -48,6 +58,8 @@ export function TaskFields({
   branches?: string[] | null;
   allStates?: boolean;
   autoFocus?: boolean;
+  /** The project's goals; the field shows only when it has some. */
+  goals?: Goal[];
 }) {
   const field = <K extends keyof TaskInput>(key: K, value: TaskInput[K]) =>
     onChange({ ...input, [key]: value });
@@ -107,6 +119,19 @@ export function TaskFields({
           />
         )}
       </Field>
+      {goals.length > 0 && (
+        <Field label={t("Goal")} className="span-all">
+          {({ id, labelId }) => (
+            <Select
+              id={id}
+              labelledBy={labelId}
+              value={input.goalId ?? ""}
+              options={goalOptions(goals, input.goalId)}
+              onChange={(value) => field("goalId", value || null)}
+            />
+          )}
+        </Field>
+      )}
       {branches !== undefined && (
         <Field
           label={t("Branch")}

@@ -1,6 +1,6 @@
 ---
 name: trama
-description: Work on the Trama board through the `trama` MCP. Use when the person asks you to pick up, update, comment on or deliver Trama tasks, create tasks or drafts, organize categories, or look at a Trama project's Git and PRs.
+description: Work with Trama workspaces, projects, goals and tasks through the `trama` MCP. Use when the person asks you to manage or deliver Trama work, organize categories, or inspect a project's Git and PRs.
 ---
 
 # Trama through MCP
@@ -11,9 +11,12 @@ Trama is the local board where the person and the agent hand work to each other.
 
 The server is the `trama-agent` binary that ships with the app. On a Mac it is at `/Applications/Trama.app/Contents/MacOS/trama-agent`. On Windows, it is `trama-agent.exe` next to the executable.
 
-- `--workspace`: every project. Every project tool requires `project_id`.
-- `--project-id UUID`: a single project. `project_id` isn't accepted, and creating or deleting projects doesn't exist. The IDs are in the app's Preferences.
-- `--database PATH` or `TRAMA_DB`: another database. Use it for tests, never the personal database.
+- `--workspace`: projects in the active workspace. Every project tool requires `project_id`. Without `--database`, the server checks the active workspace before each request and follows workspace changes made in the app.
+- `--project-id UUID`: a single project. `project_id` isn't accepted in tool calls; project creation and deletion are available only in workspace mode. The IDs are in the app's Preferences.
+- `--database PATH`: pins the MCP server to that database, including when combined with `--workspace`; it will not follow workspace changes.
+- `TRAMA_DB`: when present in a process, pins that process to the named database and disables workspace switching there. Use database overrides only when intentionally working with an isolated or explicitly selected database; don't set them for routine personal-board work.
+
+Each workspace is a separate database. `list_projects` shows the projects available in the database this connection currently uses. The MCP toolset manages projects, goals and tasks, but may not expose workspace creation or switching; when those tools aren't listed, manage workspaces in the Trama app instead of guessing a tool name. In workspace mode, project creation and deletion are available only when the person asks.
 
 Claude Code:
 
@@ -45,7 +48,7 @@ If the `trama` tools don't show up, ask the person to set it up and reload the s
 
 ## Workflow
 
-1. **Context.** In workspace mode, start with `list_projects`. Then call `get_context` to see the project, repository, categories and rules.
+1. **Context.** In workspace mode, start with `list_projects` to find the project in the active workspace. Then call `get_context` to see the project, repository, categories and rules. If the expected project isn't listed, check whether the app is on the right workspace before proceeding.
 2. **Find work.** Call `list_tasks` with `assignee: "agent"` and `status: "todo"`. If the person names a task, use `search_tasks`.
 3. **Read before acting.** `get_task_details` returns the briefing (`details`, in Markdown), the messages and the history. If the task came back from review, the last message or event says what to change.
 4. **Start.** Use `move_task` with `status: "inProgress"`. If the task was with the person and they asked you to take it, first use `update_task` with `assignee: "agent"`.
@@ -59,6 +62,14 @@ If the `trama` tools don't show up, ask the person to set it up and reload the s
 7. **Stop there.** Only move to `done`, delete anything or change `assignee` to `user` when the person asks.
 
 To record new work the person asked for, use `create_task`. The defaults are `assignee=agent`, `status=todo` and the category "Feature" (or "Funcionalidade" in older projects). For an idea that isn't ready yet, create it in `preparing` and promote it later with `promote_draft`.
+
+## Workspaces and goals
+
+- A workspace contains its own projects and data. In workspace mode, first find the project with `list_projects`, then pass its `project_id` to project operations. A project-bound connection sees only its configured project.
+- Goals group tasks in one project around an outcome. Use `list_goals` before assigning a task to a goal; set `goal_id` through `create_task` or `update_task`. The goal must belong to the same project, and a task can belong to at most one goal. Send `goal_id: null` to remove the association.
+- Use `create_goal` for a new goal and `update_goal` for its name, description or target date. Dates use `YYYY-MM-DD`; `null` clears the target date.
+- Goal progress counts its tasks on the board, including done tasks, and excludes drafts. Completing every task does not conclude the goal automatically. Concluding or reopening a goal is the person's decision; the current MCP toolset can list, create and edit goals but does not conclude or reopen them. If asked to do that, use the app if available or explain the tool limitation.
+- A goal is an organizational grouping, not authorization to implement all its tasks. Follow the person’s request and the task workflow above.
 
 ## Categories
 

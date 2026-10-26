@@ -76,6 +76,14 @@ const agentChange = (e: TaskEvent): ReactNode => {
           {t("Removed the note")} {named(e.value, true)}
         </>
       );
+    case "goal":
+      return e.value ? (
+        <>
+          {t("Goal:")} {named(e.value)}
+        </>
+      ) : (
+        t("Removed the goal")
+      );
   }
 };
 const personChange = (e: TaskEvent): ReactNode => {
@@ -113,6 +121,14 @@ const personChange = (e: TaskEvent): ReactNode => {
         <>
           {t("Note")} {named(e.value, true)} {t("removed from attachments")}
         </>
+      );
+    case "goal":
+      return e.value ? (
+        <>
+          {t("Goal changed to")} {named(e.value)}
+        </>
+      ) : (
+        t("Goal removed")
       );
     default:
       return agentChange(e);

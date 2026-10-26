@@ -244,7 +244,7 @@ export function ProjectComposer({
 }
 
 /** Palette as a radio group: arrows move and choose, like native radios. */
-function ColorPicker({
+export function ColorPicker({
   id,
   labelId,
   value,
@@ -298,7 +298,7 @@ function ColorPicker({
 }
 
 /** The initial, then the project glyphs, as one radio group tinted with the chosen color. */
-function IconPicker({
+export function IconPicker({
   id,
   labelId,
   name,

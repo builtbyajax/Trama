@@ -1,10 +1,12 @@
 //! Shared SQLite core for the desktop app and the project-bound MCP process.
 mod categories;
 mod conversation;
+mod goals;
 mod migrations;
 mod operations;
 mod search;
 mod tasks;
+mod transfer;
 use rusqlite::{params, Connection, OptionalExtension, Row, Transaction, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -22,7 +24,7 @@ pub const STATUSES: [&str; 6] = [
     "preparing",
     "reserved",
 ];
-const TASK_COLUMNS: &str = "t.id,t.project_id,t.title,t.details,t.category,t.assignee,t.status,t.position,t.agent_summary,t.repository_branch,t.commit_hash,t.pull_request_url,t.pull_request_number,t.created_at,t.updated_at,(SELECT COUNT(*) FROM task_checks c WHERE c.task_id=t.id),(SELECT COUNT(*) FROM task_checks c WHERE c.task_id=t.id AND c.is_complete=1),(SELECT COUNT(*) FROM task_messages m WHERE m.task_id=t.id),(SELECT COUNT(*) FROM task_documents d WHERE d.task_id=t.id),t.archived_at";
+const TASK_COLUMNS: &str = "t.id,t.project_id,t.title,t.details,t.category,t.assignee,t.status,t.position,t.agent_summary,t.repository_branch,t.commit_hash,t.pull_request_url,t.pull_request_number,t.created_at,t.updated_at,(SELECT COUNT(*) FROM task_checks c WHERE c.task_id=t.id),(SELECT COUNT(*) FROM task_checks c WHERE c.task_id=t.id AND c.is_complete=1),(SELECT COUNT(*) FROM task_messages m WHERE m.task_id=t.id),(SELECT COUNT(*) FROM task_documents d WHERE d.task_id=t.id),t.archived_at,t.goal_id";
 fn sql<T>(r: rusqlite::Result<T>) -> Result<T> {
     r.map_err(|e| e.to_string())
 }
@@ -52,14 +54,9 @@ pub const PROJECT_COLORS: i64 = 6;
 pub fn id() -> String {
     uuid::Uuid::new_v4().to_string().to_uppercase()
 }
+/// The open workspace's database, or the one `TRAMA_DB` names.
 pub fn default_database_path() -> PathBuf {
-    std::env::var_os("TRAMA_DB")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| {
-            dirs::data_dir()
-                .unwrap_or_default()
-                .join("Trama/trama.sqlite")
-        })
+    crate::workspaces::active_path()
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -98,6 +95,8 @@ pub struct Task {
     pub updated_at: f64,
     /// When the person archived the task by hand, before the week a done task otherwise waits.
     pub archived_at: Option<f64>,
+    /// The goal the task counts toward, in the same project.
+    pub goal_id: Option<String>,
     pub checks_total: i64,
     pub checks_done: i64,
     pub message_count: i64,
@@ -118,6 +117,8 @@ pub struct TaskInput {
     pub commit_hash: Option<String>,
     pub pull_request_url: Option<String>,
     pub pull_request_number: Option<i64>,
+    #[serde(default)]
+    pub goal_id: Option<String>,
 }
 /// A partial edit: omitted fields preserve the latest value; nullable delivery fields can be cleared.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -139,6 +140,8 @@ pub struct TaskPatch {
     pub pull_request_url: Option<Option<String>>,
     #[serde(default, deserialize_with = "nullable_patch")]
     pub pull_request_number: Option<Option<i64>>,
+    #[serde(default, deserialize_with = "nullable_patch")]
+    pub goal_id: Option<Option<String>>,
 }
 impl From<TaskInput> for TaskPatch {
     fn from(input: TaskInput) -> Self {
@@ -149,9 +152,24 @@ impl From<TaskInput> for TaskPatch {
             category: Some(input.category),
             assignee: Some(input.assignee),
             status: Some(input.status),
+            goal_id: Some(input.goal_id),
             ..Default::default()
         }
     }
+}
+/// What a group of a project's tasks is for. Its progress is how many of them are done.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Goal {
+    pub id: String,
+    pub project_id: String,
+    pub name: String,
+    pub description: String,
+    /// A day, `YYYY-MM-DD`.
+    pub target_date: Option<String>,
+    /// When the person concluded it; concluded goals leave the sidebar's list.
+    pub completed_at: Option<f64>,
+    pub created_at: f64,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -173,7 +191,8 @@ pub struct Note {
 }
 /// Something that happened to a task, for its activity: `kind` is `created`, `status`,
 /// `assignee`, `category`, `title`, `details`, `summary`, `branch`, `commit`, `pullRequest`,
-/// `document` or `documentRemoved`, with the new value (the note's path for documents). `actor` is absent for events recorded before the activity existed.
+/// `document`, `documentRemoved`, `goal` or `project`, with the new value (the note's path for
+/// documents, the goal's or project's name for those, none when the task left its goal). `actor` is absent for events recorded before the activity existed.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Event {
@@ -222,6 +241,7 @@ pub struct Snapshot {
     pub projects: Vec<Project>,
     pub tasks: Vec<Task>,
     pub categories: Vec<Category>,
+    pub goals: Vec<Goal>,
     pub documents: Vec<Document>,
 }
 #[derive(Debug, Serialize)]
@@ -396,6 +416,7 @@ impl Store {
             projects: self.projects()?,
             tasks: self.tasks(None)?,
             categories: self.categories()?,
+            goals: self.goals(None)?,
             documents: self.documents(None)?,
         })
     }
@@ -414,6 +435,7 @@ impl From<&Task> for TaskInput {
             commit_hash: t.commit_hash.clone(),
             pull_request_url: t.pull_request_url.clone(),
             pull_request_number: t.pull_request_number,
+            goal_id: t.goal_id.clone(),
         }
     }
 }
@@ -453,6 +475,7 @@ fn map_task(r: &Row) -> rusqlite::Result<Task> {
         message_count: r.get(17)?,
         document_count: r.get(18)?,
         archived_at: r.get(19)?,
+        goal_id: r.get(20)?,
     })
 }
 pub(crate) fn fold(text: &str) -> String {

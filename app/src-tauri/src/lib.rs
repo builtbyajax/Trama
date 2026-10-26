@@ -8,6 +8,7 @@ mod menu;
 mod process;
 pub mod pull_requests;
 pub mod store;
+pub mod workspaces;
 /// Every UI operation goes through one dispatcher, shared with the browser preview's bridge.
 #[tauri::command]
 async fn call(command: String, args: serde_json::Value) -> store::Result<serde_json::Value> {
