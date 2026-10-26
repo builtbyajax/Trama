@@ -6,6 +6,23 @@
 
 Mudanças entregues em cada versão do Trama. A seção **Em desenvolvimento** reúne alterações implementadas que ainda não foram lançadas; ao publicar uma versão, substitua esse título pelo número e pela data da release.
 
+## [Em desenvolvimento]
+
+### Adicionado
+
+- Busca por atualizações assinadas no app, com verificação automática e manual nas Preferências.
+- Instalação da atualização disponível e reinício do app pelo aviso.
+- Depois de atualizar, mostrar o aviso: “Reinicie as sessões dos agentes para conectá-las à versão atualizada do Trama.”
+
+### Alterado
+
+- Arquivos e pastas agora são ordenados juntos por nome no explorador de notas, com ordem numérica natural.
+
+### Corrigido
+
+- Chamadas MCP de agentes conectados a um banco migrado por um app mais novo são recusadas.
+- No Windows, a instalação é bloqueada enquanto o `trama-agent.exe` estiver em uso.
+
 ## [0.2.1](https://github.com/builtbyajax/Trama/releases/tag/v0.2.1) — 2026-10-24
 
 ### Corrigido
