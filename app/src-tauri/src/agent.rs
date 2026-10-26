@@ -91,7 +91,10 @@ impl Agent {
                 if !arguments.is_object() {
                     return Some(error(id, -32602, "Arguments must be an object"));
                 }
-                let outcome = schema::validate(arguments, &definition["inputSchema"])
+                let outcome = self
+                    .store
+                    .check_supported_schema()
+                    .and_then(|_| schema::validate(arguments, &definition["inputSchema"]))
                     .and_then(|_| self.execute(name, arguments.as_object().unwrap()));
                 match outcome {
                     Ok(value) => {
