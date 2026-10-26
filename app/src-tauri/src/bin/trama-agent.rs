@@ -40,26 +40,27 @@ fn run() -> Result<(), String> {
         None if follow => trama_lib::store::default_database_path(),
         None => Ok(trama_lib::store::default_database_path()?),
     };
-    let mut agent = if workspace {
-        workspace_agent(&path)?
+    let agent = if follow {
+        None
+    } else if workspace {
+        Some(workspace_agent(&path)?)
     } else {
         let id = uuid::Uuid::parse_str(project.as_deref().unwrap())
             .map_err(|_| "Uso: trama-agent --project-id UUID [--database CAMINHO]".to_string())?;
-        Agent::new(Store::open(path.as_ref()?)?, &id.to_string())?
+        Some(Agent::new(Store::open(path.as_ref()?)?, &id.to_string())?)
     };
     let stdin = io::stdin();
     let mut stdout = io::stdout().lock();
     for line in stdin.lock().lines() {
         let line = line.map_err(|e| e.to_string())?;
-        if follow {
-            let active = trama_lib::store::default_database_path();
-            if active != path {
-                agent = workspace_agent(&active)?;
-                path = active;
-            }
-        }
         let response = match serde_json::from_str(&line) {
-            Ok(request) => agent.handle(request),
+            Ok(request) if follow => {
+                path = trama_lib::store::default_database_path();
+                // Close SQLite between calls so Windows can delete a workspace while the agent is idle.
+                let agent = workspace_agent(&path)?;
+                agent.handle(request)
+            }
+            Ok(request) => agent.as_ref().unwrap().handle(request),
             Err(_) => Some(
                 serde_json::json!({"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"Parse error"}}),
             ),
