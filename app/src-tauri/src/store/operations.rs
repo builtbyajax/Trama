@@ -275,11 +275,7 @@ impl Store {
             if fold(&context).contains(&needle) {
                 results.push(SearchResult {
                     id: format!("task:{}", t.id),
-                    kind: if ["preparing", "reserved"].contains(&t.status.as_str()) {
-                        "draft"
-                    } else {
-                        "task"
-                    },
+                    kind: "task",
                     project_id: p.id.clone(),
                     task_id: t.id.clone(),
                     title: t.title.clone(),

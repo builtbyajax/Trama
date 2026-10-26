@@ -48,11 +48,14 @@ export function useAppCommands(commands: AppCommands) {
       case "overview":
         commands.navigate({ kind: "overview" });
         break;
-      case "drafts":
-        commands.navigate({ kind: "drafts" });
+      case "archive":
+        commands.navigate({ kind: "archive" });
         break;
       case "notes":
         commands.navigate({ kind: "notes" });
+        break;
+      case "project_page":
+        commands.setProjectMode("project");
         break;
       case "board":
       case "git":

@@ -1,11 +1,11 @@
 //! Single source of truth for discoverable tool arguments and runtime validation.
-use crate::store::{Result, STATUSES};
+use crate::store::{validate_status, Result, STATUSES};
 use serde_json::{json, Value};
 pub fn tools(workspace: bool) -> Vec<Value> {
     let text = json!({"type":"string"});
     let nullable = json!({"type":["string","null"]});
     let uuid = json!({"type":"string","format":"uuid"});
-    let status = json!({"type":"string","enum":STATUSES});
+    let status = json!({"type":"string","enum":STATUSES,"description":"backlog: Pendências, ideas and work not yet prioritized; todo: To do, the queue; inProgress: Working; review: In review, waiting for the person; done: concluded, off the board in the Archive."});
     let assignee = json!({"type":"string","enum":["user","agent"]});
     let limit = json!({"type":"integer","minimum":1,"maximum":200});
     let offset = json!({"type":"integer","minimum":0});
@@ -82,8 +82,8 @@ pub fn tools(workspace: bool) -> Vec<Value> {
         false,
     );
     add("delete_category","Deletes a category; replacement is required when it has tasks. Logs the change in the activity.",json!({"name":text,"replacement":nullable}),vec!["name"],true,false,true);
-    add("list_tasks","Lists the project's tasks and drafts in board order: by column, top to bottom. Optional filters; paginated with limit/offset (at most 200).",json!({"status":status,"category":text,"assignee":assignee,"goal_id":{"type":"string","format":"uuid"},"limit":limit,"offset":offset}),vec![],true,true,false);
-    add("list_goals","Lists the project's goals with their progress (done tasks over tasks on the board, drafts left out). Concluded goals have completed_at.",json!({}),vec![],true,true,false);
+    add("list_tasks","Lists the project's tasks in board order: Pendências (backlog), To do, Working, In review, then the Archive (done), each column top to bottom. Filter by status to leave the Archive out. Paginated with limit/offset (at most 200).",json!({"status":status,"category":text,"assignee":assignee,"goal_id":{"type":"string","format":"uuid"},"limit":limit,"offset":offset}),vec![],true,true,false);
+    add("list_goals","Lists the project's goals with their progress (done tasks over all its tasks). Concluded goals have completed_at.",json!({}),vec![],true,true,false);
     let date =
         json!({"type":["string","null"],"description":"A day, YYYY-MM-DD; null removes it."});
     add(
@@ -104,25 +104,16 @@ pub fn tools(workspace: bool) -> Vec<Value> {
         false,
         false,
     );
-    add("search_tasks","Searches public context and messages, ignoring accents. Never searches private annotations.",json!({"query":text,"limit":limit,"offset":offset}),vec!["query"],true,true,false);
+    add("search_tasks","Searches public context and messages of every task, archived ones included (check status), ignoring accents. Never searches private annotations.",json!({"query":text,"limit":limit,"offset":offset}),vec!["query"],true,true,false);
     add("get_task","Reads a task: Markdown context, category, assignee, position, counts and delivery metadata.",json!({"task_id":uuid}),vec!["task_id"],true,true,false);
     add("get_task_details","Reads the full task, public messages, checklist and event history. Leaves out private annotations.",json!({"task_id":uuid}),vec!["task_id"],true,true,false);
     let goal_ref = json!({"type":["string","null"],"format":"uuid","description":"A goal of the same project (list_goals); null takes the task out of its goal."});
     let task_fields = json!({"goal_id":goal_ref,"title":text,"details":text,"category":text,"assignee":assignee,"status":status,"agent_summary":nullable,"repository_branch":{"type":["string","null"],"description":"Existing local branch in the project's repository where the task is worked on. Trama doesn't create branches; null removes it."},"commit_hash":nullable,"pull_request_url":nullable,"pull_request_number":{"type":["integer","null"],"minimum":1}});
-    add("create_task","Creates a task or draft with optional context and delivery; by default assignee agent, status todo, category Feature.",task_fields.clone(),vec!["title"],true,false,false);
+    add("create_task","Creates a task with optional context and delivery; by default assignee agent, status todo, category Feature. An idea that isn't ready goes in backlog.",task_fields.clone(),vec!["title"],true,false,false);
     let mut patch = task_fields;
     patch["task_id"] = uuid.clone();
     add("update_task","Edits only the fields sent, without overwriting concurrent edits to other fields. null clears optional metadata. Deliveries are references; they don't run Git.",patch,vec!["task_id"],true,false,false);
-    add("move_task","Moves a task or draft to a status and position; after_id is the card before it, null puts it at the top.",json!({"task_id":uuid,"status":status,"after_id":{"type":["string","null"],"format":"uuid"}}),vec!["task_id","status"],true,false,false);
-    add(
-        "promote_draft",
-        "Promotes a Preparing/Reserved draft to To do.",
-        json!({"task_id":uuid}),
-        vec!["task_id"],
-        true,
-        false,
-        false,
-    );
+    add("move_task","Moves a task to a status and position; after_id is the card before it, null puts it at the top. done concludes it and takes it to the Archive.",json!({"task_id":uuid,"status":status,"after_id":{"type":["string","null"],"format":"uuid"}}),vec!["task_id","status"],true,false,false);
     add(
         "delete_task",
         "Deletes a task and its data. Use only when asked.",
@@ -287,6 +278,12 @@ pub fn validate(args: &Value, schema: &Value) -> Result<()> {
         }
         if let Some(choices) = p["enum"].as_array() {
             if !choices.contains(v) {
+                // A retired status says what replaced it.
+                if let (true, Some(old @ ("preparing" | "reserved"))) =
+                    (key == "status", v.as_str())
+                {
+                    validate_status(old)?;
+                }
                 return Err(format!("Invalid value for {key}."));
             }
         }

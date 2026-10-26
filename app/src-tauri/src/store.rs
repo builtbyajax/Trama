@@ -17,15 +17,9 @@ use unicode_normalization::{char::is_combining_mark, UnicodeNormalization};
 
 pub type Result<T> = std::result::Result<T, String>;
 /// Latest database schema supported by this build, also advertised through MCP.
-pub const SCHEMA_VERSION: i64 = 10;
-pub const STATUSES: [&str; 6] = [
-    "todo",
-    "inProgress",
-    "review",
-    "done",
-    "preparing",
-    "reserved",
-];
+pub const SCHEMA_VERSION: i64 = 12;
+/// In board order: Pendências, To do, Working, In review, then the Archive.
+pub const STATUSES: [&str; 5] = ["backlog", "todo", "inProgress", "review", "done"];
 const TASK_COLUMNS: &str = "t.id,t.project_id,t.title,t.details,t.category,t.assignee,t.status,t.position,t.agent_summary,t.repository_branch,t.commit_hash,t.pull_request_url,t.pull_request_number,t.created_at,t.updated_at,(SELECT COUNT(*) FROM task_checks c WHERE c.task_id=t.id),(SELECT COUNT(*) FROM task_checks c WHERE c.task_id=t.id AND c.is_complete=1),(SELECT COUNT(*) FROM task_messages m WHERE m.task_id=t.id),(SELECT COUNT(*) FROM task_documents d WHERE d.task_id=t.id),t.archived_at,t.goal_id";
 fn sql<T>(r: rusqlite::Result<T>) -> Result<T> {
     r.map_err(|e| e.to_string())
@@ -95,7 +89,8 @@ pub struct Task {
     pub pull_request_number: Option<i64>,
     pub created_at: f64,
     pub updated_at: f64,
-    /// When the person archived the task by hand, before the week a done task otherwise waits.
+    /// When the task was done and went to the Archive; the database sets it as the task enters done
+    /// and clears it as it leaves.
     pub archived_at: Option<f64>,
     /// The goal the task counts toward, in the same project.
     pub goal_id: Option<String>,
@@ -496,6 +491,10 @@ fn validate_actor(actor: &str) -> Result<()> {
 pub fn validate_status(status: &str) -> Result<()> {
     if STATUSES.contains(&status) {
         Ok(())
+    } else if ["preparing", "reserved"].contains(&status) {
+        Err(format!(
+            "The status `{status}` no longer exists; use `backlog`, the column for ideas and work not yet prioritized."
+        ))
     } else {
         Err("Unknown status.".into())
     }

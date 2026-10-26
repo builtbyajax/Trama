@@ -50,22 +50,41 @@ fn task_reordering_and_status_events_follow_board_rules() {
 }
 
 #[test]
-fn drafts_and_archiving_enforce_their_lifecycle() {
+fn backlog_and_the_archive_follow_the_task_lifecycle() {
     let s = memory();
     let p = project(&s, "Lifecycle");
+    let idea = task(&s, &p.id, "Idea", "backlog");
+    assert_eq!(
+        s.move_task(&idea.id, &p.id, "todo", None).unwrap().status,
+        "todo"
+    );
     for status in ["preparing", "reserved"] {
-        let t = task(&s, &p.id, status, status);
-        assert_eq!(s.promote_draft(&t.id, &p.id).unwrap().status, "todo");
-        assert!(s.promote_draft(&t.id, &p.id).is_err());
+        let error = s
+            .move_task(&idea.id, &p.id, status, None)
+            .unwrap_err()
+            .to_string();
+        assert!(
+            error.contains("no longer exists") && error.contains("backlog"),
+            "{error}"
+        );
     }
     let t = task(&s, &p.id, "Archive", "todo");
-    assert!(s.archive_task(&t.id, &p.id, true).is_err());
-    s.move_task(&t.id, &p.id, "done", None).unwrap();
-    assert!(s
-        .archive_task(&t.id, &p.id, true)
-        .unwrap()
-        .archived_at
-        .is_some());
+    assert!(t.archived_at.is_none());
+    let before = trama_lib::store::now();
+    let done = s.move_task(&t.id, &p.id, "done", None).unwrap();
+    let archived = done.archived_at.expect("done goes to the Archive");
+    assert!((archived - before).abs() < 5.0);
+    let edited = s
+        .edit_task(
+            &t.id,
+            TaskPatch {
+                project_id: p.id.clone(),
+                title: Some("Renamed in the Archive".into()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    assert_eq!(edited.archived_at, Some(archived));
     assert!(s
         .move_task(&t.id, &p.id, "todo", None)
         .unwrap()
@@ -275,17 +294,17 @@ fn public_search_ignores_case_accents_and_private_notes() {
 }
 
 #[test]
-fn desktop_search_finds_private_annotations_and_drafts_without_crossing_public_boundary() {
+fn desktop_search_finds_private_annotations_and_backlog_without_crossing_public_boundary() {
     let s = memory();
     let p = project(&s, "Search");
-    let t = task(&s, &p.id, "Ordinary title", "preparing");
+    let t = task(&s, &p.id, "Ordinary title", "backlog");
     s.add_note(&t.id, &p.id, "First annotation").unwrap();
     s.add_note(&t.id, &p.id, "Anotação particular de prevenção")
         .unwrap();
     let results = s.search("PREVENCAO").unwrap();
     assert_eq!(results.len(), 1);
     assert_eq!(results[0].task_id, t.id);
-    assert_eq!(results[0].kind, "draft");
+    assert_eq!(results[0].kind, "task");
     assert!(results[0].excerpt.contains("prevenção"));
     assert!(s.search("   ").unwrap().is_empty());
     assert!(s.search("not present").unwrap().is_empty());

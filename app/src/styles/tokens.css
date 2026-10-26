@@ -51,8 +51,7 @@
   --s-inProgress: #8db8ff;
   --s-review: #e8b665;
   --s-done: #7fcf9b;
-  --s-preparing: #c7a6f0;
-  --s-reserved: #e79ac2;
+  --s-backlog: #e79ac2;
   --scrim: rgba(0, 0, 0, 0.5);
   --font:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable",
@@ -92,9 +91,10 @@
   --island-gap: 8px;
   --page-x: 24px;
   /* The scrollbar's width, and the room it takes beside the content. An area that scrolls
-     reserves that room and gives it back from its right padding: both sides keep the same
-     inset, scrolling or not. The macOS WebKit only takes the room while the area scrolls, so the
-     board's lanes measure it themselves (`useScrollbarRoom`). */
+     always shows its bar (`overflow-y: scroll`, with nothing drawn while there is nothing to
+     scroll) and gives the room back from its right padding: both sides keep the same inset,
+     scrolling or not. `scrollbar-gutter` would not do: with nothing to scroll, the macOS WebKit
+     reserves the native bar's 17px instead of this one. */
   --bar-width: 8px;
   --bar: var(--bar-width);
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);

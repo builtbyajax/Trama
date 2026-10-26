@@ -77,9 +77,8 @@ const statusRank: Record<TaskStatus, number> = {
   inProgress: 0,
   review: 1,
   todo: 2,
-  preparing: 3,
-  reserved: 4,
-  done: 5,
+  backlog: 3,
+  done: 4,
 };
 const byProgress = (a: Task, b: Task) =>
   statusRank[a.status] - statusRank[b.status] ||

@@ -566,6 +566,19 @@ input[type="checkbox"]:checked::after {
   font-size: 12.5px;
   animation: toast-in 0.2s var(--ease);
 }
+.toast-action {
+  margin: -4px -6px -4px 6px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+.toast-action:hover {
+  background: var(--hover);
+}
 .toast.error {
   border-color: var(--danger-line);
 }

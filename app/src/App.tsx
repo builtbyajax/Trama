@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Board } from "./components/Board";
 import { BrandMark } from "./components/BrandMark";
-import { Icon } from "./components/Icon";
+import { Icon, StatusIcon } from "./components/Icon";
 import {
   ProjectHeader,
   defaultFilter,
@@ -25,8 +25,15 @@ import { useToast } from "./hooks/useToast";
 import { useAppUpdater } from "./hooks/useAppUpdater";
 import { useWorkspaces } from "./hooks/useWorkspaces";
 import { Tooltips } from "./components/Tooltips";
-import { Drafts } from "./components/Drafts";
-import { ArchivedTasks } from "./components/ArchivedTasks";
+import {
+  ArchivePage,
+  archiveSections,
+  defaultArchiveView,
+  type ArchiveView,
+} from "./components/ArchivePage";
+import { BoardList, listOrder } from "./components/BoardList";
+import { ProjectPage } from "./components/ProjectPage";
+import { useStoredState } from "./hooks/useStoredState";
 import { Overview } from "./components/Overview";
 import {
   Sidebar,
@@ -43,14 +50,7 @@ import { ShortcutsSheet } from "./components/ShortcutsSheet";
 import { TaskComposer } from "./components/TaskComposer";
 import { TaskSheet, type SheetMode } from "./components/TaskSheet";
 import { categoryNames } from "./components/TaskFields";
-import {
-  archiveTask,
-  copyText,
-  editTask,
-  errorMessage,
-  openUrl,
-  promoteDraft,
-} from "./lib/api";
+import { copyText, editTask, errorMessage, openUrl } from "./lib/api";
 import { ContextMenu, type MenuItem } from "./components/Sidebar";
 import { TaskDelete } from "./components/TaskDelete";
 import { UpdateNotices } from "./components/UpdateNotices";
@@ -82,13 +82,13 @@ import {
   taskMenuLabel,
   type MenuRequest,
 } from "./components/TaskMenu";
-import { isArchived } from "./lib/archive";
 import { isMac, shortcutLabel, shortcuts } from "./lib/shortcuts";
 import {
   boardStatuses,
   byPosition,
   isAgentWorking,
-  isDraft,
+  statusTitle,
+  type BoardView,
   type GitFocus,
   type Goal,
   type Project,
@@ -99,7 +99,7 @@ import {
 import { t } from "./lib/i18n";
 
 export function App() {
-  const { toast, notify } = useToast();
+  const { toast, notify, dismiss } = useToast();
   const updater = useAppUpdater();
   const [gitFocus, setGitFocus] = useState<GitFocus | null>(null);
   const { place, setPlace, canBack, canForward, visit, go, forget, ...nav } =
@@ -112,7 +112,7 @@ export function App() {
     if (loaded.projects[0])
       setPlace({
         destination: { kind: "project", id: loaded.projects[0].id },
-        mode: "board",
+        mode: "project",
       });
   });
   const { data, landedId, setLandedId, move } = useBoardMoves(
@@ -141,6 +141,16 @@ export function App() {
   const [taskMenu, setTaskMenu] = useState<MenuRequest | null>(null);
   const [taskDelete, setTaskDelete] = useState<Task | null>(null);
   const [taskGoalMenu, setTaskGoalMenu] = useState<MenuRequest | null>(null);
+  const [boardView, setBoardView] = useStoredState<BoardView>(
+    "trama.boardView",
+    (saved) => (saved === "list" ? "list" : "kanban"),
+    (value) => value,
+  );
+  const [archiveView, setArchiveView] =
+    useState<ArchiveView>(defaultArchiveView);
+  const [taskStatusMenu, setTaskStatusMenu] = useState<MenuRequest | null>(
+    null,
+  );
   const [goalComposer, setGoalComposer] = useState<{
     projectId: string;
     goal?: Goal;
@@ -184,7 +194,7 @@ export function App() {
     endPeek,
   } = useSidebarLayout(reading ? "diff" : panel);
   const selectedTask = data?.tasks.find((t) => t.id === selected?.id);
-  // Local branches of the open project and, from the drafts, of the open task's project.
+  // Local branches of the open project and, from the Archive, of the open task's project.
   const branches = useBranches(project, revision);
   const sheetProject = data?.projects.find(
     (p) => p.id === selectedTask?.projectId,
@@ -202,13 +212,13 @@ export function App() {
     setSheetMode("sheet");
     return true;
   }
-  /** Another project opens on the same tab; the open project again returns to its board. */
+  /** Another project opens on the same tab; the open project again returns to its page. */
   const navigate = (next: Destination) => {
     const keep =
       next.kind === "project" &&
       destination.kind === "project" &&
       next.id !== destination.id;
-    go({ destination: next, mode: keep ? mode : "board" });
+    go({ destination: next, mode: keep ? mode : "project" });
   };
   function back() {
     if (selectedTask) closeDetails();
@@ -235,7 +245,7 @@ export function App() {
     }
     setComposer({
       projectId: project?.id ?? snapshot.projects[0].id,
-      status: status ?? (destination.kind === "drafts" ? "preparing" : "todo"),
+      status: status ?? "todo",
     });
   }
   useHintKey();
@@ -265,11 +275,17 @@ export function App() {
     },
   });
   function openTask(task: Task) {
+    // From the project page or the Archive the task opens over it; anywhere else, over its board.
+    const onPage =
+      mode === "project" &&
+      destination.kind === "project" &&
+      destination.id === task.projectId;
     visit({
-      destination: isDraft(task.status)
-        ? { kind: "drafts" }
-        : { kind: "project", id: task.projectId },
-      mode: "board",
+      destination:
+        destination.kind === "archive" && task.status === "done"
+          ? destination
+          : { kind: "project", id: task.projectId },
+      mode: onPage ? "project" : "board",
     });
     setGitFocus(null);
     setSelected({ id: task.id });
@@ -341,6 +357,8 @@ export function App() {
         setSheetMode("page");
       },
       onMoveToTop: () => void move(task.id, task.status, null),
+      onConclude: () => void move(task.id, "done", null),
+      onMoveToStatus: () => taskMenu && setTaskStatusMenu(taskMenu),
       onMoveToGoal: data!.goals.some(
         (g) =>
           g.projectId === task.projectId &&
@@ -370,13 +388,6 @@ export function App() {
       onOpenNote: (path) => {
         if (closeDetails()) openNote(task.projectId, path);
       },
-      onArchive: (archived) =>
-        void archiveTask(task, archived)
-          .then(() => refresh())
-          .then(() =>
-            notify(archived ? t("Task archived.") : t("Task unarchived.")),
-          )
-          .catch((e) => notify(errorMessage(e), true)),
       onDelete: () => setTaskDelete(task),
     });
   }
@@ -404,12 +415,7 @@ export function App() {
   );
   const nextColor = colorUse.indexOf(Math.min(...colorUse));
   const boardTasks = project
-    ? data.tasks.filter((t) => t.projectId === project.id && !isDraft(t.status))
-    : [];
-  const archivedTasks = project
-    ? boardTasks
-        .filter((t) => isArchived(t, project, branches))
-        .sort((a, b) => b.updatedAt - a.updatedAt)
+    ? data.tasks.filter((t) => t.projectId === project.id)
     : [];
   const storedFilter = project
     ? { ...defaultFilter, ...filters[project.id] }
@@ -417,15 +423,11 @@ export function App() {
   const projectGoals = project
     ? data.goals.filter((g) => g.projectId === project.id)
     : [];
-  // An empty archive closes itself and shows the board again.
-  const archived = Boolean(storedFilter.archived) && archivedTasks.length > 0;
-  const projectTasks = archived
-    ? archivedTasks
-    : boardTasks.filter((t) => !archivedTasks.includes(t));
+  // Done tasks leave the board for the Archive.
+  const projectTasks = boardTasks.filter((t) => t.status !== "done");
   // A category or branch no task uses anymore no longer filters anything.
   const filter = {
     ...storedFilter,
-    archived,
     category:
       storedFilter.category === "*" ||
       projectTasks.some((t) => t.category === storedFilter.category)
@@ -461,16 +463,15 @@ export function App() {
   const changeFilter = (patch: Partial<BoardFilter>) =>
     project &&
     setFilters((v) => ({ ...v, [project.id]: { ...filter, ...patch } }));
-  const drafts = data.tasks.filter((t) => isDraft(t.status));
-  // Order the sheet steps through: the visible board, column by column, or the drafts list.
+  // Order the sheet steps through: the visible board, column by column, or the Archive.
   const sequence = project
-    ? archived
-      ? visibleTasks
-      : boardStatuses.flatMap((status) =>
-          visibleTasks.filter((t) => t.status === status).sort(byPosition),
+    ? (boardView === "list" ? listOrder : boardStatuses).flatMap((status) =>
+        visibleTasks.filter((t) => t.status === status).sort(byPosition),
+      )
+    : destination.kind === "archive"
+      ? archiveSections(data.tasks, data.goals, archiveView).flatMap(
+          (section) => section.groups.flatMap((group) => group.tasks),
         )
-    : destination.kind === "drafts"
-      ? drafts
       : [];
   const selectedIndex = selectedTask ? sequence.indexOf(selectedTask) : -1;
   const step = (offset: number) => {
@@ -481,22 +482,24 @@ export function App() {
   };
   const openCounts: Record<string, number> = {};
   for (const task of data.tasks)
-    if (task.status !== "done" && !isDraft(task.status))
+    if (task.status !== "done")
       openCounts[task.projectId] = (openCounts[task.projectId] ?? 0) + 1;
   const crumbs: Crumb[] = project
     ? [
         {
           label: project.name,
           project,
-          onClick: () => go({ destination, mode: "board" }),
+          onClick: () => go({ destination, mode: "project" }),
         },
         {
           label:
-            mode === "git"
-              ? t("History")
-              : mode === "notes"
-                ? t("Notes")
-                : t("Board"),
+            mode === "project"
+              ? t("Project")
+              : mode === "git"
+                ? t("History")
+                : mode === "notes"
+                  ? t("Notes")
+                  : t("Board"),
           onClick: () => {
             if (closeDetails()) setDiffTitle(null);
           },
@@ -505,8 +508,8 @@ export function App() {
     : [
         {
           label:
-            destination.kind === "drafts"
-              ? t("Drafts")
+            destination.kind === "archive"
+              ? t("Archive")
               : destination.kind === "preferences"
                 ? t("Preferences")
                 : destination.kind === "notes"
@@ -586,7 +589,6 @@ export function App() {
           <Sidebar
             projects={data.projects}
             openCounts={openCounts}
-            draftCount={drafts.length}
             workingCount={data.tasks.filter(isAgentWorking).length}
             updateAvailable={updater.updateNoticeDismissed}
             destination={destination}
@@ -604,7 +606,7 @@ export function App() {
                   activeId={activeGoal?.id ?? null}
                   onSelect={(goalId) => {
                     if (mode !== "board") setProjectMode("board");
-                    changeFilter({ goal: goalId ?? "*", archived: false });
+                    changeFilter({ goal: goalId ?? "*" });
                   }}
                   onNew={() => setGoalComposer({ projectId: project.id })}
                   onEdit={(goal) =>
@@ -669,7 +671,6 @@ export function App() {
               project={project}
               color={projectColor(project)}
               tasks={projectTasks}
-              archivedCount={archivedTasks.length}
               goals={projectGoals}
               goal={
                 mode === "board" && activeGoal
@@ -744,7 +745,19 @@ export function App() {
                 />
               )
             ) : project ? (
-              mode === "git" ? (
+              mode === "project" ? (
+                <ProjectPage
+                  key={project.id}
+                  tasks={boardTasks}
+                  goals={projectGoals}
+                  onOpenTask={openTask}
+                  onOpenGoal={(goalId) => {
+                    setProjectMode("board");
+                    changeFilter({ goal: goalId });
+                  }}
+                  onShowConcluded={() => setConcludedOpen(true)}
+                />
+              ) : mode === "git" ? (
                 <GitProject
                   key={project.id}
                   project={project}
@@ -760,9 +773,14 @@ export function App() {
                   onOpenTask={openTask}
                   onRefresh={() => void refresh()}
                 />
-              ) : archived ? (
-                <ArchivedTasks
+              ) : boardView === "list" ? (
+                <BoardList
                   tasks={visibleTasks}
+                  goals={projectGoals}
+                  landedId={landedId}
+                  onMove={(id, status, afterId) =>
+                    void move(id, status, afterId)
+                  }
                   selectedId={selectedTask?.id}
                   menuId={taskMenu?.task.id}
                   onMenu={setTaskMenu}
@@ -772,6 +790,7 @@ export function App() {
                 <Board
                   tasks={visibleTasks}
                   branches={branches}
+                  goals={activeGoal ? [] : projectGoals}
                   landedId={landedId}
                   selectedId={selectedTask?.id}
                   menuId={taskMenu?.task.id}
@@ -782,18 +801,17 @@ export function App() {
                   onOpen={openTask}
                 />
               )
-            ) : destination.kind === "drafts" ? (
-              <Drafts
+            ) : destination.kind === "archive" ? (
+              <ArchivePage
                 tasks={data.tasks}
+                goals={data.goals}
                 projects={data.projects}
+                view={archiveView}
+                onView={(patch) => setArchiveView((v) => ({ ...v, ...patch }))}
                 selectedId={selectedTask?.id}
+                menuId={taskMenu?.task.id}
+                onMenu={setTaskMenu}
                 onOpen={openTask}
-                onPromote={(task) =>
-                  void promoteDraft(task)
-                    .then(() => refresh())
-                    .then(() => notify(t("Draft added to the board.")))
-                    .catch((e) => notify(errorMessage(e), true))
-                }
               />
             ) : destination.kind === "notes" ? (
               <Vaults
@@ -814,6 +832,8 @@ export function App() {
                   setWorkspaceLeave({ workspace, mode })
                 }
                 notify={notify}
+                boardView={boardView}
+                onBoardView={setBoardView}
                 onEdit={(project) => setProjectComposer({ project })}
                 onAddProject={() => setProjectComposer({})}
                 updater={updater}
@@ -862,7 +882,11 @@ export function App() {
                 if (closeDetails()) openNote(selectedTask.projectId, path);
               }}
               mode={sheetMode}
-              backLabel={project ? t("Board") : t("Drafts")}
+              backLabel={
+                !project && destination.kind === "archive"
+                  ? t("Archive")
+                  : t("Board")
+              }
               position={
                 selectedIndex >= 0
                   ? { index: selectedIndex, total: sequence.length }
@@ -905,6 +929,18 @@ export function App() {
         >
           {toast.error && <Icon name="warning" size={14} />}
           {toast.text}
+          {toast.action && (
+            <button
+              type="button"
+              className="toast-action"
+              onClick={() => {
+                dismiss();
+                toast.action!.run();
+              }}
+            >
+              {toast.action.label}
+            </button>
+          )}
         </div>
       )}
       {composer && (
@@ -927,9 +963,7 @@ export function App() {
           onSaved={(task) => {
             setComposer(null);
             go({
-              destination: isDraft(task.status)
-                ? { kind: "drafts" }
-                : { kind: "project", id: task.projectId },
+              destination: { kind: "project", id: task.projectId },
               mode: "board",
             });
             setLandedId(task.id);
@@ -990,6 +1024,45 @@ export function App() {
           }}
         />
       )}
+      {taskStatusMenu && (
+        <ContextMenu
+          x={taskStatusMenu.x}
+          y={taskStatusMenu.y}
+          // From the Archive a task only goes back to a stage of the board.
+          label={
+            taskStatusMenu.task.status === "done"
+              ? t("Reopen in stage")
+              : t("Move to stage")
+          }
+          heading={
+            taskStatusMenu.task.status === "done"
+              ? t("Reopen in stage")
+              : t("Move to stage")
+          }
+          items={(taskStatusMenu.task.status === "done"
+            ? boardStatuses
+            : [...boardStatuses, "done" as const]
+          ).map((status) => {
+            const task =
+              data.tasks.find((t) => t.id === taskStatusMenu.task.id) ??
+              taskStatusMenu.task;
+            return {
+              label: statusTitle[status],
+              leading:
+                status === "done" ? undefined : <StatusIcon status={status} />,
+              icon: status === "done" ? ("check" as const) : undefined,
+              checked: task.status === status,
+              separated: status === "done",
+              onSelect: () =>
+                task.status !== status && void move(task.id, status, null),
+            };
+          })}
+          onClose={(restoreFocus) => {
+            if (restoreFocus) taskStatusMenu.trigger.focus();
+            setTaskStatusMenu(null);
+          }}
+        />
+      )}
       {taskGoalMenu && (
         <ContextMenu
           x={taskGoalMenu.x}
@@ -1042,7 +1115,7 @@ export function App() {
           onOpen={(goal) => {
             setConcludedOpen(false);
             if (mode !== "board") setProjectMode("board");
-            changeFilter({ goal: goal.id, archived: false });
+            changeFilter({ goal: goal.id });
           }}
           onReopen={reopenGoal}
           onDelete={setGoalDelete}

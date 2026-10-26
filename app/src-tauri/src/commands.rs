@@ -132,17 +132,7 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
             ),
         ),
         "delete_goal" => encoded(store.delete_goal(text(&args, "goalId")?, project()?)),
-        "promote_draft" => encoded(store.promote_draft(task()?, project()?)),
         "delete_task" => encoded(store.delete_task(task()?, project()?)),
-        "archive_task" => encoded(
-            store.archive_task(
-                task()?,
-                project()?,
-                args["archived"]
-                    .as_bool()
-                    .ok_or("Missing argument: archived")?,
-            ),
-        ),
         "task_details" => encoded(store.task_details(task()?, project()?)),
         "handoff_events" => {
             encoded(store.handoff_events(args["since"].as_f64().ok_or("Missing argument: since")?))

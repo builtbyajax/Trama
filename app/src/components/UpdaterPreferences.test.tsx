@@ -40,7 +40,6 @@ function UpdaterPreferences() {
       <Sidebar
         projects={[]}
         openCounts={{}}
-        draftCount={0}
         workingCount={0}
         updateAvailable={updater.updateNoticeDismissed}
         destination={{ kind: "preferences" }}
@@ -72,6 +71,8 @@ function UpdaterPreferences() {
         notify={mocks.notify}
         onEdit={vi.fn()}
         onAddProject={vi.fn()}
+        boardView="kanban"
+        onBoardView={vi.fn()}
         updater={updater}
       />
     </>

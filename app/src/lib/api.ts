@@ -116,16 +116,8 @@ export const deleteCategory = (
     name,
     replacement,
   });
-export const promoteDraft = (task: Task) =>
-  call<Task>("promote_draft", { taskId: task.id, projectId: task.projectId });
 export const deleteTask = (task: Task) =>
   call<void>("delete_task", { taskId: task.id, projectId: task.projectId });
-export const archiveTask = (task: Task, archived: boolean) =>
-  call<Task>("archive_task", {
-    taskId: task.id,
-    projectId: task.projectId,
-    archived,
-  });
 export const taskDetails = (task: Task) =>
   call<TaskDetails>("task_details", {
     taskId: task.id,

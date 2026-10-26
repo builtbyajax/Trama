@@ -96,6 +96,28 @@
     "path": "note.md",
     "task_id": "<uuid-2>"
   },
+  "backlog-to-todo": {
+    "agent_summary": null,
+    "assignee": "agent",
+    "category": "Feature",
+    "checks_done": 0,
+    "checks_total": 0,
+    "commit_hash": null,
+    "created_at": "<timestamp>",
+    "details": "",
+    "document_count": 0,
+    "goal_id": null,
+    "id": "<uuid-13>",
+    "message_count": 0,
+    "position": 0,
+    "project_id": "<uuid-14>",
+    "pull_request_number": null,
+    "pull_request_url": null,
+    "repository_branch": null,
+    "status": "todo",
+    "title": "Idea",
+    "updated_at": "<timestamp>"
+  },
   "clear-delivery": {
     "agent_summary": null,
     "assignee": "agent",
@@ -106,7 +128,7 @@
     "created_at": "<timestamp>",
     "details": "",
     "document_count": 0,
-    "goal_id": "<uuid-13>",
+    "goal_id": "<uuid-15>",
     "id": "<uuid-2>",
     "message_count": 0,
     "position": 0,
@@ -127,7 +149,7 @@
     "completed_at": null,
     "created_at": "<timestamp>",
     "description": "Synthetic",
-    "id": "<uuid-13>",
+    "id": "<uuid-15>",
     "name": "Outcome",
     "project_id": "<uuid-14>",
     "target_date": "2026-12-01",
@@ -136,7 +158,7 @@
   },
   "create-project": {
     "created_at": "<timestamp>",
-    "id": "<uuid-15>",
+    "id": "<uuid-16>",
     "name": "Disposable",
     "notes_folder": null,
     "repository_path": null
@@ -151,7 +173,7 @@
     "created_at": "<timestamp>",
     "details": "",
     "document_count": 0,
-    "goal_id": "<uuid-13>",
+    "goal_id": "<uuid-15>",
     "id": "<uuid-2>",
     "message_count": 0,
     "position": -1,
@@ -188,7 +210,7 @@
     "created_at": "<timestamp>",
     "details": "",
     "document_count": 0,
-    "goal_id": "<uuid-13>",
+    "goal_id": "<uuid-15>",
     "id": "<uuid-2>",
     "message_count": 0,
     "position": 0,
@@ -219,7 +241,7 @@
           "listChanged": false
         }
       },
-      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); log progress with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Never move a task to done unless asked. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations.",
+      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); log progress with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Ideas and work not yet prioritized wait in backlog (Pendências); they are not your queue. Never move a task to done unless asked: done concludes it and takes it off the board to the Archive. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations.",
       "resultType": "complete",
       "supportedVersions": [
         "2026-07-28",
@@ -245,7 +267,7 @@
         "details": "Public briefing",
         "document_count": 0,
         "goal_id": null,
-        "id": "<uuid-16>",
+        "id": "<uuid-17>",
         "message_count": 0,
         "position": 0,
         "project_id": "<uuid-14>",
@@ -281,7 +303,7 @@
           "listChanged": false
         }
       },
-      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); log progress with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Never move a task to done unless asked. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations.",
+      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); log progress with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Ideas and work not yet prioritized wait in backlog (Pendências); they are not your queue. Never move a task to done unless asked: done concludes it and takes it off the board to the Archive. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations.",
       "protocolVersion": "2025-11-25",
       "serverInfo": {
         "name": "trama-agent-bridge",
@@ -393,7 +415,7 @@
         "created_at": "<timestamp>",
         "details": "",
         "document_count": 0,
-        "goal_id": "<uuid-13>",
+        "goal_id": "<uuid-15>",
         "id": "<uuid-2>",
         "message_count": 0,
         "position": 0,
@@ -417,7 +439,7 @@
           "listChanged": false
         }
       },
-      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); log progress with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Never move a task to done unless asked. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations.",
+      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); log progress with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Ideas and work not yet prioritized wait in backlog (Pendências); they are not your queue. Never move a task to done unless asked: done concludes it and takes it off the board to the Archive. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations.",
       "protocolVersion": "2024-11-05",
       "serverInfo": {
         "name": "trama-agent-bridge",
@@ -606,7 +628,7 @@
             "openWorldHint": false,
             "readOnlyHint": true
           },
-          "description": "Lists the project's tasks and drafts in board order: by column, top to bottom. Optional filters; paginated with limit/offset (at most 200).",
+          "description": "Lists the project's tasks in board order: Pendências (backlog), To do, Working, In review, then the Archive (done), each column top to bottom. Filter by status to leave the Archive out. Paginated with limit/offset (at most 200).",
           "inputSchema": {
             "additionalProperties": false,
             "properties": {
@@ -634,13 +656,13 @@
                 "type": "integer"
               },
               "status": {
+                "description": "backlog: Pendências, ideas and work not yet prioritized; todo: To do, the queue; inProgress: Working; review: In review, waiting for the person; done: concluded, off the board in the Archive.",
                 "enum": [
+                  "backlog",
                   "todo",
                   "inProgress",
                   "review",
-                  "done",
-                  "preparing",
-                  "reserved"
+                  "done"
                 ],
                 "type": "string"
               }
@@ -656,7 +678,7 @@
             "openWorldHint": false,
             "readOnlyHint": true
           },
-          "description": "Lists the project's goals with their progress (done tasks over tasks on the board, drafts left out). Concluded goals have completed_at.",
+          "description": "Lists the project's goals with their progress (done tasks over all its tasks). Concluded goals have completed_at.",
           "inputSchema": {
             "additionalProperties": false,
             "properties": {},
@@ -737,7 +759,7 @@
             "openWorldHint": false,
             "readOnlyHint": true
           },
-          "description": "Searches public context and messages, ignoring accents. Never searches private annotations.",
+          "description": "Searches public context and messages of every task, archived ones included (check status), ignoring accents. Never searches private annotations.",
           "inputSchema": {
             "additionalProperties": false,
             "properties": {
@@ -811,7 +833,7 @@
             "openWorldHint": false,
             "readOnlyHint": false
           },
-          "description": "Creates a task or draft with optional context and delivery; by default assignee agent, status todo, category Feature.",
+          "description": "Creates a task with optional context and delivery; by default assignee agent, status todo, category Feature. An idea that isn't ready goes in backlog.",
           "inputSchema": {
             "additionalProperties": false,
             "properties": {
@@ -869,13 +891,13 @@
                 ]
               },
               "status": {
+                "description": "backlog: Pendências, ideas and work not yet prioritized; todo: To do, the queue; inProgress: Working; review: In review, waiting for the person; done: concluded, off the board in the Archive.",
                 "enum": [
+                  "backlog",
                   "todo",
                   "inProgress",
                   "review",
-                  "done",
-                  "preparing",
-                  "reserved"
+                  "done"
                 ],
                 "type": "string"
               },
@@ -954,13 +976,13 @@
                 ]
               },
               "status": {
+                "description": "backlog: Pendências, ideas and work not yet prioritized; todo: To do, the queue; inProgress: Working; review: In review, waiting for the person; done: concluded, off the board in the Archive.",
                 "enum": [
+                  "backlog",
                   "todo",
                   "inProgress",
                   "review",
-                  "done",
-                  "preparing",
-                  "reserved"
+                  "done"
                 ],
                 "type": "string"
               },
@@ -985,7 +1007,7 @@
             "openWorldHint": false,
             "readOnlyHint": false
           },
-          "description": "Moves a task or draft to a status and position; after_id is the card before it, null puts it at the top.",
+          "description": "Moves a task to a status and position; after_id is the card before it, null puts it at the top. done concludes it and takes it to the Archive.",
           "inputSchema": {
             "additionalProperties": false,
             "properties": {
@@ -997,13 +1019,13 @@
                 ]
               },
               "status": {
+                "description": "backlog: Pendências, ideas and work not yet prioritized; todo: To do, the queue; inProgress: Working; review: In review, waiting for the person; done: concluded, off the board in the Archive.",
                 "enum": [
+                  "backlog",
                   "todo",
                   "inProgress",
                   "review",
-                  "done",
-                  "preparing",
-                  "reserved"
+                  "done"
                 ],
                 "type": "string"
               },
@@ -1019,28 +1041,6 @@
             "type": "object"
           },
           "name": "move_task"
-        },
-        {
-          "annotations": {
-            "destructiveHint": false,
-            "openWorldHint": false,
-            "readOnlyHint": false
-          },
-          "description": "Promotes a Preparing/Reserved draft to To do.",
-          "inputSchema": {
-            "additionalProperties": false,
-            "properties": {
-              "task_id": {
-                "format": "uuid",
-                "type": "string"
-              }
-            },
-            "required": [
-              "task_id"
-            ],
-            "type": "object"
-          },
-          "name": "promote_draft"
         },
         {
           "annotations": {
@@ -1467,35 +1467,13 @@
       ]
     }
   },
-  "promote-draft": {
-    "agent_summary": null,
-    "assignee": "agent",
-    "category": "Feature",
-    "checks_done": 0,
-    "checks_total": 0,
-    "commit_hash": null,
-    "created_at": "<timestamp>",
-    "details": "",
-    "document_count": 0,
-    "goal_id": null,
-    "id": "<uuid-17>",
-    "message_count": 0,
-    "position": 0,
-    "project_id": "<uuid-14>",
-    "pull_request_number": null,
-    "pull_request_url": null,
-    "repository_branch": null,
-    "status": "todo",
-    "title": "Draft",
-    "updated_at": "<timestamp>"
-  },
   "read-get_context": {
     "id": "<request-id>",
     "jsonrpc": "2.0",
     "result": {
       "content": [
         {
-          "text": "{\"agent_execution\":\"external\",\"assignees\":[\"user\",\"agent\"],\"briefing_field\":\"details\",\"categories\":[{\"name\":\"Documentation\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Feature\",\"project_id\":\"<uuid-14>\",\"task_count\":2},{\"name\":\"Fix\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Infrastructure\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Interface\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Investigation\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Migration\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Performance\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Refactoring\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Security\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Tests\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Validation\",\"project_id\":\"<uuid-14>\",\"task_count\":0}],\"private_notes_accessible\":false,\"project\":{\"created_at\":\"<timestamp>\",\"id\":\"<uuid-14>\",\"name\":\"Contract\",\"notes_folder\":\"<temp>/notes\",\"repository_path\":\"<temp>/repo\"},\"schema_version\":10,\"scope\":\"workspace\",\"statuses\":[\"todo\",\"inProgress\",\"review\",\"done\",\"preparing\",\"reserved\"],\"working_indicator\":\"assignee=agent and status=inProgress\"}",
+          "text": "{\"agent_execution\":\"external\",\"assignees\":[\"user\",\"agent\"],\"briefing_field\":\"details\",\"categories\":[{\"name\":\"Documentation\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Feature\",\"project_id\":\"<uuid-14>\",\"task_count\":2},{\"name\":\"Fix\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Infrastructure\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Interface\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Investigation\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Migration\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Performance\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Refactoring\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Security\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Tests\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Validation\",\"project_id\":\"<uuid-14>\",\"task_count\":0}],\"private_notes_accessible\":false,\"project\":{\"created_at\":\"<timestamp>\",\"id\":\"<uuid-14>\",\"name\":\"Contract\",\"notes_folder\":\"<temp>/notes\",\"repository_path\":\"<temp>/repo\"},\"schema_version\":12,\"scope\":\"workspace\",\"statuses\":[\"backlog\",\"todo\",\"inProgress\",\"review\",\"done\"],\"working_indicator\":\"assignee=agent and status=inProgress\"}",
           "type": "text"
         }
       ],
@@ -1577,15 +1555,14 @@
           "notes_folder": "<temp>/notes",
           "repository_path": "<temp>/repo"
         },
-        "schema_version": 10,
+        "schema_version": 12,
         "scope": "workspace",
         "statuses": [
+          "backlog",
           "todo",
           "inProgress",
           "review",
-          "done",
-          "preparing",
-          "reserved"
+          "done"
         ],
         "working_indicator": "assignee=agent and status=inProgress"
       }
@@ -1597,7 +1574,7 @@
     "result": {
       "content": [
         {
-          "text": "{\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-16>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"}",
+          "text": "{\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-17>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"}",
           "type": "text"
         }
       ],
@@ -1613,7 +1590,7 @@
         "details": "Public briefing",
         "document_count": 0,
         "goal_id": null,
-        "id": "<uuid-16>",
+        "id": "<uuid-17>",
         "message_count": 0,
         "position": 0,
         "project_id": "<uuid-14>",
@@ -1632,7 +1609,7 @@
     "result": {
       "content": [
         {
-          "text": "{\"checks\":[],\"documents\":[],\"events\":[{\"actor\":\"user\",\"created_at\":\"<timestamp>\",\"id\":\"<uuid-18>\",\"kind\":\"created\",\"task_id\":\"<uuid-16>\",\"value\":null}],\"messages\":[],\"task\":{\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-16>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"}}",
+          "text": "{\"checks\":[],\"documents\":[],\"events\":[{\"actor\":\"user\",\"created_at\":\"<timestamp>\",\"id\":\"<uuid-18>\",\"kind\":\"created\",\"task_id\":\"<uuid-17>\",\"value\":null}],\"messages\":[],\"task\":{\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-17>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"}}",
           "type": "text"
         }
       ],
@@ -1646,7 +1623,7 @@
             "created_at": "<timestamp>",
             "id": "<uuid-18>",
             "kind": "created",
-            "task_id": "<uuid-16>",
+            "task_id": "<uuid-17>",
             "value": null
           }
         ],
@@ -1662,7 +1639,7 @@
           "details": "Public briefing",
           "document_count": 0,
           "goal_id": null,
-          "id": "<uuid-16>",
+          "id": "<uuid-17>",
           "message_count": 0,
           "position": 0,
           "project_id": "<uuid-14>",
@@ -1870,7 +1847,7 @@
     "result": {
       "content": [
         {
-          "text": "{\"goals\":[{\"completed_at\":null,\"created_at\":\"<timestamp>\",\"description\":\"Synthetic\",\"id\":\"<uuid-13>\",\"name\":\"Renamed outcome\",\"project_id\":\"<uuid-14>\",\"target_date\":null,\"tasks_done\":0,\"tasks_total\":1}]}",
+          "text": "{\"goals\":[{\"completed_at\":null,\"created_at\":\"<timestamp>\",\"description\":\"Synthetic\",\"id\":\"<uuid-15>\",\"name\":\"Renamed outcome\",\"project_id\":\"<uuid-14>\",\"target_date\":null,\"tasks_done\":0,\"tasks_total\":1}]}",
           "type": "text"
         }
       ],
@@ -1881,7 +1858,7 @@
             "completed_at": null,
             "created_at": "<timestamp>",
             "description": "Synthetic",
-            "id": "<uuid-13>",
+            "id": "<uuid-15>",
             "name": "Renamed outcome",
             "project_id": "<uuid-14>",
             "target_date": null,
@@ -1978,7 +1955,7 @@
     "result": {
       "content": [
         {
-          "text": "{\"next_offset\":null,\"tasks\":[{\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-16>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"},{\"agent_summary\":\"Delivered\",\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":\"<commit>\",\"created_at\":\"<timestamp>\",\"details\":\"\",\"document_count\":0,\"goal_id\":\"<uuid-13>\",\"id\":\"<uuid-2>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":1,\"pull_request_url\":\"https://github.com/example/repository/pull/1\",\"repository_branch\":\"test/contract\",\"status\":\"review\",\"title\":\"Lifecycle\",\"updated_at\":\"<timestamp>\"}],\"total\":2}",
+          "text": "{\"next_offset\":null,\"tasks\":[{\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-17>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"},{\"agent_summary\":\"Delivered\",\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":\"<commit>\",\"created_at\":\"<timestamp>\",\"details\":\"\",\"document_count\":0,\"goal_id\":\"<uuid-15>\",\"id\":\"<uuid-2>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":1,\"pull_request_url\":\"https://github.com/example/repository/pull/1\",\"repository_branch\":\"test/contract\",\"status\":\"review\",\"title\":\"Lifecycle\",\"updated_at\":\"<timestamp>\"}],\"total\":2}",
           "type": "text"
         }
       ],
@@ -1997,7 +1974,7 @@
             "details": "Public briefing",
             "document_count": 0,
             "goal_id": null,
-            "id": "<uuid-16>",
+            "id": "<uuid-17>",
             "message_count": 0,
             "position": 0,
             "project_id": "<uuid-14>",
@@ -2018,7 +1995,7 @@
             "created_at": "<timestamp>",
             "details": "",
             "document_count": 0,
-            "goal_id": "<uuid-13>",
+            "goal_id": "<uuid-15>",
             "id": "<uuid-2>",
             "message_count": 0,
             "position": 0,
@@ -2041,7 +2018,7 @@
     "result": {
       "content": [
         {
-          "text": "{\"events\":[{\"actor\":\"user\",\"created_at\":\"<timestamp>\",\"id\":\"<uuid-18>\",\"kind\":\"created\",\"task_id\":\"<uuid-16>\",\"value\":null}],\"next_offset\":null,\"total\":1}",
+          "text": "{\"events\":[{\"actor\":\"user\",\"created_at\":\"<timestamp>\",\"id\":\"<uuid-18>\",\"kind\":\"created\",\"task_id\":\"<uuid-17>\",\"value\":null}],\"next_offset\":null,\"total\":1}",
           "type": "text"
         }
       ],
@@ -2053,7 +2030,7 @@
             "created_at": "<timestamp>",
             "id": "<uuid-18>",
             "kind": "created",
-            "task_id": "<uuid-16>",
+            "task_id": "<uuid-17>",
             "value": null
           }
         ],
@@ -2103,6 +2080,19 @@
     "project_id": "<uuid-14>",
     "task_count": 0
   },
+  "retired-status": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "The status `reserved` no longer exists; use `backlog`, the column for ideas and work not yet prioritized.",
+          "type": "text"
+        }
+      ],
+      "isError": true
+    }
+  },
   "review-task": {
     "agent_summary": "Delivered",
     "assignee": "agent",
@@ -2113,7 +2103,7 @@
     "created_at": "<timestamp>",
     "details": "",
     "document_count": 0,
-    "goal_id": "<uuid-13>",
+    "goal_id": "<uuid-15>",
     "id": "<uuid-2>",
     "message_count": 0,
     "position": 0,
@@ -2135,7 +2125,7 @@
     "created_at": "<timestamp>",
     "details": "",
     "document_count": 0,
-    "goal_id": "<uuid-13>",
+    "goal_id": "<uuid-15>",
     "id": "<uuid-2>",
     "message_count": 0,
     "position": 0,
@@ -2165,7 +2155,7 @@
     "completed_at": null,
     "created_at": "<timestamp>",
     "description": "Synthetic",
-    "id": "<uuid-13>",
+    "id": "<uuid-15>",
     "name": "Renamed outcome",
     "project_id": "<uuid-14>",
     "target_date": null,
@@ -2181,7 +2171,7 @@
   },
   "update-project": {
     "created_at": "<timestamp>",
-    "id": "<uuid-15>",
+    "id": "<uuid-16>",
     "name": "Updated disposable",
     "notes_folder": null,
     "repository_path": null
@@ -2424,7 +2414,7 @@
             "openWorldHint": false,
             "readOnlyHint": true
           },
-          "description": "Lists the project's tasks and drafts in board order: by column, top to bottom. Optional filters; paginated with limit/offset (at most 200).",
+          "description": "Lists the project's tasks in board order: Pendências (backlog), To do, Working, In review, then the Archive (done), each column top to bottom. Filter by status to leave the Archive out. Paginated with limit/offset (at most 200).",
           "inputSchema": {
             "additionalProperties": false,
             "properties": {
@@ -2456,13 +2446,13 @@
                 "type": "string"
               },
               "status": {
+                "description": "backlog: Pendências, ideas and work not yet prioritized; todo: To do, the queue; inProgress: Working; review: In review, waiting for the person; done: concluded, off the board in the Archive.",
                 "enum": [
+                  "backlog",
                   "todo",
                   "inProgress",
                   "review",
-                  "done",
-                  "preparing",
-                  "reserved"
+                  "done"
                 ],
                 "type": "string"
               }
@@ -2480,7 +2470,7 @@
             "openWorldHint": false,
             "readOnlyHint": true
           },
-          "description": "Lists the project's goals with their progress (done tasks over tasks on the board, drafts left out). Concluded goals have completed_at.",
+          "description": "Lists the project's goals with their progress (done tasks over all its tasks). Concluded goals have completed_at.",
           "inputSchema": {
             "additionalProperties": false,
             "properties": {
@@ -2578,7 +2568,7 @@
             "openWorldHint": false,
             "readOnlyHint": true
           },
-          "description": "Searches public context and messages, ignoring accents. Never searches private annotations.",
+          "description": "Searches public context and messages of every task, archived ones included (check status), ignoring accents. Never searches private annotations.",
           "inputSchema": {
             "additionalProperties": false,
             "properties": {
@@ -2667,7 +2657,7 @@
             "openWorldHint": false,
             "readOnlyHint": false
           },
-          "description": "Creates a task or draft with optional context and delivery; by default assignee agent, status todo, category Feature.",
+          "description": "Creates a task with optional context and delivery; by default assignee agent, status todo, category Feature. An idea that isn't ready goes in backlog.",
           "inputSchema": {
             "additionalProperties": false,
             "properties": {
@@ -2729,13 +2719,13 @@
                 ]
               },
               "status": {
+                "description": "backlog: Pendências, ideas and work not yet prioritized; todo: To do, the queue; inProgress: Working; review: In review, waiting for the person; done: concluded, off the board in the Archive.",
                 "enum": [
+                  "backlog",
                   "todo",
                   "inProgress",
                   "review",
-                  "done",
-                  "preparing",
-                  "reserved"
+                  "done"
                 ],
                 "type": "string"
               },
@@ -2819,13 +2809,13 @@
                 ]
               },
               "status": {
+                "description": "backlog: Pendências, ideas and work not yet prioritized; todo: To do, the queue; inProgress: Working; review: In review, waiting for the person; done: concluded, off the board in the Archive.",
                 "enum": [
+                  "backlog",
                   "todo",
                   "inProgress",
                   "review",
-                  "done",
-                  "preparing",
-                  "reserved"
+                  "done"
                 ],
                 "type": "string"
               },
@@ -2851,7 +2841,7 @@
             "openWorldHint": false,
             "readOnlyHint": false
           },
-          "description": "Moves a task or draft to a status and position; after_id is the card before it, null puts it at the top.",
+          "description": "Moves a task to a status and position; after_id is the card before it, null puts it at the top. done concludes it and takes it to the Archive.",
           "inputSchema": {
             "additionalProperties": false,
             "properties": {
@@ -2867,13 +2857,13 @@
                 "type": "string"
               },
               "status": {
+                "description": "backlog: Pendências, ideas and work not yet prioritized; todo: To do, the queue; inProgress: Working; review: In review, waiting for the person; done: concluded, off the board in the Archive.",
                 "enum": [
+                  "backlog",
                   "todo",
                   "inProgress",
                   "review",
-                  "done",
-                  "preparing",
-                  "reserved"
+                  "done"
                 ],
                 "type": "string"
               },
@@ -2890,33 +2880,6 @@
             "type": "object"
           },
           "name": "move_task"
-        },
-        {
-          "annotations": {
-            "destructiveHint": false,
-            "openWorldHint": false,
-            "readOnlyHint": false
-          },
-          "description": "Promotes a Preparing/Reserved draft to To do.",
-          "inputSchema": {
-            "additionalProperties": false,
-            "properties": {
-              "project_id": {
-                "format": "uuid",
-                "type": "string"
-              },
-              "task_id": {
-                "format": "uuid",
-                "type": "string"
-              }
-            },
-            "required": [
-              "task_id",
-              "project_id"
-            ],
-            "type": "object"
-          },
-          "name": "promote_draft"
         },
         {
           "annotations": {

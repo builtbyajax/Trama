@@ -93,10 +93,9 @@
 .history-list {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
   overscroll-behavior: contain;
   padding: 4px calc(12px - var(--bar)) 16px 12px;
-  scrollbar-gutter: stable;
 }
 .history-section h3 {
   display: flex;
@@ -661,11 +660,10 @@
 .detail-files {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
   overscroll-behavior: contain;
   margin-top: 14px;
   padding: 0 calc(16px - var(--bar)) 24px 16px;
-  scrollbar-gutter: stable;
   border-top: 1px solid var(--line-subtle);
 }
 .detail-files-head {

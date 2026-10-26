@@ -1,9 +1,8 @@
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useBranches } from "../hooks/useBranches";
 import { saveTask, errorMessage } from "../lib/api";
 import {
   emptyInput,
-  isDraft,
   type Category,
   type Goal,
   type Project,
@@ -59,7 +58,6 @@ export function TaskComposer({
   }));
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const destinationId = useId();
   const project = projects.find((p) => p.id === input.projectId);
   const branches = useBranches(project);
   // A branch that left the repository cannot be chosen.
@@ -71,7 +69,6 @@ export function TaskComposer({
   useEffect(() => {
     if (stale) setInput((v) => ({ ...v, repositoryBranch: null }));
   }, [stale]);
-  const draft = isDraft(input.status);
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
@@ -111,39 +108,6 @@ export function TaskComposer({
                 />
               )}
             </Field>
-            <div className="field">
-              <span className="field-label" id={destinationId}>
-                {t("Save to")}
-              </span>
-              <div
-                className="segmented segmented-field"
-                role="radiogroup"
-                aria-labelledby={destinationId}
-              >
-                {(
-                  [
-                    ["todo", t("Board")],
-                    ["preparing", t("Drafts")],
-                  ] as const
-                ).map(([value, label]) => {
-                  const on = (value === "preparing") === draft;
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      role="radio"
-                      aria-checked={on}
-                      className={on ? "on" : ""}
-                      onClick={() =>
-                        !on && setInput({ ...input, status: value })
-                      }
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
           <TaskFields
             input={input}
@@ -162,8 +126,8 @@ export function TaskComposer({
         </div>
         <footer className="modal-footer">
           <p className="footer-hint">
-            {draft
-              ? t("The draft stays off the board until it's ready.")
+            {input.status === "backlog"
+              ? t("The task waits in Backlog until you move it to To do.")
               : t("The task joins the project's queue.")}
           </p>
           <button type="button" className="button" onClick={onClose}>

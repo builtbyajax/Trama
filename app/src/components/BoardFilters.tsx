@@ -21,25 +21,22 @@ import { locale, t } from "../lib/i18n";
 
 /**
  * `branch` is "*" for every task, "" for tasks without a branch, or a branch name. `goal` is "*"
- * or the id of the goal the board is open on. `archived` swaps the board for the list of archived
- * tasks (see `isArchived`).
+ * or the id of the goal the board is open on ("" for the tasks without one).
  */
 export type BoardFilter = {
   assignee: "all" | TaskAssignee;
   category: string;
   branch: string;
   goal: string;
-  archived: boolean;
 };
 export const defaultFilter: BoardFilter = {
   assignee: "all",
   category: "*",
   branch: "*",
   goal: "*",
-  archived: false,
 };
 
-export type ProjectMode = "board" | "git" | "notes";
+export type ProjectMode = "project" | "board" | "git" | "notes";
 
 /** The two threads of the app: a ring for you, a diamond for the agent. */
 export function Glyph({ who }: { who: TaskAssignee }) {
@@ -48,14 +45,12 @@ export function Glyph({ who }: { who: TaskAssignee }) {
 
 /**
  * Head of a project page: name and a one-line summary, the Board/History switch and, on the
- * board, the category chips (with their manager), the branch and assignee filters and the switch
- * to the archived tasks.
+ * board, the category chips (with their manager) and the branch and assignee filters.
  */
 export function ProjectHeader({
   project,
   color,
   tasks,
-  archivedCount,
   goals,
   goal,
   mode,
@@ -69,9 +64,8 @@ export function ProjectHeader({
 }: {
   project: Project;
   color: string;
-  /** The project's board tasks, or its archived ones while those are shown; unfiltered. */
+  /** The project's board tasks, unfiltered. */
   tasks: Task[];
-  archivedCount: number;
   /** The project's goals. */
   goals: Goal[];
   /**
@@ -225,16 +219,10 @@ export function ProjectHeader({
             )}
           </h1>
           <p>
-            {filter.archived
-              ? counted.length === 1
-                ? t("1 archived task")
-                : t("{0} archived tasks", [counted.length])
-              : counted.length === 1
-                ? t("1 task")
-                : t("{0} tasks", [counted.length])}
-            {!filter.archived &&
-              withAgent > 0 &&
-              t(", {0} with the agent", [withAgent])}
+            {counted.length === 1
+              ? t("1 task")
+              : t("{0} tasks", [counted.length])}
+            {withAgent > 0 && t(", {0} with the agent", [withAgent])}
             {!goal && mode === "notes" && project.documentsFolder && (
               <button
                 type="button"
@@ -329,6 +317,19 @@ export function ProjectHeader({
         <div className="segmented" role="group" aria-label={t("Project view")}>
           <button
             type="button"
+            aria-pressed={mode === "project"}
+            aria-keyshortcuts={ariaKeys(shortcuts.projectPage)}
+            data-tooltip={t("Project  {0}", [
+              shortcutLabel(shortcuts.projectPage),
+            ])}
+            className={mode === "project" ? "on" : ""}
+            onClick={() => onMode("project")}
+          >
+            {t("Project")}
+            <KeyHint keys={shortcuts.projectPage} />
+          </button>
+          <button
+            type="button"
             aria-pressed={mode === "board"}
             aria-keyshortcuts={ariaKeys(shortcuts.board)}
             data-tooltip={t("Board  {0}", [shortcutLabel(shortcuts.board)])}
@@ -382,21 +383,6 @@ export function ProjectHeader({
               options={branchOptions}
               onChange={(branch) => onFilter({ branch })}
             />
-          )}
-          {archivedCount > 0 && (
-            <button
-              type="button"
-              aria-pressed={filter.archived}
-              aria-label={t("Archived, {0}", [archivedCount])}
-              data-tooltip={t(
-                "Archived: done more than 7 days ago, with no branch in the repository",
-              )}
-              className={`chip-button archive-toggle ${filter.archived ? "on" : ""}`}
-              onClick={() => onFilter({ archived: !filter.archived })}
-            >
-              <Icon name="archive" size={12} />
-              <span className="chip-count">{archivedCount}</span>
-            </button>
           )}
           <div
             className="segmented small"

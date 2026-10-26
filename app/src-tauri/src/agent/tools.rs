@@ -231,17 +231,6 @@ impl Agent {
                 )?;
                 Ok(goal_value(&goal, &self.store.tasks(Some(&project))?))
             }
-            "promote_draft" => {
-                let t = self.store.task(task()?, &project)?;
-                if !["preparing", "reserved"].contains(&t.status.as_str()) {
-                    return Err("Only a draft can be promoted to the board.".into());
-                }
-                Ok(task_value(
-                    &self
-                        .store
-                        .move_task_as(&t.id, &project, "todo", None, "agent")?,
-                ))
-            }
             "delete_task" => {
                 self.store.delete_task(task()?, &project)?;
                 Ok(json!({"deleted":true}))
@@ -407,14 +396,11 @@ fn project_value(p: &Project) -> Value {
 fn task_value(t: &Task) -> Value {
     json!({"id":t.id,"project_id":t.project_id,"title":t.title,"details":t.details,"category":t.category,"assignee":t.assignee,"status":t.status,"position":t.position,"agent_summary":t.agent_summary,"repository_branch":t.repository_branch,"commit_hash":t.commit_hash,"pull_request_url":t.pull_request_url,"pull_request_number":t.pull_request_number,"goal_id":t.goal_id,"checks_total":t.checks_total,"checks_done":t.checks_done,"message_count":t.message_count,"document_count":t.document_count,"created_at":timestamp(t.created_at),"updated_at":timestamp(t.updated_at)})
 }
-/// A goal with its progress among `tasks`: drafts aren't on the board yet, so they don't count.
+/// A goal with its progress among `tasks`.
 fn goal_value(g: &Goal, tasks: &[Task]) -> Value {
     let counted: Vec<&Task> = tasks
         .iter()
-        .filter(|t| {
-            t.goal_id.as_deref() == Some(g.id.as_str())
-                && !["preparing", "reserved"].contains(&t.status.as_str())
-        })
+        .filter(|t| t.goal_id.as_deref() == Some(g.id.as_str()))
         .collect();
     let done = counted.iter().filter(|t| t.status == "done").count();
     json!({"id":g.id,"project_id":g.project_id,"name":g.name,"description":g.description,"target_date":g.target_date,"completed_at":g.completed_at.map(timestamp),"tasks_total":counted.len(),"tasks_done":done,"created_at":timestamp(g.created_at)})

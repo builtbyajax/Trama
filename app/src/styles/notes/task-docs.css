@@ -68,8 +68,7 @@
 .doc-peek {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
+  overflow-y: scroll;
   padding: 4px calc(32px - var(--bar)) 24px 32px;
   border-top: 1px solid var(--line-subtle);
 }

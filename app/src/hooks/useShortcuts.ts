@@ -10,8 +10,9 @@ export type WorkspaceAction =
   | "toggle_sidebar"
   | "reload"
   | "overview"
-  | "drafts"
+  | "archive"
   | "notes"
+  | "project_page"
   | "board"
   | "git"
   | "project_notes"
@@ -33,8 +34,9 @@ const menuActions = new Set<WorkspaceAction>([
   "toggle_sidebar",
   "reload",
   "overview",
-  "drafts",
+  "archive",
   "notes",
+  "project_page",
   "board",
   "git",
   "project_notes",
@@ -49,12 +51,14 @@ function actionFor(event: KeyboardEvent): WorkspaceAction | undefined {
   // AltGr reports Ctrl+Alt on Windows layouts; it types characters, not shortcuts.
   if (event.getModifierState?.("AltGraph")) return undefined;
   const digit = /^Digit([1-9])$/.exec(event.code)?.[1];
-  // The open project's tabs: ⌃1–3 on macOS, Alt+1–3 elsewhere.
+  // The open project's tabs: ⌃1–4 on macOS, Alt+1–4 elsewhere.
   const tab = isMac
     ? event.ctrlKey && !event.metaKey && !event.altKey
     : event.altKey && !event.ctrlKey;
   if (tab && !event.shiftKey && digit)
-    return (["board", "git", "project_notes"] as const)[Number(digit) - 1];
+    return (["project_page", "board", "git", "project_notes"] as const)[
+      Number(digit) - 1
+    ];
   if (!mod) {
     if (event.key === "Escape" && !document.querySelector("dialog[open]"))
       return "close_details";
@@ -64,7 +68,7 @@ function actionFor(event: KeyboardEvent): WorkspaceAction | undefined {
   if (event.altKey) {
     if (event.shiftKey) return undefined;
     if (digit === "1") return "overview";
-    if (digit === "2") return "drafts";
+    if (digit === "2") return "archive";
     if (digit === "3") return "notes";
     return undefined;
   }

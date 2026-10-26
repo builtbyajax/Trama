@@ -292,11 +292,9 @@ button.crumb:hover {
 .sidebar-group.grow {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-  /* The bar sits in the sidebar's own padding, so the items keep their width. `--bar` is measured
-     here (`useScrollbarRoom`): the macOS WebKit only takes the room while the list scrolls. */
+  /* The bar sits in the sidebar's own padding, so the items keep their width. */
   margin: 0 calc(-1 * var(--bar)) 0 -4px;
   padding: 0 0 8px 4px;
 }
@@ -338,6 +336,16 @@ button.crumb:hover {
 .nav-item:hover {
   background: var(--hover);
   color: var(--ink);
+}
+/* Archive, when a concluded card reaches it. */
+.nav-item.received {
+  animation: nav-received 0.9s var(--ease);
+}
+@keyframes nav-received {
+  from {
+    background: color-mix(in srgb, var(--s-done) 22%, transparent);
+    color: var(--ink);
+  }
 }
 .nav-item.selected {
   background: var(--accent-soft);
@@ -1112,17 +1120,26 @@ button.crumb:hover {
 .goal-bar > span {
   border-radius: 3.5px;
 }
-:is(.goal-dots, .goal-bar) > .s-done {
+:is(.goal-dots, .goal-bar, .project-goal-bar) > .s-done,
+.project-legend .dot.s-done {
   background: var(--s-done);
 }
-:is(.goal-dots, .goal-bar) > .s-review {
+:is(.goal-dots, .goal-bar, .project-goal-bar) > .s-review,
+.project-legend .dot.s-review {
   background: var(--s-review);
 }
-:is(.goal-dots, .goal-bar) > .s-inProgress {
+:is(.goal-dots, .goal-bar, .project-goal-bar) > .s-inProgress,
+.project-legend .dot.s-inProgress {
   background: var(--s-inProgress);
 }
-:is(.goal-dots, .goal-bar) > .s-todo {
+:is(.goal-dots, .goal-bar, .project-goal-bar) > .s-todo,
+.project-legend .dot.s-todo {
   background: var(--ink-off);
+}
+:is(.goal-dots, .goal-bar, .project-goal-bar) > .s-backlog,
+.project-legend .dot.s-backlog {
+  background: var(--s-backlog);
+  opacity: 0.55;
 }
 
 /* ───── day field and its month popover ───── */
@@ -1278,7 +1295,6 @@ button.crumb:hover {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  scrollbar-gutter: auto;
   padding: 4px 24px 12px;
   display: flex;
   flex-direction: column;
@@ -1304,8 +1320,7 @@ button.crumb:hover {
   min-height: 0;
   margin: 0 -8px;
   padding: 0 calc(8px - var(--bar)) 0 8px;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
+  overflow-y: scroll;
   overscroll-behavior: contain;
 }
 .concluded-month {

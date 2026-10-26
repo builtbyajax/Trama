@@ -276,13 +276,6 @@ impl Store {
         ))?;
         Ok(())
     }
-    pub fn promote_draft(&self, task_id: &str, project_id: &str) -> Result<Task> {
-        let task = self.task(task_id, project_id)?;
-        if !["preparing", "reserved"].contains(&task.status.as_str()) {
-            return Err("Only a draft can be promoted to the board.".into());
-        }
-        self.move_task(task_id, project_id, "todo", None)
-    }
     pub fn delete_task(&self, task_id: &str, project_id: &str) -> Result<()> {
         let task = self.task(task_id, project_id)?;
         sql(self.db.execute(
@@ -290,18 +283,6 @@ impl Store {
             params![task.id, task.project_id],
         ))?;
         Ok(())
-    }
-    /// Archives a done task now, or brings one archived by hand back to the board.
-    pub fn archive_task(&self, task_id: &str, project_id: &str, archived: bool) -> Result<Task> {
-        let task = self.task(task_id, project_id)?;
-        if archived && task.status != "done" {
-            return Err("Only a completed task can be archived.".into());
-        }
-        sql(self.db.execute(
-            "UPDATE tasks SET archived_at=? WHERE id=? AND project_id=?",
-            params![archived.then(now), task.id, task.project_id],
-        ))?;
-        self.task(&task.id, &task.project_id)
     }
     pub fn events(&self, task_id: &str, project_id: &str) -> Result<Vec<Event>> {
         let task = self.task(task_id, project_id)?;

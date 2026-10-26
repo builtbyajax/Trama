@@ -1,8 +1,9 @@
+import type { TaskStatus } from "../lib/types";
+
 // Small stroke icon set (15 pt, 1.35 stroke).
 const paths = {
   search: "M7 2.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM10.3 10.3L14 14",
   overview: "M3 3.5h4v4H3zM9 3.5h4v4H9zM3 9.5h4v4H3zM9 9.5h4v4H9z",
-  drafts: "M4 2.5h5.5L12 5v8.5H4zM9.5 2.5V5H12M6 8h4M6 10.5h3",
   plus: "M8 3.5v9M3.5 8h9",
   gear: "M6.57 3.31L6.89 1.7L9.11 1.7L9.43 3.31A4.9 4.9 0 0 1 11.34 4.42L12.9 3.89L14.01 5.81L12.77 6.9A4.9 4.9 0 0 1 12.77 9.1L14.01 10.19L12.9 12.11L11.34 11.58A4.9 4.9 0 0 1 9.43 12.69L9.11 14.3L6.89 14.3L6.57 12.69A4.9 4.9 0 0 1 4.66 11.58L3.1 12.11L1.99 10.19L3.23 9.1A4.9 4.9 0 0 1 3.23 6.9L1.99 5.81L3.1 3.89L4.66 4.42A4.9 4.9 0 0 1 6.57 3.31zM10 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0z",
   sidebar:
@@ -110,6 +111,44 @@ export function Icon({ name, size = 15 }: { name: IconName; size?: number }) {
       aria-hidden="true"
     >
       <path d={paths[name]} />
+    </svg>
+  );
+}
+
+/** A board column's mark, in its status color: backlog tray, open circle, half circle, eye. */
+export function StatusIcon({
+  status,
+  size = 14,
+}: {
+  status: TaskStatus;
+  size?: number;
+}) {
+  return (
+    <svg
+      className={`status-icon s-${status}`}
+      width={size}
+      height={size}
+      viewBox="0 0 14 14"
+      aria-hidden="true"
+    >
+      {status === "backlog" ? (
+        <>
+          <rect x="1.75" y="2.5" width="10.5" height="9" rx="2" />
+          <path d="M1.75 7h3l1 1.5h2.5l1-1.5h3" />
+        </>
+      ) : status === "review" ? (
+        <>
+          <path d="M1.5 7s2-3.75 5.5-3.75S12.5 7 12.5 7 10.5 10.75 7 10.75 1.5 7 1.5 7z" />
+          <circle cx="7" cy="7" r="1.6" />
+        </>
+      ) : (
+        <>
+          <circle cx="7" cy="7" r="5.5" />
+          {status === "inProgress" && (
+            <path className="fill" d="M7 3.5a3.5 3.5 0 0 1 0 7z" />
+          )}
+        </>
+      )}
     </svg>
   );
 }

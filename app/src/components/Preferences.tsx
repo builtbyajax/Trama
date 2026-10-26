@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { copyText, errorMessage, revealLabel, revealPath } from "../lib/api";
-import type { Project, Snapshot, Workspace, Workspaces } from "../lib/types";
+import type {
+  BoardView,
+  Project,
+  Snapshot,
+  Workspace,
+  Workspaces,
+} from "../lib/types";
 import { CopyIcon, Icon } from "./Icon";
 import { ContextMenu, type MenuItem } from "./Sidebar";
 import { workspaceName } from "./Workspaces";
@@ -13,6 +19,8 @@ export function Preferences({
   onEditWorkspace,
   onLeaveWorkspace,
   notify,
+  boardView,
+  onBoardView,
   onEdit,
   onAddProject,
   updater,
@@ -23,6 +31,8 @@ export function Preferences({
   /** Asks before the workspace leaves the list or is deleted, the open one included. */
   onLeaveWorkspace: (workspace: Workspace, mode: "remove" | "delete") => void;
   notify: (message: string, error?: boolean) => void;
+  boardView: BoardView;
+  onBoardView: (view: BoardView) => void;
   onEdit: (project: Project) => void;
   onAddProject: () => void;
   updater: AppUpdater;
@@ -123,6 +133,31 @@ export function Preferences({
                 }
               >
                 {option.label}
+              </button>
+            ))}
+          </div>
+        </section>
+        <section className="settings-group">
+          <h2 id="board-view-title">{t("Board view")}</h2>
+          <p className="muted">
+            {t(
+              "How tasks show in the Board tab, in every project and goal. Stages and order are the same in both.",
+            )}
+          </p>
+          <div
+            className="segmented"
+            role="group"
+            aria-labelledby="board-view-title"
+          >
+            {(["kanban", "list"] as const).map((view) => (
+              <button
+                key={view}
+                type="button"
+                aria-pressed={boardView === view}
+                className={boardView === view ? "on" : ""}
+                onClick={() => onBoardView(view)}
+              >
+                {view === "kanban" ? t("Kanban") : t("List")}
               </button>
             ))}
           </div>

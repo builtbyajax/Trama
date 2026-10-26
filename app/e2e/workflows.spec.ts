@@ -123,7 +123,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   await expect(cards).toHaveCount(2);
   await cards.filter({ hasText: "First task" }).click();
   await page.getByRole("combobox", { name: "Status", exact: true }).click();
-  await page.getByRole("option", { name: "In progress", exact: true }).click();
+  await page.getByRole("option", { name: "Working", exact: true }).click();
   await page
     .getByRole("button", { name: "Close task", exact: true })
     .last()

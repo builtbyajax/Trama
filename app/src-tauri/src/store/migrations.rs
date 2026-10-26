@@ -20,7 +20,7 @@ pub(super) fn check_version(db: &Connection) -> Result<i64> {
 pub(super) fn migrate(tx: &Transaction) -> Result<()> {
     let version = check_version(tx)?;
     let steps: [fn(&Transaction) -> Result<()>; LATEST as usize] =
-        [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10];
+        [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12];
     for step in &steps[version as usize..] {
         step(tx)?;
     }
@@ -184,5 +184,58 @@ CREATE INDEX goals_project ON goals(project_id,created_at);
 ALTER TABLE tasks ADD COLUMN goal_id TEXT REFERENCES goals(id) ON DELETE SET NULL;
 CREATE INDEX tasks_goal ON tasks(goal_id);
 PRAGMA user_version=10;"))?;
+    Ok(())
+}
+
+fn v11(tx: &Transaction) -> Result<()> {
+    // Done is the Archive: `archived_at` becomes when the task got there, kept by the database on
+    // every path, and the hand-archiving of v8 goes away. Done tasks take the time of their last
+    // move to done, or their last update when the history doesn't have it.
+    sql(tx.execute_batch("DROP TRIGGER tasks_unarchive;
+UPDATE tasks SET archived_at=NULL WHERE status<>'done';
+UPDATE tasks SET archived_at=COALESCE((SELECT MAX(e.created_at) FROM task_events e WHERE e.task_id=tasks.id AND e.kind='status' AND e.value='done'),updated_at) WHERE status='done';
+CREATE TRIGGER tasks_archive AFTER UPDATE OF status ON tasks WHEN NEW.status<>OLD.status AND (NEW.status='done' OR OLD.status='done') BEGIN UPDATE tasks SET archived_at=CASE WHEN NEW.status='done' THEN (julianday('now')-2440587.5)*86400.0 END WHERE id=NEW.id; END;
+CREATE TRIGGER tasks_archive_new AFTER INSERT ON tasks WHEN NEW.status='done' AND NEW.archived_at IS NULL BEGIN UPDATE tasks SET archived_at=(julianday('now')-2440587.5)*86400.0 WHERE id=NEW.id; END;
+CREATE INDEX tasks_archived ON tasks(archived_at) WHERE status='done';
+PRAGMA user_version=11;"))?;
+    Ok(())
+}
+
+fn v12(tx: &Transaction) -> Result<()> {
+    // Drafts and Reserved become one status, backlog (Pendências on the board). Drafts go after the
+    // reserved tasks of their project, each group keeping its order, and the history follows.
+    //
+    // Only the CHECK of `status` changes, so the schema text is edited in place, the way SQLite
+    // documents for constraints: rebuilding the table would cascade-delete every message, check,
+    // event and note, since foreign keys are on. Every row is moved off the old values first.
+    sql(tx.execute_batch("CREATE TEMP TABLE draft_shift AS SELECT project_id,COALESCE((SELECT MAX(r.position) FROM tasks r WHERE r.project_id=d.project_id AND r.status='reserved'),-1)+1-MIN(d.position) AS shift FROM tasks d WHERE d.status='preparing' GROUP BY d.project_id;
+UPDATE tasks SET position=position+(SELECT shift FROM draft_shift s WHERE s.project_id=tasks.project_id) WHERE status='preparing';
+DROP TABLE draft_shift;"))?;
+    const OLD: &str =
+        "CHECK(status IN('todo','inProgress','review','done','preparing','reserved'))";
+    const NEW: &str = "CHECK(status IN('backlog','todo','inProgress','review','done'))";
+    let table: String = sql(tx.query_row(
+        "SELECT sql FROM sqlite_schema WHERE type='table' AND name='tasks'",
+        [],
+        |r| r.get(0),
+    ))?;
+    if table.matches(OLD).count() != 1 {
+        return Err("The tasks table doesn't have the expected statuses.".into());
+    }
+    let version: i64 = sql(tx.query_row("PRAGMA schema_version", [], |r| r.get(0)))?;
+    sql(tx.execute_batch("PRAGMA writable_schema=ON;"))?;
+    sql(tx.execute(
+        "UPDATE sqlite_schema SET sql=? WHERE type='table' AND name='tasks'",
+        [table.replace(OLD, NEW)],
+    ))?;
+    sql(tx.execute_batch(&format!(
+        "PRAGMA schema_version={}; PRAGMA writable_schema=OFF;",
+        version + 1
+    )))?;
+    sql(tx.execute_batch(
+        "UPDATE tasks SET status='backlog' WHERE status IN('preparing','reserved');
+UPDATE task_events SET value='backlog' WHERE kind='status' AND value IN('preparing','reserved');
+PRAGMA user_version=12;",
+    ))?;
     Ok(())
 }

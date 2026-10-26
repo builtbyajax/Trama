@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { task, project, commit, pr, snapshot } from "../test/fixtures";
-import { isArchived, ARCHIVE_AFTER } from "./archive";
+import { isSettled, SETTLE_AFTER } from "./settled";
 import { nextBoardStatus } from "./boardKeyboard";
 import { goalProgress, type Goal, type TaskEvent } from "./types";
 import { weave, holding, rank, DAY, weekDays, rhythm } from "./handoffs";
@@ -10,33 +10,24 @@ import { commitGraph } from "./graph";
 import { reach, buildFronts } from "./fronts";
 
 describe("board lifecycle", () => {
-  it("archives only eligible done tasks and waits for known branch state", () => {
-    const now = 100 + ARCHIVE_AFTER;
+  it("settles only eligible done tasks and waits for known branch state", () => {
+    const now = 100 + SETTLE_AFTER;
     const done = task({ status: "done" });
-    expect(isArchived(done, project(), null, now - 1)).toBe(false);
-    expect(isArchived(done, project(), null, now)).toBe(true);
+    expect(isSettled(done, project(), null, now - 1)).toBe(false);
+    expect(isSettled(done, project(), null, now)).toBe(true);
     const branched = { ...done, repositoryBranch: "feat/example" };
-    expect(isArchived(branched, project(), null, now)).toBe(false);
-    expect(isArchived(branched, project(), ["feat/example"], now)).toBe(false);
-    expect(isArchived(branched, project(), [], now)).toBe(true);
+    expect(isSettled(branched, project(), null, now)).toBe(false);
+    expect(isSettled(branched, project(), ["feat/example"], now)).toBe(false);
+    expect(isSettled(branched, project(), [], now)).toBe(true);
+    expect(isSettled(task({ status: "todo" }), project(), [], now)).toBe(false);
     expect(
-      isArchived(task({ status: "todo", archivedAt: 100 }), project(), [], now),
-    ).toBe(false);
-    expect(
-      isArchived(
-        task({ status: "done", archivedAt: 100 }),
-        project(),
-        null,
-        101,
-      ),
-    ).toBe(true);
-    expect(
-      isArchived(branched, project({ repositoryPath: null }), null, now),
+      isSettled(branched, project({ repositoryPath: null }), null, now),
     ).toBe(true);
   });
-  it("clamps keyboard moves and excludes drafts and unrelated goals from progress", () => {
-    expect(nextBoardStatus("todo", -1)).toBe("todo");
-    expect(nextBoardStatus("done", 1)).toBe("done");
+  it("clamps keyboard moves and counts the backlog but not unrelated goals in progress", () => {
+    expect(nextBoardStatus("backlog", -1)).toBe("backlog");
+    expect(nextBoardStatus("todo", -1)).toBe("backlog");
+    expect(nextBoardStatus("review", 1)).toBe("review");
     expect(nextBoardStatus("todo", 1)).toBe("inProgress");
     expect(nextBoardStatus("review", -1)).toBe("inProgress");
     const goal: Goal = {
@@ -52,11 +43,10 @@ describe("board lifecycle", () => {
       goalProgress(goal, [
         task({ goalId: "goal", status: "done" }),
         task({ goalId: "goal" }),
-        task({ goalId: "goal", status: "preparing" }),
-        task({ goalId: "goal", status: "reserved" }),
+        task({ goalId: "goal", status: "backlog" }),
         task({ goalId: "other", status: "done" }),
       ]),
-    ).toEqual({ total: 2, done: 1 });
+    ).toEqual({ total: 3, done: 1 });
   });
   it("reconstructs queue, work, review and completion at fixed timestamps", () => {
     const event = (value: string, createdAt: number): TaskEvent => ({

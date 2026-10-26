@@ -28,7 +28,7 @@ impl Store {
             DEFAULT_CATEGORIES[0].into()
         })
     }
-    /// Known categories of every project with how many tasks (drafts included) use each one.
+    /// Known categories of every project with how many tasks use each one.
     pub fn categories(&self) -> Result<Vec<Category>> {
         let mut stmt = sql(self.db.prepare("SELECT c.project_id,c.name,(SELECT COUNT(*) FROM tasks t WHERE t.project_id=c.project_id AND t.category=c.name COLLATE NOCASE) FROM task_categories c ORDER BY c.project_id,c.name"))?;
         let result = sql(stmt

@@ -35,7 +35,7 @@ A interface está disponível em inglês e português brasileiro. Escolha o idio
 
 ## Um quadro para você e seus agentes
 
-Mova o trabalho por **A fazer → Em andamento → Para revisar → Concluído**. Atribua tarefas a você ou ao agente, organize-as por categorias e branches locais e mantenha as ideias em preparação nos rascunhos.
+Mova o trabalho por **Pendências → A fazer → Em andamento → Para revisar** e conclua no Arquivo. Atribua tarefas a você ou ao agente, organize-as por categorias e branches locais e mantenha as ideias que ainda não estão prontas em Pendências.
 
 - Arraste cartões ou mova-os pelo teclado.
 - Consulte a atividade e o resumo da entrega antes de revisar.
@@ -137,7 +137,7 @@ Use ⌘ no macOS e Ctrl no Windows. As abas do projeto usam ⌃ no macOS e Alt n
 | `⌘K` | Buscar |
 | `⌘1…9` | Trocar de projeto |
 | `⌘T` | Encontrar um projeto pelo nome |
-| `⌥⌘1` / `⌥⌘2` / `⌥⌘3` | Visão geral / Rascunhos / Cofres |
+| `⌥⌘1` / `⌥⌘2` / `⌥⌘3` | Visão geral / Arquivo / Cofres |
 | `⌃1` / `⌃2` / `⌃3` | Quadro / Histórico Git / Notas |
 | `⌘[` / `⌘]` | Voltar / Avançar |
 | `⌘B` | Mostrar ou ocultar a barra lateral |

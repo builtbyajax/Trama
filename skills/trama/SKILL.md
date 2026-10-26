@@ -36,20 +36,24 @@ If the `trama` tools don't show up, ask the person to set it up and reload the s
 
 ## Statuses
 
+The board's columns, left to right, then the Archive:
+
 | `status` | Column | Who has it |
 |---|---|---|
-| `preparing`, `reserved` | Drafts | Off the board |
+| `backlog` | Backlog (Pendências in Portuguese) | Nobody yet: ideas and work not prioritized. Not your queue, even with `assignee=agent` |
 | `todo` | To do | In the agent's queue if `assignee=agent`; otherwise with the person |
-| `inProgress` | In progress | With the `assignee`. Agent + `inProgress` shows as "working now" |
+| `inProgress` | Working | With the `assignee`. Agent + `inProgress` shows as "working now" |
 | `review` | In review | Waiting for the person, whoever the `assignee` is |
-| `done` | Done | Off the board |
+| `done` | Archive | Concluded: off the board, in the Archive. Moving it to another status puts it back on the board |
 
 `assignee` is `agent` or `user`. A task sent back for changes goes from `review` to `todo` and stays with the agent.
+
+`preparing` and `reserved` (the old Drafts and Reserved) no longer exist: older databases moved them to `backlog`, and tools refuse them with a message that says so. `promote_draft` was removed; to bring an idea onto the queue, use `move_task` from `backlog` to `todo`.
 
 ## Workflow
 
 1. **Context.** In workspace mode, start with `list_projects` to find the project in the active workspace. Then call `get_context` to see the project, repository, categories and rules. If the expected project isn't listed, check whether the app is on the right workspace before proceeding.
-2. **Find work.** Call `list_tasks` with `assignee: "agent"` and `status: "todo"`. If the person names a task, use `search_tasks`.
+2. **Find work.** Call `list_tasks` with `assignee: "agent"` and `status: "todo"`. If the person names a task, use `search_tasks`; it also finds tasks in the Archive, so check `status`.
 3. **Read before acting.** `get_task_details` returns the briefing (`details`, in Markdown), the messages and the history. If the task came back from review, the last message or event says what to change.
 4. **Start.** Use `move_task` with `status: "inProgress"`. If the task was with the person and they asked you to take it, first use `update_task` with `assignee: "agent"`.
    - If the task has a `repository_branch`, work on that branch. Several tasks can share a branch.
@@ -59,16 +63,16 @@ If the `trama` tools don't show up, ask the person to set it up and reload the s
    - Use `update_task` with `agent_summary` (what changed and how to check it) and, when they exist and aren't recorded yet, `repository_branch`, `commit_hash` (the full hash) and `pull_request_url`/`pull_request_number`.
    - If you wrote a plan, report or other Markdown document for the person to read, save the `.md` in the notes folder and attach it with `attach_document`. See the **Notes** rule.
    - Then use `move_task` with `status: "review"`.
-7. **Stop there.** Only move to `done`, delete anything or change `assignee` to `user` when the person asks.
+7. **Stop there.** Only move to `done` (which concludes the task and sends it to the Archive), delete anything or change `assignee` to `user` when the person asks.
 
-To record new work the person asked for, use `create_task`. The defaults are `assignee=agent`, `status=todo` and the category "Feature" (or "Funcionalidade" in older projects). For an idea that isn't ready yet, create it in `preparing` and promote it later with `promote_draft`.
+To record new work the person asked for, use `create_task`. The defaults are `assignee=agent`, `status=todo` and the category "Feature" (or "Funcionalidade" in older projects). For an idea that isn't ready yet, create it in `backlog`; it waits there until the person moves it to `todo`. Don't move tasks out of `backlog` on your own.
 
 ## Workspaces and goals
 
 - A workspace contains its own projects and data. In workspace mode, first find the project with `list_projects`, then pass its `project_id` to project operations. A project-bound connection sees only its configured project.
 - Goals group tasks in one project around an outcome. Use `list_goals` before assigning a task to a goal; set `goal_id` through `create_task` or `update_task`. The goal must belong to the same project, and a task can belong to at most one goal. Send `goal_id: null` to remove the association.
 - Use `create_goal` for a new goal and `update_goal` for its name, description or target date. Dates use `YYYY-MM-DD`; `null` clears the target date.
-- Goal progress counts its tasks on the board, including done tasks, and excludes drafts. Completing every task does not conclude the goal automatically. Concluding or reopening a goal is the person's decision; the current MCP toolset can list, create and edit goals but does not conclude or reopen them. If asked to do that, use the app if available or explain the tool limitation.
+- Goal progress counts all of its tasks, backlog and Archive included: done tasks over the total. Completing every task does not conclude the goal automatically. Concluding or reopening a goal is the person's decision; the current MCP toolset can list, create and edit goals but does not conclude or reopen them. If asked to do that, use the app if available or explain the tool limitation.
 - A goal is an organizational grouping, not authorization to implement all its tasks. Follow the person’s request and the task workflow above.
 
 ## Categories

@@ -37,12 +37,11 @@
 .notes-list {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 0 calc(10px - var(--bar)) 16px 10px;
-  scrollbar-gutter: stable;
 }
 /* A folder's rows keep the spacing of the rows around it. */
 .notes-list [role="group"],
