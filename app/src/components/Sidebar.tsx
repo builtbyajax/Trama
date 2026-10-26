@@ -38,6 +38,7 @@ interface SidebarProps {
   openCounts: Record<string, number>;
   draftCount: number;
   workingCount: number;
+  updateAvailable?: boolean;
   destination: Destination;
   onNavigate: (destination: Destination) => void;
   onAddProject: () => void;
@@ -78,6 +79,7 @@ export function Sidebar({
   openCounts,
   draftCount,
   workingCount,
+  updateAvailable = false,
   destination,
   onNavigate,
   onAddProject,
@@ -243,6 +245,7 @@ export function Sidebar({
           rail={rail}
           icon="gear"
           label={t("Preferences")}
+          notice={updateAvailable}
           keys={shortcuts.preferences}
           selected={destination.kind === "preferences"}
           onClick={() => onNavigate({ kind: "preferences" })}
@@ -264,6 +267,7 @@ interface NavItemProps {
   icon?: IconName;
   leading?: ReactNode;
   count?: number;
+  notice?: boolean;
   selected?: boolean;
   keys?: string[];
   menuOpen?: boolean;
@@ -281,6 +285,7 @@ function NavItem({
   icon,
   leading,
   count,
+  notice = false,
   selected,
   keys,
   menuOpen,
@@ -296,7 +301,13 @@ function NavItem({
       type="button"
       className={`nav-item ${selected ? "selected" : ""} ${menuOpen ? "menu-open" : ""}`}
       aria-current={selected ? "page" : undefined}
-      aria-label={count !== undefined ? `${label}, ${count}` : label}
+      aria-label={
+        count !== undefined
+          ? `${label}, ${count}`
+          : notice
+            ? `${label}, ${t("Update available")}`
+            : label
+      }
       aria-keyshortcuts={keys && ariaKeys(keys)}
       data-tooltip={
         onHover
@@ -315,6 +326,7 @@ function NavItem({
     >
       <span className="nav-leading">
         {leading ?? (icon && <Icon name={icon} size={15} />)}
+        {notice && <span className="nav-update-indicator" />}
       </span>
       <span className="nav-label">{label}</span>
       {count !== undefined && <span className="nav-count">{count}</span>}
@@ -390,7 +402,7 @@ export function ContextMenu({
     (
       menu.querySelector<HTMLElement>("[aria-checked=true]") ??
       menu.querySelector<HTMLElement>("[role^=menuitem]")
-    )?.focus();
+    )?.focus({ preventScroll: true });
   }, [x, y]);
   useEffect(() => {
     const outside = (event: Event) => {

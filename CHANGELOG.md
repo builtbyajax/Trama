@@ -6,6 +6,24 @@
 
 Changes delivered in each Trama version. **Unreleased** lists implemented changes that have not shipped yet; when publishing a version, replace that heading with the release number and date.
 
+## [Unreleased]
+
+### Added
+
+- Check for signed updates automatically or manually in Preferences; manual checks remain available after finding an update.
+- Install an available update and restart the app from the update notice or Preferences, with a persistent Preferences indicator after dismissing the notice.
+- Keep a found update installable after dismissing the notice, allow retry after a failed download, and prevent overlapping update operations.
+- Relaunch macOS updates through the existing Dock item and block Windows installation while `trama-agent.exe` is in use.
+- After a version change, recommend restarting agent sessions to reconnect to the MCP included with the installed version, including after a downgrade.
+
+### Changed
+
+- Sort files and folders together by name in the notes explorer, including natural numeric order.
+
+### Fixed
+
+- Refuse MCP tool calls from an agent connected to a database migrated by a newer app.
+
 ## [0.2.1](https://github.com/builtbyajax/Trama/releases/tag/v0.2.1) — 2026-10-24
 
 ### Fixed

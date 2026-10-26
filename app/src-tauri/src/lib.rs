@@ -7,6 +7,8 @@ pub mod git;
 mod menu;
 mod process;
 pub mod pull_requests;
+#[cfg(target_os = "macos")]
+mod relaunch;
 pub mod store;
 pub mod workspaces;
 /// Every UI operation goes through one dispatcher, shared with the browser preview's bridge.
@@ -26,6 +28,25 @@ fn set_menu_language(app: tauri::AppHandle, language: String) -> Result<(), Stri
     let _ = (app, language);
     Ok(())
 }
+/// Restarts the desktop process after the updater has installed a verified package.
+#[tauri::command]
+fn restart_app(app: tauri::AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        relaunch::restart(&app).map_err(|error| {
+            eprintln!("Couldn't relaunch Trama after installing the update: {error}");
+            "Couldn't restart Trama. Close and reopen the app to use the installed update.".into()
+        })
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        app.restart()
+    }
+}
+#[tauri::command]
+fn has_running_agent() -> Result<bool, String> {
+    process::agent_is_running()
+}
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
@@ -43,7 +64,13 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
-        .invoke_handler(tauri::generate_handler![call, set_menu_language])
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .invoke_handler(tauri::generate_handler![
+            call,
+            has_running_agent,
+            restart_app,
+            set_menu_language
+        ])
         .run(tauri::generate_context!())
         .expect("failed to start Trama");
 }

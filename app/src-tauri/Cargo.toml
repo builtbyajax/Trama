@@ -1,6 +1,6 @@
 [package]
 name = "trama"
-version = "0.2.1"
+version = "0.2.2"
 description = "Trama: quadro de tarefas local com agentes"
 edition = "2021"
 rust-version = "1.90"
@@ -27,6 +27,7 @@ tauri-plugin-opener = "2"
 tauri-plugin-clipboard-manager = "2"
 chrono = { version = "0.4", default-features = false, features = ["std"] }
 trash = "5"
+tauri-plugin-updater = "2.14.0"
 
 [features]
 agent-cli = []

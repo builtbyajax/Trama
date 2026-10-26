@@ -22,6 +22,7 @@ import { useNavigation } from "./hooks/useNavigation";
 import { useSidebarLayout } from "./hooks/useSidebarLayout";
 import { useSnapshot } from "./hooks/useSnapshot";
 import { useToast } from "./hooks/useToast";
+import { useAppUpdater } from "./hooks/useAppUpdater";
 import { useWorkspaces } from "./hooks/useWorkspaces";
 import { Tooltips } from "./components/Tooltips";
 import { Drafts } from "./components/Drafts";
@@ -52,6 +53,7 @@ import {
 } from "./lib/api";
 import { ContextMenu, type MenuItem } from "./components/Sidebar";
 import { TaskDelete } from "./components/TaskDelete";
+import { UpdateNotices } from "./components/UpdateNotices";
 import { ProjectMove } from "./components/ProjectMove";
 import {
   GoalComplete,
@@ -98,6 +100,7 @@ import { t } from "./lib/i18n";
 
 export function App() {
   const { toast, notify } = useToast();
+  const updater = useAppUpdater();
   const [gitFocus, setGitFocus] = useState<GitFocus | null>(null);
   const { place, setPlace, canBack, canForward, visit, go, forget, ...nav } =
     useNavigation(
@@ -585,6 +588,7 @@ export function App() {
             openCounts={openCounts}
             draftCount={drafts.length}
             workingCount={data.tasks.filter(isAgentWorking).length}
+            updateAvailable={updater.updateNoticeDismissed}
             destination={destination}
             onNavigate={navigate}
             onAddProject={() => setProjectComposer({})}
@@ -633,6 +637,25 @@ export function App() {
           />
         </SidebarSlot>
         <main className="island">
+          <UpdateNotices
+            availableVersion={
+              updater.updateNoticeDismissed
+                ? null
+                : (updater.availableUpdate?.version ?? null)
+            }
+            installing={updater.installing}
+            restartNotice={updater.restartNotice}
+            onDismissRestart={updater.dismissRestartNotice}
+            onDismissUpdate={updater.dismissUpdate}
+            onInstall={() =>
+              void updater.install().catch((e) => notify(errorMessage(e), true))
+            }
+            onReleaseNotes={() =>
+              void openUrl(
+                "https://github.com/builtbyajax/Trama/releases/latest",
+              ).catch((e) => notify(errorMessage(e), true))
+            }
+          />
           {error && (
             <div className="error-banner" role="alert">
               {error}
@@ -793,6 +816,7 @@ export function App() {
                 notify={notify}
                 onEdit={(project) => setProjectComposer({ project })}
                 onAddProject={() => setProjectComposer({})}
+                updater={updater}
               />
             ) : data.projects.length === 0 ? (
               <div className="empty-state">

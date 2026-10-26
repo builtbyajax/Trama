@@ -1,5 +1,7 @@
 Trama __VERSION__ is an early test release. Each installer includes the local MCP server.
 
+The app checks for signed updates and can install them from Preferences. Restart agent sessions to reconnect them to the MCP included with this version of Trama.
+
 - **macOS Apple Silicon:** DMG for Apple Silicon Macs.
 - **macOS Intel:** DMG for Intel Macs.
 - **Windows x64:** installer for 64-bit Windows.

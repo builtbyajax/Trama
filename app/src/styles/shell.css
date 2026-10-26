@@ -348,12 +348,23 @@ button.crumb:hover {
   color: var(--ink);
 }
 .nav-leading {
+  position: relative;
   width: 16px;
   height: 16px;
   display: grid;
   place-items: center;
   flex: none;
   color: var(--ink-3);
+}
+.nav-update-indicator {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--bg-window);
+  border-radius: 50%;
+  background: var(--accent);
 }
 .nav-item.selected .nav-leading {
   color: var(--accent);
@@ -560,6 +571,42 @@ button.crumb:hover {
 }
 .error-banner .button {
   margin-left: auto;
+}
+.update-notice {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 42px;
+  padding: 6px 12px 6px var(--page-x);
+  border-bottom: 1px solid var(--line-subtle);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+}
+.update-notice > span {
+  flex: 1;
+  min-width: 0;
+}
+.restart-notice {
+  background: var(--bg-raised);
+}
+.available-notice {
+  background: var(--accent-soft);
+}
+.update-notice .icon-button {
+  flex: none;
+}
+@media (max-width: 620px) {
+  .update-notice {
+    flex-wrap: wrap;
+    padding-left: 12px;
+  }
+  .update-notice > span {
+    flex-basis: calc(100% - 36px);
+  }
+  .available-notice .button:first-of-type {
+    margin-left: auto;
+  }
 }
 
 /* ───── project head ───── */

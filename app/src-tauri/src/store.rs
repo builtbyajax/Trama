@@ -326,6 +326,16 @@ impl Store {
             path: path.into(),
         })
     }
+    /// Prevent an older long-lived agent from using a database migrated by a newer app.
+    pub fn check_supported_schema(&self) -> Result<()> {
+        let version: i64 = sql(self
+            .db
+            .query_row("PRAGMA user_version", [], |row| row.get(0)))?;
+        if version > SCHEMA_VERSION {
+            return Err("O Trama foi atualizado. Reinicie esta sessão do agente.".into());
+        }
+        Ok(())
+    }
     pub fn open_default() -> Result<Self> {
         Self::open(&default_database_path())
     }

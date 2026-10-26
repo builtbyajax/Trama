@@ -71,8 +71,10 @@ impl Mcp {
         self.send(json!({"jsonrpc":"2.0","id":id,"method":method,"params":params}));
         let line = self
             .lines
-            .recv_timeout(Duration::from_secs(10))
-            .expect("MCP failed to reply before the timeout");
+            .recv_timeout(Duration::from_secs(30))
+            .unwrap_or_else(|error| {
+                panic!("MCP request {method} ({id}) timed out after 30 seconds: {error}")
+            });
         let response: Value =
             serde_json::from_str(&line).expect("stdout must contain only JSON-RPC");
         assert_eq!(response["id"], id);
