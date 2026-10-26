@@ -96,3 +96,47 @@ test("stages signed update bundles, emits latest.json and checksums all assets",
     /repository/,
   );
 });
+
+test("finds Tauri updater bundles outside the reported installer paths", (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "trama-updater-paths-test-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const dest = join(dir, "assets");
+  const definitions = [
+    ["macOS_Apple-Silicon", ".dmg", ".app.tar.gz", "dmg", "macos"],
+    ["macOS_Intel", ".dmg", ".app.tar.gz", "dmg", "macos"],
+    ["Windows_x64_Setup", ".exe", ".nsis.zip", "nsis", "nsis"],
+  ];
+
+  for (const [
+    platform,
+    installerExtension,
+    updaterExtension,
+    installerDir,
+    updaterDir,
+  ] of definitions) {
+    const bundle = join(dir, platform, "bundle");
+    const installerDirectory = join(bundle, installerDir);
+    const updaterDirectory = join(bundle, updaterDir);
+    mkdirSync(installerDirectory, { recursive: true });
+    mkdirSync(updaterDirectory, { recursive: true });
+    const installer = join(
+      installerDirectory,
+      `Trama_${platform}${installerExtension}`,
+    );
+    const updater = join(
+      updaterDirectory,
+      `Trama_${platform}${updaterExtension}`,
+    );
+    writeFileSync(installer, `Installer ${platform}`);
+    writeFileSync(updater, `Updater bundle ${platform}`);
+    writeFileSync(`${updater}.sig`, `Signature ${platform}\n`);
+
+    const staged = stageUpdaterArtifact([installer], "0.2.2", platform, dest);
+
+    assert.equal(readFileSync(staged, "utf8"), `Updater bundle ${platform}`);
+    assert.equal(
+      readFileSync(`${staged}.sig`, "utf8"),
+      `Signature ${platform}\n`,
+    );
+  }
+});

@@ -7,23 +7,26 @@ import {
   readdirSync,
   writeFileSync,
 } from "node:fs";
-import { basename, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const platforms = {
   "macOS_Apple-Silicon": {
     installerExtension: ".dmg",
     updaterExtension: ".app.tar.gz",
+    updaterSubdirectory: "../macos",
     target: "darwin-aarch64-app",
   },
   macOS_Intel: {
     installerExtension: ".dmg",
     updaterExtension: ".app.tar.gz",
+    updaterSubdirectory: "../macos",
     target: "darwin-x86_64-app",
   },
   Windows_x64_Setup: {
     installerExtension: ".exe",
     updaterExtension: ".nsis.zip",
+    updaterSubdirectory: ".",
     target: "windows-x86_64-nsis",
   },
 };
@@ -69,13 +72,38 @@ export function stageUpdaterArtifact(
 ) {
   if (!validVersion(version)) throw new Error("Invalid release version");
   const platform = platformFor(platformName);
+  let updaterPaths = paths.filter((path) =>
+    path.endsWith(platform.updaterExtension),
+  );
+  if (
+    updaterPaths.length === 0 &&
+    paths.some((path) => path.endsWith(platform.installerExtension))
+  ) {
+    const installer = uniquePath(
+      paths,
+      (path) => path.endsWith(platform.installerExtension),
+      "Expected exactly one platform installer",
+    );
+    const updaterDirectory = resolve(
+      dirname(installer),
+      platform.updaterSubdirectory,
+    );
+    updaterPaths = existsSync(updaterDirectory)
+      ? readdirSync(updaterDirectory)
+          .filter((name) => name.endsWith(platform.updaterExtension))
+          .map((name) => resolve(updaterDirectory, name))
+      : [];
+  }
   const source = uniquePath(
-    paths,
+    updaterPaths,
     (path) => path.endsWith(platform.updaterExtension),
     "Expected exactly one platform updater bundle",
   );
+  let signaturePaths = paths.filter((path) => path === `${source}.sig`);
+  if (signaturePaths.length === 0 && existsSync(`${source}.sig`))
+    signaturePaths = [`${source}.sig`];
   const signature = uniquePath(
-    paths,
+    signaturePaths,
     (path) => path === `${source}.sig`,
     "Expected exactly one updater signature",
   );
