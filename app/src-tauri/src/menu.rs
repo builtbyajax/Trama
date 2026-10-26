@@ -68,9 +68,9 @@ pub fn set(app: &AppHandle, language: &str) -> tauri::Result<()> {
         text("Overview", "Visão geral"),
         Some("CmdOrCtrl+Alt+1"),
     )?;
-    let drafts = item(
-        "drafts",
-        text("Drafts", "Rascunhos"),
+    let archive = item(
+        "archive",
+        text("Archive", "Arquivo"),
         Some("CmdOrCtrl+Alt+2"),
     )?;
     let notes = item("notes", text("Vaults", "Cofres"), Some("CmdOrCtrl+Alt+3"))?;
@@ -81,20 +81,30 @@ pub fn set(app: &AppHandle, language: &str) -> tauri::Result<()> {
     )?;
     // ⌘ and a number picks a project; the open project's tabs take ⌃.
     let tab = "Ctrl";
+    let project_page = item(
+        "project_page",
+        text("Project page", "Página do projeto"),
+        Some(&format!("{tab}+1")),
+    )?;
     let board = item(
         "board",
         text("Project board", "Quadro do projeto"),
-        Some(&format!("{tab}+1")),
+        Some(&format!("{tab}+2")),
     )?;
     let git = item(
         "git",
         text("Project Git history", "Histórico Git do projeto"),
-        Some(&format!("{tab}+2")),
+        Some(&format!("{tab}+3")),
     )?;
     let project_notes = item(
         "project_notes",
         text("Project notes", "Notas do projeto"),
-        Some(&format!("{tab}+3")),
+        Some(&format!("{tab}+4")),
+    )?;
+    let board_view = item(
+        "board_view",
+        text("Kanban or List", "Kanban ou Lista"),
+        Some("CmdOrCtrl+Shift+L"),
     )?;
     let back = item("back", text("Back", "Voltar"), Some("CmdOrCtrl+["))?;
     let forward = item("forward", text("Forward", "Avançar"), Some("CmdOrCtrl+]"))?;
@@ -111,12 +121,15 @@ pub fn set(app: &AppHandle, language: &str) -> tauri::Result<()> {
             &forward,
             &PredefinedMenuItem::separator(app)?,
             &overview,
-            &drafts,
+            &archive,
             &notes,
             &switch_project,
+            &project_page,
             &board,
             &git,
             &project_notes,
+            &PredefinedMenuItem::separator(app)?,
+            &board_view,
         ],
     )?;
     let compact = item(

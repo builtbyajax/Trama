@@ -9,12 +9,15 @@ import { t } from "../lib/i18n";
 
 /** The board project's local branches, to mark a card whose branch is gone; null while unknown. */
 export const BranchesContext = createContext<string[] | null>(null);
+/** Goal names by id, for the card's goal; empty when the board already shows a single goal. */
+export const GoalNamesContext = createContext<Map<string, string>>(new Map());
 
 export function TaskCardContent({ task }: { task: Task }) {
   const working = isAgentWorking(task);
   const agent = task.assignee === "agent";
   const branches = useContext(BranchesContext);
   const branch = task.repositoryBranch;
+  const goal = useContext(GoalNamesContext).get(task.goalId ?? "");
   // A done task's branch is expected to go once it is merged; only open work warns.
   const gone = Boolean(
     branch && branches && task.status !== "done" && !branches.includes(branch),
@@ -22,9 +25,17 @@ export function TaskCardContent({ task }: { task: Task }) {
   return (
     <>
       {working && <AgentTrail />}
-      <span className="card-category" title={task.category}>
-        {task.category}
-      </span>
+      <div className="card-top">
+        <span className="card-category" title={task.category}>
+          {task.category}
+        </span>
+        {goal && (
+          <span className="card-goal" title={goal}>
+            <Icon name="target" size={11} />
+            <span className="truncate">{goal}</span>
+          </span>
+        )}
+      </div>
       <div className="card-title">{task.title}</div>
       {branch && (
         <span
@@ -104,6 +115,7 @@ export function TaskCard({
     id: task.id,
   });
   const working = isAgentWorking(task);
+  const goal = useContext(GoalNamesContext).get(task.goalId ?? "");
   const state = [
     working && "working",
     (isDragging || keyboardActive) && "drag-origin",
@@ -150,6 +162,7 @@ export function TaskCard({
       aria-label={[
         task.title,
         task.category,
+        goal && t("goal {0}", [goal]),
         task.assignee === "agent" ? t("agent") : t("you"),
         statusTitle[task.status],
         task.repositoryBranch && t("branch {0}", [task.repositoryBranch]),

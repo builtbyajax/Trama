@@ -14,6 +14,7 @@ import { store } from "../../lib/storage";
 import { dualKey, followKey } from "./noteStorage";
 import type { SaveState } from "./useNoteFile";
 import { t } from "../../lib/i18n";
+import { Segmented } from "../Segmented";
 
 /** Where each line of a textarea starts, wrapping included: a hidden copy with the same
  * width and type lays the lines out one per element. */
@@ -310,32 +311,20 @@ export function NoteEditor({
             {t("Scroll together")}
           </button>
         )}
-        <div
-          className="segmented small note-view"
-          role="radiogroup"
-          aria-label={t("View")}
-        >
-          {(
-            [
-              [false, t("Text only")],
-              [true, t("Side by side")],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={label}
-              type="button"
-              role="radio"
-              aria-checked={dual === value}
-              className={dual === value ? "on" : ""}
-              onClick={() => {
-                onDual(value);
-                store(dualKey, value ? "on" : "off");
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          size="small"
+          className="note-view"
+          label={t("View")}
+          options={[
+            { value: false, label: t("Text only") },
+            { value: true, label: t("Side by side") },
+          ]}
+          value={dual}
+          onChange={(value) => {
+            onDual(value);
+            store(dualKey, value ? "on" : "off");
+          }}
+        />
         <button
           type="button"
           className="button small primary note-done"

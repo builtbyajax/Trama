@@ -39,9 +39,8 @@
   min-height: 0;
   margin: 0;
   padding: 4px calc(28px - var(--bar)) 18px 28px;
-  scrollbar-gutter: stable;
   list-style: none;
-  overflow-y: auto;
+  overflow-y: scroll;
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;

@@ -41,7 +41,8 @@ const noteName = (path: string) => path.split("/").pop()!.replace(/\.md$/i, "");
 
 /**
  * The actions of a task's menu, only those that apply to it: open, move, hand over, copy what
- * identifies it, reach its Git work and attached notes, archive it, and delete after confirming.
+ * identifies it, reach its Git work and attached notes, and delete after confirming. A done task
+ * is in the Archive: it can only be reopened on the board, not reordered, handed over or regrouped.
  */
 export function taskMenuItems(
   task: Task,
@@ -53,13 +54,14 @@ export function taskMenuItems(
     onOpen,
     onOpenPage,
     onMoveToTop,
+    onMoveToStatus,
+    onConclude,
     onAssign,
     onMoveToGoal,
     onCopy,
     onGit,
     onOpenPullRequest,
     onOpenNote,
-    onArchive,
     onDelete,
   }: {
     documents: TaskDocument[];
@@ -69,6 +71,9 @@ export function taskMenuItems(
     onOpen: () => void;
     onOpenPage: () => void;
     onMoveToTop: () => void;
+    onMoveToStatus?: () => void;
+    /** Takes the task off the board to the Archive. */
+    onConclude?: () => void;
     onAssign: (assignee: Task["assignee"]) => void;
     /** Left out when the task's project has no goal to move it to. */
     onMoveToGoal?: () => void;
@@ -76,7 +81,6 @@ export function taskMenuItems(
     onGit: () => void;
     onOpenPullRequest: (url: string) => void;
     onOpenNote: (path: string) => void;
-    onArchive: (archived: boolean) => void;
     onDelete: () => void;
   },
 ): MenuItem[] {
@@ -89,33 +93,43 @@ export function taskMenuItems(
     },
     { label: t("Open full screen"), icon: "expand", onSelect: onOpenPage },
   ];
+  const archived = task.status === "done";
   const moves: MenuItem[] = [];
-  if (!atTop)
+  if (!atTop && !archived)
     moves.push({
       label: t("Move to top"),
       icon: "arrowUp",
       onSelect: onMoveToTop,
     });
-  moves.push(
-    task.assignee === "agent"
-      ? {
-          label: t("Take the task"),
-          icon: "arrowLeft",
-          onSelect: () => onAssign("user"),
-        }
-      : {
-          label: t("Hand to the agent"),
-          icon: "arrowRight",
-          onSelect: () => onAssign("agent"),
-        },
-  );
-  if (onMoveToGoal)
+  if (onMoveToStatus)
+    moves.push({
+      label: archived ? t("Reopen in…") : t("Move to…"),
+      icon: "board",
+      onSelect: onMoveToStatus,
+    });
+  if (onMoveToStatus && onConclude && !archived)
+    moves.push({ label: t("Conclude"), icon: "check", onSelect: onConclude });
+  if (!archived)
+    moves.push(
+      task.assignee === "agent"
+        ? {
+            label: t("Take the task"),
+            icon: "arrowLeft",
+            onSelect: () => onAssign("user"),
+          }
+        : {
+            label: t("Hand to the agent"),
+            icon: "arrowRight",
+            onSelect: () => onAssign("agent"),
+          },
+    );
+  if (onMoveToGoal && !archived)
     moves.push({
       label: t("Move to goal…"),
       icon: "target",
       onSelect: onMoveToGoal,
     });
-  moves[0].separated = true;
+  if (moves.length) moves[0].separated = true;
   items.push(...moves);
 
   const copies: MenuItem[] = [
@@ -170,29 +184,13 @@ export function taskMenuItems(
   if (notes.length) notes[0].separated = true;
   items.push(...notes);
 
-  // Archiving by hand is for done tasks; one archived that way can be brought back. A task the
-  // week archived returns by moving it, as before.
-  const last: MenuItem[] = [];
-  if (task.archivedAt !== null)
-    last.push({
-      label: t("Unarchive"),
-      icon: "archive",
-      onSelect: () => onArchive(false),
-    });
-  else if (task.status === "done")
-    last.push({
-      label: t("Archive"),
-      icon: "archive",
-      onSelect: () => onArchive(true),
-    });
-  last.push({
+  items.push({
     label: t("Delete task…"),
     icon: "trash",
     danger: true,
+    separated: true,
     onSelect: onDelete,
   });
-  last[0].separated = true;
-  items.push(...last);
   return items;
 }
 

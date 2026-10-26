@@ -15,7 +15,6 @@ import {
 import {
   ago,
   isAgentWorking,
-  isDraft,
   type Project,
   type Task,
   type TaskEvent,
@@ -78,7 +77,7 @@ export function Overview({
     for (const event of events)
       byTask.set(event.taskId, [...(byTask.get(event.taskId) ?? []), event]);
     return tasks
-      .filter((task) => !isDraft(task.status) && byTask.has(task.id))
+      .filter((task) => byTask.has(task.id))
       .map((task) => weave(task, byTask.get(task.id) ?? []));
   }, [events, tasks]);
   const shown = threads

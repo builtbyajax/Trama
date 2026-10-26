@@ -10,6 +10,26 @@ Changes delivered in each Trama version. **Unreleased** lists implemented change
 
 ### Added
 
+- Archive page for concluded tasks, with search, project filtering and grouping; archived tasks can be reopened in any board stage.
+- Conclude a task by dragging it to the bar that appears at the bottom of the board while dragging, or from its menu.
+- Project page with the agent's work, reviews, goals and recent deliveries.
+- List view of the board alongside Kanban, with keyboard dragging; switch views in Preferences or with ⇧⌘L.
+- Show each task's goal on its card.
+- Show the time left on notices with an Undo action, pausing while the pointer or focus is on the notice.
+
+### Changed
+
+- Merge Drafts and Reserved into a single Backlog column. Upgrade the database to schema 12 while preserving existing data; after migration, Trama 0.2 cannot open that database.
+- MCP tools refuse the retired `preparing` and `reserved` statuses with guidance to use `backlog`, and `promote_draft` was removed.
+- Split Preferences into General, Board, Projects, Agent and MCP, and Updates, keeping the section list visible while it is open. The MCP section shows the command with the bundled agent path and the project IDs.
+- Show notices at the top of the window, with entry and exit animations.
+- Use one segmented control, navigable with the arrow keys, for project tabs, board filters, Archive grouping, activity, diffs and notes.
+- Guide agents in the Trama skill to write focused briefings, delivery summaries and messages, and to name and use goals.
+
+## [0.2.2](https://github.com/builtbyajax/Trama/releases/tag/v0.2.2) — 2026-10-25
+
+### Added
+
 - Check for signed updates automatically or manually in Preferences; manual checks remain available after finding an update.
 - Install an available update and restart the app from the update notice or Preferences, with a persistent Preferences indicator after dismissing the notice.
 - Keep a found update installable after dismissing the notice, allow retry after a failed download, and prevent overlapping update operations.

@@ -1,4 +1,4 @@
-import { isArchived } from "./archive";
+import { isSettled } from "./settled";
 import { matchesPullRequest } from "./delivery";
 import {
   byPosition,
@@ -49,7 +49,7 @@ export interface Fronts {
 
 const integrationNames = ["develop", "dev", "development"];
 const groupOrder: [TaskStatus, string][] = [
-  ["inProgress", t("In progress")],
+  ["inProgress", t("Working")],
   ["review", t("In review")],
   ["todo", t("To do")],
   ["done", t("Done|group")],
@@ -201,7 +201,7 @@ export function buildFronts(
           t.commitHash ||
           t.pullRequestNumber ||
           t.pullRequestUrl) &&
-        !isArchived(t, project, names),
+        !isSettled(t, project, names),
     )
     .sort(byPosition);
   for (const task of tasks) {

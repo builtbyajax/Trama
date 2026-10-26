@@ -474,16 +474,22 @@ fn every_tool_has_a_blackbox_contract_and_private_notes_never_leave_the_process(
     replies.insert("clear-delivery".into(),m.ok("update_task",json!({"project_id":p.id,"task_id":task_id,"agent_summary":null,"repository_branch":null,"commit_hash":null,"pull_request_url":null,"pull_request_number":null})));
     let draft = m.ok(
         "create_task",
-        json!({"project_id":p.id,"title":"Draft","status":"preparing"}),
+        json!({"project_id":p.id,"title":"Idea","status":"backlog"}),
     );
     let draft_id = draft["id"].as_str().unwrap();
     replies.insert(
-        "promote-draft".into(),
+        "backlog-to-todo".into(),
         m.ok(
-            "promote_draft",
-            json!({"project_id":p.id,"task_id":draft_id}),
+            "move_task",
+            json!({"project_id":p.id,"task_id":draft_id,"status":"todo"}),
         ),
     );
+    let retired = m.call(
+        "move_task",
+        json!({"project_id":p.id,"task_id":draft_id,"status":"reserved"}),
+    );
+    assert_eq!(retired["result"]["isError"], true);
+    replies.insert("retired-status".into(), retired);
     replies.insert(
         "delete-task".into(),
         m.ok("delete_task", json!({"project_id":p.id,"task_id":draft_id})),

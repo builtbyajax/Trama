@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ToastAction } from "./useToast";
 import { errorMessage, moveTask } from "../lib/api";
 import {
   byPosition,
@@ -18,7 +19,7 @@ type Placement = { status: TaskStatus; position: number; updatedAt: number };
 export function useBoardMoves(
   snapshot: Snapshot | null,
   refresh: () => Promise<void>,
-  notify: (text: string, error?: boolean) => void,
+  notify: (text: string, error?: boolean, action?: ToastAction) => void,
 ) {
   const [pendingMoves, setPendingMoves] = useState<Record<string, Placement>>(
     {},
@@ -39,8 +40,16 @@ export function useBoardMoves(
       }),
     };
   }, [snapshot, pendingMoves]);
+  // Undo runs later, from the toast, against the board as it is by then.
+  const latest = useRef(data);
+  latest.current = data;
   const move = useCallback(
-    async (taskId: string, status: TaskStatus, afterId: string | null) => {
+    async (
+      taskId: string,
+      status: TaskStatus,
+      afterId: string | null,
+    ): Promise<void> => {
+      const data = latest.current;
       const task = data?.tasks.find((t) => t.id === taskId);
       if (!task) return;
       // Optimistic position between the new neighbours; SQLite renumbers the column.
@@ -53,6 +62,13 @@ export function useBoardMoves(
         )
         .sort(byPosition);
       const after = afterId ? column.findIndex((t) => t.id === afterId) : -1;
+      // Concluding takes the card off the board; undoing puts it back after the same card.
+      const own = data!.tasks
+        .filter(
+          (t) => t.projectId === task.projectId && t.status === task.status,
+        )
+        .sort(byPosition);
+      const before = own[own.findIndex((t) => t.id === taskId) - 1]?.id ?? null;
       const prev = column[after];
       const next = column[after + 1];
       const placement: Placement = {
@@ -78,7 +94,12 @@ export function useBoardMoves(
         await moveTask(task, status, afterId);
         await refresh();
         settle();
-        if (status !== task.status)
+        if (status === "done" && task.status !== "done")
+          notify(t("Concluded: {0}", [task.title]), false, {
+            label: t("Undo"),
+            run: () => void move(taskId, task.status, before),
+          });
+        else if (status !== task.status)
           notify(t("Moved to “{0}”.", [statusTitle[status]]));
       } catch (e) {
         settle();
@@ -98,7 +119,7 @@ export function useBoardMoves(
         );
       }
     },
-    [data, refresh],
+    [refresh, notify],
   );
   return { data, landedId, setLandedId, move };
 }

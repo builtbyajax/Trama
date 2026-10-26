@@ -1,6 +1,5 @@
 import {
   ago,
-  isDraft,
   statusTitle,
   type Task,
   type TaskAssignee,
@@ -14,8 +13,8 @@ export const DAY = 86_400;
 /**
  * Rebuilds who held each task over time from its creation, status and assignee events.
  * A task in review waits for you whoever delivered it; otherwise it is with its assignee,
- * and an agent task still "A fazer" sits in the agent's queue. Drafts and done tasks are
- * off the board, so they have no holder.
+ * and an agent task still "A fazer" sits in the agent's queue. Nobody holds a task in the
+ * backlog or done.
  */
 export type Phase = "work" | "queue" | "wait";
 export interface Segment {
@@ -44,7 +43,7 @@ const placeOf = ({
   status,
   assignee,
 }: State): Pick<Segment, "holder" | "phase"> | null => {
-  if (isDraft(status) || status === "done") return null;
+  if (status === "backlog" || status === "done") return null;
   if (status === "review") return { holder: "user", phase: "wait" };
   if (assignee === "agent")
     return { holder: "agent", phase: status === "todo" ? "queue" : "work" };
@@ -79,8 +78,8 @@ function describe(
   if (before.status === after.status) return null;
   switch (after.status) {
     case "todo":
-      if (isDraft(before.status))
-        return you ? t("You added it to the board") : t("Joined the board");
+      if (before.status === "backlog")
+        return t("Moved to “{0}”", [statusTitle.todo]);
       if (before.status === "review")
         return you
           ? t("You sent it back for changes")
@@ -104,8 +103,8 @@ function describe(
         : agent
           ? t("The agent completed it")
           : t("Done|task");
-    default:
-      return t("Back to drafts");
+    case "backlog":
+      return t("Moved to “{0}”", [statusTitle.backlog]);
   }
 }
 
@@ -113,12 +112,12 @@ export function weave(task: Task, events: TaskEvent[]): Thread {
   const statuses = events.filter((e) => e.kind === "status" && e.value);
   const assignees = events.filter((e) => e.kind === "assignee" && e.value);
   // Events keep only the new value, so the starting state is inferred: a task whose first move
-  // was onto "A fazer" began as a draft; otherwise it began there. One assignee change implies the
+  // was onto "A fazer" began in the backlog; otherwise it began there. One assignee change implies the
   // other assignee before it.
   let state: State = {
     status: statuses.length
       ? statuses[0].value === "todo"
-        ? "preparing"
+        ? "backlog"
         : "todo"
       : task.status,
     assignee: assignees.length
@@ -167,7 +166,7 @@ export function weave(task: Task, events: TaskEvent[]): Thread {
     segments,
     steps,
     doneAt,
-    current: last && last.to === null && !isDraft(task.status) ? last : null,
+    current: last && last.to === null ? last : null,
   };
 }
 

@@ -41,7 +41,13 @@ function GoalBar({ done, total }: { done: number; total: number }) {
 }
 
 /** The goal's tasks by status, in the order they finish. */
-const progressOrder = ["done", "review", "inProgress", "todo"] as const;
+const progressOrder = [
+  "done",
+  "review",
+  "inProgress",
+  "todo",
+  "backlog",
+] as const;
 const maxDots = 12;
 
 /**
@@ -49,7 +55,7 @@ const maxDots = 12;
  * dots, so the title stays one line.
  */
 function GoalProgressBar({ goal, tasks }: { goal: Goal; tasks: Task[] }) {
-  const counts = { done: 0, review: 0, inProgress: 0, todo: 0 };
+  const counts = { done: 0, review: 0, inProgress: 0, todo: 0, backlog: 0 };
   for (const task of tasks)
     if (task.goalId === goal.id && task.status in counts)
       counts[task.status as keyof typeof counts]++;

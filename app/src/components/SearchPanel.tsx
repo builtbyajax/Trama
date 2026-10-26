@@ -7,7 +7,6 @@ import { t } from "../lib/i18n";
 
 const kindLabel: Record<SearchResult["kind"], string> = {
   message: t("Message"),
-  draft: t("Draft"),
   task: t("Task"),
 };
 
@@ -74,10 +73,10 @@ export function SearchPanel({
             aria-activedescendant={
               results[selected] ? `${listId}-${selected}` : undefined
             }
-            aria-label={t("Search tasks, drafts and annotations")}
+            aria-label={t("Search tasks and annotations")}
             autoComplete="off"
             spellCheck={false}
-            placeholder={t("Search tasks, drafts and annotations…")}
+            placeholder={t("Search tasks and annotations…")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {

@@ -75,10 +75,9 @@
 .diff-tree {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
   overscroll-behavior: contain;
   padding: 4px calc(8px - var(--bar)) 12px 8px;
-  scrollbar-gutter: stable;
 }
 /* Folders close with everything below; each level steps in 12px. */
 .diff-folder {
@@ -170,9 +169,8 @@
   flex: 1;
   min-width: 0;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: scroll;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
 }
 /* Focused only so the keys scroll it; the page is not a control to ring. */
 .diff-main:focus {

@@ -54,6 +54,12 @@ async function selectWorkspaceAction(
   await page.keyboard.press("Enter");
 }
 
+// A project opens on its Project tab; the board is one tab over.
+const openBoard = (page: Page) =>
+  page
+    .getByLabel("Project view", { exact: true })
+    .locator("button", { hasText: /^Board/ })
+    .click();
 test("workspace, board, goals, transfer and note conflicts persist through the real backend", async ({
   page,
   request,
@@ -123,12 +129,13 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   await expect(cards).toHaveCount(2);
   await cards.filter({ hasText: "First task" }).click();
   await page.getByRole("combobox", { name: "Status", exact: true }).click();
-  await page.getByRole("option", { name: "In progress", exact: true }).click();
+  await page.getByRole("option", { name: "Working", exact: true }).click();
   await page
     .getByRole("button", { name: "Close task", exact: true })
     .last()
     .click();
   await page.reload();
+  await openBoard(page);
   let data = await command<Snapshot>(request, "load_snapshot");
   expect(data.tasks.find((t) => t.title === "First task")?.status).toBe(
     "inProgress",
@@ -145,6 +152,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   await page.keyboard.press("ArrowUp");
   await page.keyboard.press("Space");
   await page.reload();
+  await openBoard(page);
   data = await command<Snapshot>(request, "load_snapshot");
   expect(data.tasks.find((t) => t.title === "Second task")?.status).toBe(
     "inProgress",
@@ -181,6 +189,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
     )
     .toBe("review");
   await page.reload();
+  await openBoard(page);
   await expect(
     reviewColumn.locator(".card").filter({ hasText: "First task" }),
   ).toBeVisible();
@@ -193,7 +202,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
     documentsFolder: home,
   });
   await page.reload();
-  await page.getByRole("button", { name: "Notes", exact: true }).click();
+  await page.getByRole("radio", { name: "Notes", exact: true }).click();
   await page.getByRole("button", { name: `note-${run}`, exact: true }).click();
   await page.getByRole("button", { name: /^Edit / }).click();
   const editor = page.getByRole("textbox", { name: "Note text in Markdown" });
@@ -215,7 +224,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   await expect(editor).toHaveValue("# External change\n");
   await editor.fill("# Saved edit\n");
   await expect.poll(() => readFile(note, "utf8")).toBe("# Saved edit\n");
-  await page.getByRole("button", { name: "Board", exact: true }).click();
+  await page.getByRole("radio", { name: "Board", exact: true }).click();
   for (const title of ["First task", "Second task"]) {
     await page
       .locator(".card[data-task-id]")
@@ -382,4 +391,137 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
     (await command<Workspaces>(request, "list_workspaces")).active,
   ).not.toBe(destination.active);
   await expect(access(destination.active)).rejects.toThrow();
+});
+
+/** Presses on the element and moves to the target in steps, as a person drags. */
+async function drag(
+  page: Page,
+  from: { x: number; y: number; width: number; height: number },
+  to: { x: number; y: number },
+) {
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    from.x + from.width / 2 + 12,
+    from.y + from.height / 2,
+    { steps: 3 },
+  );
+  await page.mouse.move(to.x, to.y, { steps: 15 });
+  await page.mouse.up();
+}
+
+test("concluding from the board and the list, and reopening from the Archive", async ({
+  page,
+  request,
+}, info) => {
+  const { home } = JSON.parse(
+    await readFile("../.trama-local/e2e-state.json", "utf8"),
+  );
+  const run = `${info.project.name}-${info.repeatEachIndex}`;
+  await command(request, "create_workspace", {
+    name: `Archive ${run}`,
+    folder: home,
+  });
+  const project = await command<{ id: string }>(request, "save_project", {
+    projectId: null,
+    name: "Archive Project",
+    repositoryPath: null,
+    color: 0,
+    documentsFolder: null,
+  });
+  const category = (await command<Snapshot>(request, "load_snapshot"))
+    .categories[0].name;
+  for (const title of ["Alpha", "Beta", "Gamma"])
+    await command(request, "save_task", {
+      taskId: null,
+      input: {
+        projectId: project.id,
+        title,
+        details: "",
+        category,
+        assignee: "user",
+        status: "todo",
+        agentSummary: null,
+        repositoryBranch: null,
+        commitHash: null,
+        pullRequestUrl: null,
+        pullRequestNumber: null,
+        goalId: null,
+      },
+    });
+  const status = async (title: string) =>
+    (await command<Snapshot>(request, "load_snapshot")).tasks.find(
+      (t) => t.title === title,
+    )?.status;
+  await page.goto("/");
+  await page
+    .getByRole("navigation", { name: "Navigation", exact: true })
+    .getByRole("button", { name: /^Archive Project/ })
+    .click();
+  await openBoard(page);
+
+  // Kanban: drop a card on the bar at the bottom, then conclude another from its menu.
+  const card = (title: string) =>
+    page.locator(".card[data-task-id]").filter({ hasText: title });
+  const zone = await page.locator(".conclude-zone").boundingBox();
+  await drag(page, (await card("Alpha").boundingBox())!, {
+    x: zone!.x + zone!.width / 2,
+    y: zone!.y + zone!.height / 2,
+  });
+  await expect.poll(() => status("Alpha")).toBe("done");
+  await expect(card("Alpha")).toHaveCount(0);
+  await card("Beta").click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Conclude", exact: true }).click();
+  await expect.poll(() => status("Beta")).toBe("done");
+
+  // List, chosen in Preferences: drag a row into another stage.
+  await page.getByRole("button", { name: "Preferences", exact: true }).click();
+  const preferences = page.getByRole("navigation", {
+    name: "Preferences",
+    exact: true,
+  });
+  await preferences.getByRole("button", { name: "Board", exact: true }).click();
+  await page.getByRole("radio", { name: /^List/ }).click();
+  await expect(page.getByRole("radio", { name: /^List/ })).toBeChecked();
+  await preferences.getByRole("button", { name: "Back", exact: true }).click();
+  const review = page.locator(".list-group").filter({
+    has: page.getByRole("heading", { name: /^In review/ }),
+  });
+  const row = page.locator(".list-row[data-task-id]").filter({
+    hasText: "Gamma",
+  });
+  const target = await review.boundingBox();
+  await drag(page, (await row.boundingBox())!, {
+    x: target!.x + target!.width / 2,
+    y: target!.y + target!.height - 4,
+  });
+  await expect.poll(() => status("Gamma")).toBe("review");
+  await expect(
+    review.locator(".list-row").filter({ hasText: "Gamma" }),
+  ).toBeVisible();
+
+  // The Archive lists both concluded tasks and reopens one in a stage of the board.
+  // dnd-kit swallows a click that lands on the same tick as the drop, so the move is retried.
+  await expect(async () => {
+    await page
+      .getByRole("navigation", { name: "Navigation", exact: true })
+      .getByRole("button", { name: "Archive", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Archive", exact: true, level: 1 }),
+    ).toBeVisible({ timeout: 500 });
+  }).toPass();
+  const archived = page.locator(".archive-row");
+  await expect(archived).toHaveCount(2);
+  await archived
+    .filter({ hasText: "Alpha" })
+    .locator(".row-button")
+    .click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Reopen in…", exact: true }).click();
+  await page
+    .getByRole("menu", { name: "Reopen in stage", exact: true })
+    .getByRole("menuitemradio", { name: "To do", exact: true })
+    .click();
+  await expect.poll(() => status("Alpha")).toBe("todo");
+  await expect(archived).toHaveCount(1);
 });

@@ -25,21 +25,17 @@ export const ptBR = {
 
   // board
   ", {0} with the agent": ", {0} com o agente",
-  "{0} archived tasks": "{0} tarefas arquivadas",
   "{0} attached notes": "{0} notas anexadas",
   "{0} more categories": "Mais {0} categorias",
   "{0} no longer exists in the repository":
     "{0} não existe mais no repositório",
-  "1 archived task": "1 tarefa arquivada",
   "1 attached note": "1 nota anexada",
   agent: "agente",
   "agent working": "agente trabalhando",
   "All|filter": "Todas",
-  "Archived, {0}": "Arquivadas, {0}",
-  "Archived: done more than 7 days ago, with no branch in the repository":
-    "Arquivadas: concluídas há mais de 7 dias, sem branch no repositório",
   "Board  {0}": "Quadro  {0}",
   "branch {0}": "branch {0}",
+  "goal {0}": "objetivo {0}",
   "Change the category, branch or assignee.":
     "Mude a categoria, a branch ou o responsável.",
   Everyone: "Todos",
@@ -48,8 +44,6 @@ export const ptBR = {
   "Git history  {0}": "Histórico Git  {0}",
   "Manage categories…": "Gerenciar categorias…",
   "More categories": "Mais categorias",
-  "No archived tasks with these filters":
-    "Nenhuma tarefa arquivada com estes filtros",
   "No tasks": "Nenhuma tarefa",
   "Other categories": "Outras categorias",
   PR: "PR",
@@ -58,6 +52,8 @@ export const ptBR = {
   "Project notes  {0}": "Notas do projeto  {0}",
   "Project view": "Visualização do projeto",
   "Working now": "Trabalhando agora",
+  Working: "Trabalhando",
+  Backlog: "Pendências",
 
   // categories
   "“{0}” was created.": "“{0}” foi criada.",
@@ -142,11 +138,8 @@ export const ptBR = {
   "Checks when the app opens and once a day.":
     "Procura ao abrir o app e uma vez por dia.",
   "Checking for updates…": "Procurando atualizações…",
-  "Choose when Trama checks for updates.":
-    "Escolha quando o Trama procura atualizações.",
   "Dismiss restart notice": "Dispensar aviso sobre sessões de agentes",
   "Dismiss update notice": "Dispensar aviso de atualização",
-  "Installed version": "Versão instalada",
   "Installing update…": "Instalando atualização…",
   "Restart agent sessions to reconnect them to the MCP included with this version of Trama.":
     "Reinicie as sessões dos agentes para reconectá-las ao MCP incluído nesta versão do Trama.",
@@ -166,8 +159,6 @@ export const ptBR = {
   Deleted: "Excluído",
   Done: "Concluído",
   "Done|task": "Concluída",
-  "Draft added to the board.": "Rascunho adicionado ao quadro.",
-  Drafts: "Rascunhos",
   "Each project has its own task queue and, if you want, a Git repository to look into.":
     "Cada projeto tem sua própria fila de tarefas e, se quiser, um repositório Git para consulta.",
   "Edit project": "Editar projeto",
@@ -208,7 +199,6 @@ export const ptBR = {
   "Path copied.": "Caminho copiado.",
   "PR #": "PR #",
   Preferences: "Preferências",
-  Preparing: "Em preparação",
   "Project “{0}” deleted.": "Projeto “{0}” excluído.",
   Projects: "Projetos",
   Properties: "Propriedades",
@@ -216,7 +206,6 @@ export const ptBR = {
   Refresh: "Atualizar",
   "Release to hide.": "Solte para esconder.",
   Renamed: "Renomeado",
-  Reserved: "Reservada",
   Saved: "Salvo",
   "Saving…": "Salvando…",
   Search: "Buscar",
@@ -228,10 +217,8 @@ export const ptBR = {
   sidebar: "barra lateral",
   "Target: {0}. Press Space to drop or Esc to cancel.":
     "Destino: {0}. Pressione Espaço para soltar ou Esc para cancelar.",
-  "Task archived.": "Tarefa arquivada.",
   "Task created": "Tarefa criada",
   "Task handed to the agent.": "Tarefa passada para o agente.",
-  "Task unarchived.": "Tarefa desarquivada.",
   Text: "Texto",
   "The file browser is available in the app.":
     "O explorador de arquivos está disponível no aplicativo.",
@@ -245,13 +232,6 @@ export const ptBR = {
   yesterday: "ontem",
   you: "você",
   You: "Você",
-
-  // drafts
-  "Add to board": "Adicionar ao quadro",
-  "Ideas that haven't reached the board yet. The agent only starts when you add one of them.":
-    "Ideias que ainda não entraram no quadro. O agente só começa quando você adiciona uma delas.",
-  "No drafts for now": "Nenhum rascunho por enquanto",
-  "Use New task and choose Drafts.": "Use Nova tarefa e escolha Rascunhos.",
 
   // git
   "{0} ahead of {1}": "{0} à frente de {1}",
@@ -571,7 +551,6 @@ export const ptBR = {
     "{0} tarefas esperam sua revisão, e a mais antiga está assim há {1}.",
   "Agent's queue": "Na fila do agente",
   "Back to “{0}”": "Voltou para “{0}”",
-  "Back to drafts": "Voltou para os rascunhos",
   "Click a thread to see where it went.":
     "Clique num fio para ver por onde ele passou.",
   "Couldn't read the tasks' history.":
@@ -587,7 +566,6 @@ export const ptBR = {
     "Do momento em que a tarefa chega em revisão até você concluir ou devolver.",
   "in progress": "em andamento",
   "it goes idle when it finishes": "ele fica parado quando terminar",
-  "Joined the board": "Entrou no quadro",
   "Last 7 days": "Últimos 7 dias",
   "last week,": "na semana passada,",
   "Moved to “{0}”": "Movida para “{0}”",
@@ -651,7 +629,6 @@ export const ptBR = {
   "With the agent, working": "Com o agente, trabalhando",
   "With you": "Com você",
   "With you, waiting for review": "Com você, esperando revisão",
-  "You added it to the board": "Você adicionou ao quadro",
   "You completed it": "Você concluiu",
   "You created the task": "Você criou a tarefa",
   "You moved it to review": "Você moveu para revisão",
@@ -661,14 +638,9 @@ export const ptBR = {
 
   // preferences
   "Copy ID of {0}": "Copiar ID de {0}",
-  "Each agent connects to a single project using the ID below.":
-    "Cada agente se conecta a um único projeto pelo ID abaixo.",
   "ID copied.": "ID copiado.",
   Language: "Idioma",
   "No projects created yet.": "Nenhum projeto criado ainda.",
-  "Projects and MCP integration": "Projetos e integração MCP",
-  "The language, where your data lives and how the agent connects.":
-    "O idioma, onde ficam os seus dados e como o agente se conecta.",
   "Trama reloads to show everything in the chosen language.":
     "O Trama abre de novo para mostrar tudo no idioma escolhido.",
 
@@ -794,14 +766,11 @@ export const ptBR = {
   "Copy path of {0}": "Copiar caminho de {0}",
   // search
   "{0} results": "{0} resultados",
-  Draft: "Rascunho",
   Message: "Mensagem",
   "No results.": "Nenhum resultado.",
+  "Search tasks and annotations": "Buscar tarefas e anotações",
+  "Search tasks and annotations…": "Buscar tarefas e anotações…",
   "Search results": "Resultados da busca",
-  "Search tasks, drafts and annotations":
-    "Buscar tarefas, rascunhos e anotações",
-  "Search tasks, drafts and annotations…":
-    "Buscar tarefas, rascunhos e anotações…",
   Task: "Tarefa",
   "Type to search all projects.": "Digite para buscar em todos os projetos.",
 
@@ -846,7 +815,7 @@ export const ptBR = {
   Activity: "Atividade",
   All: "Tudo",
   Annotations: "Anotações",
-  Archive: "Arquivar",
+  Archive: "Arquivo",
   attached: "anexada",
   "Attached the note": "Anexou a nota",
   "Back to sheet": "Voltar à folha",
@@ -925,7 +894,6 @@ export const ptBR = {
   "Removed the branch": "Tirou a branch",
   "Removed the note": "Tirou a nota",
   "Renamed to": "Renomeou para",
-  "Save to": "Guardar em",
   "Saved automatically": "Salvo automaticamente",
   "Search local branches": "Buscar branch local",
   "Search local branches…": "Buscar branch local…",
@@ -940,9 +908,9 @@ export const ptBR = {
   "The agent hasn't logged anything here yet.":
     "O agente ainda não registrou nada aqui.",
   "The agent is on this task": "O agente está nesta tarefa",
-  "The draft stays off the board until it's ready.":
-    "O rascunho fica fora do quadro até estar pronto.",
   "The task joins the project's queue.": "A tarefa entra na fila do projeto.",
+  "The task waits in Backlog until you move it to To do.":
+    "A tarefa fica em Pendências até você movê-la para A fazer.",
   "The task's context, criteria and limits":
     "Contexto, critérios e limites da tarefa",
   "The title can't be empty": "O título não pode ficar vazio",
@@ -952,7 +920,6 @@ export const ptBR = {
   "Title copied.": "Título copiado.",
   "Took the task": "Assumiu a tarefa",
   "Turn into": "Transformar em",
-  Unarchive: "Desarquivar",
   "Updated the briefing": "Atualizou o briefing",
   "View in Git": "Ver no Git",
   "What needs to be done?": "O que precisa ser feito?",
@@ -1025,6 +992,15 @@ export const ptBR = {
   "Delete goal": "Excluir objetivo",
   Goal: "Objetivo",
   "Move to goal…": "Mover para objetivo…",
+  "Move to…": "Mover para…",
+  "{0}. Use the arrows to choose the stage and position.":
+    "{0}. Use as setas para escolher a etapa e a posição.",
+  "Press Space to move the task. Use the up and down arrows to choose the stage and position, Space to drop and Esc to cancel. Press Enter to open the details.":
+    "Pressione Espaço para mover a tarefa. Use as setas para cima e para baixo para escolher a etapa e a posição, Espaço para soltar e Esc para cancelar. Pressione Enter para abrir os detalhes.",
+  "Move to stage": "Mover para etapa",
+  "No tasks with these filters": "Nenhuma tarefa com esses filtros",
+  "Board view": "Visualização do quadro",
+  Kanban: "Kanban",
   "Move to goal": "Mover para objetivo",
   "“{0}” moved to “{1}”.": "“{0}” movida para “{1}”.",
   "“{0}” left its goal.": "“{0}” saiu do objetivo.",
@@ -1040,6 +1016,88 @@ export const ptBR = {
   "Previous month": "Mês anterior",
   "Next month": "Próximo mês",
   Today: "Hoje",
+  "1 of them in {0}": "1 delas em {0}",
+  "Agent: {0}": "Agente: {0}",
+  "Done in the last 7 days": "Concluídas nos últimos 7 dias",
+  "Done tasks with a commit or PR show up here.":
+    "Tarefas concluídas com commit ou PR aparecem aqui.",
+  "Every open task has a goal.": "Toda tarefa aberta tem objetivo.",
+  "No open goals. Create one to follow a group of tasks.":
+    "Nenhum objetivo aberto. Crie um para acompanhar um grupo de tarefas.",
+  "No tasks yet": "Sem tarefas ainda",
+  "Nothing done this week.": "Nada concluído nesta semana.",
+  "Nothing waiting for review.": "Nada esperando revisão.",
+  "Outside goals": "Fora de objetivos",
+  "Project  {0}": "Projeto  {0}",
+  "Project page": "Página do projeto",
+  "Recent deliveries": "Entregas recentes",
+  "Right now": "Agora",
+  "See concluded goals ({0})": "Ver objetivos concluídos ({0})",
+  "See the {0} tasks": "Ver as {0} tarefas",
+  "Waiting for your review": "Esperando sua revisão",
+  "With the agent now": "Com o agente agora",
+  "You: review {0}": "Você: revisar {0}",
+  "{0} of them in {1}": "{0} delas em {1}",
+  "The agent isn't working on anything.":
+    "O agente não está trabalhando em nada.",
+
+  // archive
+  "Done tasks. Open one to see the delivery or move it back to the board.":
+    "Tarefas concluídas. Abra uma para ver a entrega ou mova de volta para o quadro.",
+  "Nothing in the Archive yet": "Nada no Arquivo ainda",
+  "Tasks you conclude leave the board and land here.":
+    "As tarefas que você conclui saem do quadro e ficam aqui.",
+  "Search the Archive": "Buscar no Arquivo",
+  "Reopen in…": "Reabrir em…",
+  "Reopen in stage": "Reabrir na etapa",
+  "All projects": "Todos os projetos",
+  "Group by": "Agrupar por",
+  Month: "Mês",
+  "No archived task matches “{0}”.": "Nenhuma tarefa no Arquivo com “{0}”.",
+  "No archived tasks in this project.":
+    "Nenhuma tarefa deste projeto no Arquivo.",
+  "Done today": "Concluída hoje",
+  "Done yesterday": "Concluída ontem",
+  "Done on {0}": "Concluída em {0}",
+  "Concluded on {0}, {1}": "Concluído em {0}, {1}",
+  "In progress, {0} of {1} in the Archive":
+    "Em andamento, {0} de {1} no Arquivo",
+  // concluding
+  Conclude: "Concluir",
+  "Concluded: {0}": "Concluída: {0}",
+  Undo: "Desfazer",
+  "Drop to conclude": "Solte para concluir",
+  "Agent and MCP": "Agente e MCP",
+  "The language and where your data lives.":
+    "O idioma e onde ficam seus dados.",
+  "Applies to the board of every project and goal.":
+    "Vale para o quadro de todos os projetos e objetivos.",
+  "The projects of the open workspace, in sidebar order.":
+    "Os projetos do espaço aberto, na ordem da barra lateral.",
+  "How Claude Code, Codex and other agents reach Trama.":
+    "Como o Claude Code, o Codex e outros agentes chegam ao Trama.",
+  "Installed version: {0}.": "Versão instalada: {0}.",
+  "How tasks show in the Board tab. Stages and order are the same in both.":
+    "Como as tarefas aparecem na aba Quadro. Etapas e ordem são as mesmas nas duas.",
+  "Switch with the shortcut": "Trocar pelo atalho",
+  "Works anywhere in Trama, and opens the board when a project is open.":
+    "Funciona em qualquer lugar do Trama e abre o quadro quando há um projeto aberto.",
+  "No repository": "Sem repositório",
+  "One column per stage. Drag a card to move it or conclude it.":
+    "Uma coluna por etapa. Arraste um cartão para movê-lo ou concluí-lo.",
+  "One row per task, grouped by stage, with category, goal and who has it.":
+    "Uma linha por tarefa, agrupada por etapa, com categoria, objetivo e com quem está.",
+  "Connect every project": "Conectar todos os projetos",
+  "The agent sees every project of the open workspace and picks one by its ID. This is the command for Claude Code; other agents take the same program and arguments.":
+    "O agente vê todos os projetos do espaço aberto e escolhe um pelo ID. Este é o comando do Claude Code; outros agentes usam o mesmo programa e argumentos.",
+  "Copy command": "Copiar comando",
+  "Command copied.": "Comando copiado.",
+  "Project IDs": "IDs dos projetos",
+  "To connect an agent to a single project, use --project-id with its ID instead of --workspace.":
+    "Para conectar um agente a um só projeto, use --project-id com o ID dele no lugar de --workspace.",
+  "Trama restarts to finish installing.":
+    "O Trama reinicia para terminar a instalação.",
+  "Switch between kanban and list": "Alternar entre kanban e lista",
 };
 
 /** The interface's text, in English; `t()` only takes text that has its Portuguese above. */
@@ -1121,8 +1179,6 @@ export const errors: Record<string, string> = {
   "Invalid project icon.": "Ícone de projeto inválido.",
   "Only a completed task can be archived.":
     "Somente uma tarefa concluída pode ser arquivada.",
-  "Only a draft can be promoted to the board.":
-    "Somente um rascunho pode ser promovido ao quadro.",
   "Only Markdown (.md) files can be opened or attached.":
     "Só arquivos Markdown (.md) podem ser abertos ou anexados.",
   "Only notes and folders can be renamed or deleted.":

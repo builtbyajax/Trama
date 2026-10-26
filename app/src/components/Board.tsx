@@ -1,6 +1,7 @@
 import {
   DndContext,
   DragOverlay,
+  MeasuringStrategy,
   PointerSensor,
   pointerWithin,
   rectIntersection,
@@ -13,17 +14,23 @@ import {
 } from "@dnd-kit/core";
 import { useBoardKeyboard, type BoardColumns } from "../hooks/useBoardKeyboard";
 import { useReducedMotion } from "../hooks/useReducedMotion";
-import { useScrollbarRoom } from "../hooks/useScrollbarRoom";
-import type { KeyboardEvent, ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import type { KeyboardEvent, ReactNode, RefObject } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   boardStatuses,
   byPosition,
   statusTitle,
+  type Goal,
   type Task,
   type TaskStatus,
 } from "../lib/types";
-import { BranchesContext, TaskCard, TaskCardContent } from "./TaskCard";
+import { StatusIcon } from "./Icon";
+import {
+  BranchesContext,
+  GoalNamesContext,
+  TaskCard,
+  TaskCardContent,
+} from "./TaskCard";
 import type { MenuRequest } from "./TaskMenu";
 import { t } from "../lib/i18n";
 
@@ -31,6 +38,8 @@ interface BoardProps {
   tasks: Task[];
   /** The project's local branches; null while unknown. */
   branches?: string[] | null;
+  /** Goals named on the cards; left out when the board shows a single goal. */
+  goals?: Goal[];
   /** Recently moved card, highlighted once it lands in its new place. */
   landedId?: string | null;
   /** Task open in the sheet, outlined on the board. */
@@ -49,9 +58,12 @@ interface Drop {
   index: number;
 }
 
-// The column under the pointer wins; the overlay rectangle is only a fallback for the gaps.
+// The bar to conclude lies over the columns and wins; otherwise the column under the pointer
+// wins, and the overlay rectangle is only a fallback for the gaps.
 const collision: CollisionDetection = (args) => {
   const hits = pointerWithin(args);
+  const done = hits.find((hit) => hit.id === "done");
+  if (done) return [done];
   return hits.length ? hits : rectIntersection(args);
 };
 // A card let go outside any column flies back upright into its outline, which it then replaces
@@ -88,15 +100,19 @@ const returnAnimation: DropAnimation = {
 };
 const cardGap = 8;
 const edge = 56;
+// The bar to conclude appears when the drag starts, so rects are measured during the drag.
+const measuring = { droppable: { strategy: MeasuringStrategy.Always } };
 
 /**
  * Four columns in the stored manual order. While a card is dragged it leaves its place and a slot
  * of the same height follows the pointer between the other cards, so the slot is exactly where the
- * card will land; outside any column the slot returns to the card's original place.
+ * card will land; outside any column the slot returns to the card's original place. A card dropped
+ * on the bar that rises at the bottom while dragging is concluded and goes to the Archive.
  */
 export function Board({
   tasks,
   branches = null,
+  goals = [],
   landedId,
   selectedId,
   menuId,
@@ -104,10 +120,19 @@ export function Board({
   onMove,
   onOpen,
 }: BoardProps) {
+  const goalNames = useMemo(
+    () => new Map(goals.map((goal) => [goal.id, goal.name])),
+    [goals],
+  );
   const [drag, setDrag] = useState<{ task: Task; height: number } | null>(null);
   const [drop, setDrop] = useState<Drop | null>(null);
   // Set when a drop changes the card's place: the overlay must vanish instead of flying back.
   const [landing, setLanding] = useState(false);
+  const box = useRef<SVGSVGElement>(null);
+  const zone = useRef<HTMLDivElement>(null);
+  const [flight, setFlight] = useState<{ task: Task; rect: DOMRect } | null>(
+    null,
+  );
   const lastDrop = useRef(Number.NEGATIVE_INFINITY);
   const dropRef = useRef<Drop | null>(null);
   const pointer = useRef<{ x: number; y: number } | null>(null);
@@ -158,9 +183,14 @@ export function Board({
       const body = status && bodies.current.get(status);
       if (point && body) {
         const rect = body.getBoundingClientRect();
+        // The bar to conclude covers the end of the column, so scrolling starts above it.
+        const bottom = Math.min(
+          rect.bottom,
+          zone.current?.getBoundingClientRect().top ?? rect.bottom,
+        );
         const inside = point.x >= rect.left && point.x <= rect.right;
         const up = point.y - rect.top;
-        const down = rect.bottom - point.y;
+        const down = bottom - point.y;
         const speed =
           inside && up < edge && up > -40
             ? -Math.ceil((edge - Math.max(0, up)) / 4)
@@ -184,6 +214,10 @@ export function Board({
     const dragged = drag?.task;
     if (!status || !point || !dragged || !origin) {
       setDropTo(origin);
+      return;
+    }
+    if (status === "done") {
+      setDropTo({ status, index: 0 });
       return;
     }
     const body = bodies.current.get(status);
@@ -229,6 +263,12 @@ export function Board({
     finish();
     setLanding(moved);
     if (!task || !target || !moved) return;
+    if (target.status === "done") {
+      const overlay = document.querySelector(".card.drag-overlay");
+      if (overlay) setFlight({ task, rect: overlay.getBoundingClientRect() });
+      onMove(task.id, "done", null);
+      return;
+    }
     const others = columns[target.status].filter((t) => t.id !== task.id);
     onMove(task.id, target.status, others[target.index - 1]?.id ?? null);
   };
@@ -240,90 +280,114 @@ export function Board({
   };
   return (
     <BranchesContext.Provider value={branches}>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={collision}
-        autoScroll={{ threshold: { x: 0.12, y: 0 }, acceleration: 14 }}
-        accessibility={{
-          screenReaderInstructions: {
-            draggable: t(
-              "Press Space to move the task. Use the left and right arrows to change column, up and down to choose the position, Space to drop and Esc to cancel. Press Enter to open the details.",
-            ),
-          },
-        }}
-        onDragStart={({ active }) => {
-          keyboard.cancel();
-          setLanding(false);
-          const task = tasks.find((item) => item.id === active.id);
-          if (!task) return;
-          setDrag({ task, height: active.rect.current.initial?.height ?? 64 });
-          setDropTo({
-            status: task.status,
-            index: columns[task.status].findIndex((t) => t.id === task.id),
-          });
-        }}
-        onDragMove={track}
-        onDragOver={track}
-        onDragCancel={finish}
-        onDragEnd={end}
-      >
-        <div className={`board scroll ${drag ? "dragging" : ""}`}>
-          {boardStatuses.map((status) => {
-            const preview =
-              keyboard.move?.status === status ? keyboard.move : null;
-            return (
-              <Column
-                key={status}
-                status={status}
-                tasks={columns[status]}
-                bodyRef={(node) => {
-                  if (node) bodies.current.set(status, node);
-                  else bodies.current.delete(status);
-                }}
-                draggedId={drag?.task.id}
-                slot={
-                  drag && drop?.status === status && !atOrigin
-                    ? { index: drop.index, height: drag.height }
-                    : undefined
-                }
-                target={
-                  (drag && drop?.status === status && !atOrigin) ||
-                  Boolean(preview && keyboard.changed)
-                }
-                keyboardSlot={
-                  preview && keyboard.changed && keyboard.task
-                    ? { index: preview.index, task: keyboard.task }
-                    : undefined
-                }
-                reduceMotion={reduceMotion}
-                keyboardId={keyboard.move?.taskId}
-                landedId={landedId}
-                selectedId={selectedId}
-                menuId={menuId}
-                onMenu={drag ? undefined : onMenu}
-                onKeyboard={keyboard.handle}
-                onOpen={open}
-              />
-            );
-          })}
-        </div>
-        <span className="sr-only" role="status">
-          {keyboard.announcement}
-        </span>
-        <DragOverlay
-          // After a move the card is already drawn in its new place; animating back would send it
-          // to its old place first.
-          dropAnimation={
-            reduceMotion || !atOrigin || landing ? null : returnAnimation
-          }
+      <GoalNamesContext.Provider value={goalNames}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={collision}
+          measuring={measuring}
+          autoScroll={{ threshold: { x: 0.12, y: 0 }, acceleration: 14 }}
+          accessibility={{
+            screenReaderInstructions: {
+              draggable: t(
+                "Press Space to move the task. Use the left and right arrows to change column, up and down to choose the position, Space to drop and Esc to cancel. Press Enter to open the details.",
+              ),
+            },
+          }}
+          onDragStart={({ active }) => {
+            keyboard.cancel();
+            setLanding(false);
+            const task = tasks.find((item) => item.id === active.id);
+            if (!task) return;
+            setDrag({
+              task,
+              height: active.rect.current.initial?.height ?? 64,
+            });
+            setDropTo({
+              status: task.status,
+              index: columns[task.status].findIndex((t) => t.id === task.id),
+            });
+          }}
+          onDragMove={track}
+          onDragOver={track}
+          onDragCancel={finish}
+          onDragEnd={end}
         >
-          {drag && (
-            <div className="card drag-overlay">
-              <TaskCardContent task={drag.task} />
+          <div className="board-area">
+            <div className={`board scroll ${drag ? "dragging" : ""}`}>
+              {boardStatuses.map((status) => {
+                const preview =
+                  keyboard.move?.status === status ? keyboard.move : null;
+                return (
+                  <Column
+                    key={status}
+                    status={status}
+                    tasks={columns[status]}
+                    bodyRef={(node) => {
+                      if (node) bodies.current.set(status, node);
+                      else bodies.current.delete(status);
+                    }}
+                    draggedId={drag?.task.id}
+                    slot={
+                      drag && drop?.status === status && !atOrigin
+                        ? { index: drop.index, height: drag.height }
+                        : undefined
+                    }
+                    target={
+                      (drag && drop?.status === status && !atOrigin) ||
+                      Boolean(preview && keyboard.changed)
+                    }
+                    keyboardSlot={
+                      preview && keyboard.changed && keyboard.task
+                        ? { index: preview.index, task: keyboard.task }
+                        : undefined
+                    }
+                    reduceMotion={reduceMotion}
+                    keyboardId={keyboard.move?.taskId}
+                    landedId={landedId}
+                    selectedId={selectedId}
+                    menuId={menuId}
+                    onMenu={drag ? undefined : onMenu}
+                    onKeyboard={keyboard.handle}
+                    onOpen={open}
+                  />
+                );
+              })}
             </div>
-          )}
-        </DragOverlay>
-      </DndContext>
+            <ConcludeZone
+              zoneRef={zone}
+              boxRef={box}
+              active={Boolean(drag)}
+              over={drop?.status === "done"}
+              receiving={Boolean(flight)}
+            />
+          </div>
+          <span className="sr-only" role="status">
+            {keyboard.announcement}
+          </span>
+          <DragOverlay
+            // After a move the card is already drawn in its new place; animating back would send it
+            // to its old place first.
+            dropAnimation={
+              reduceMotion || !atOrigin || landing ? null : returnAnimation
+            }
+          >
+            {drag && (
+              <div className="card drag-overlay">
+                <TaskCardContent task={drag.task} />
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
+        {flight && (
+          <ArchiveFlight
+            key={flight.task.id}
+            {...flight}
+            box={box}
+            reduceMotion={reduceMotion}
+            onDone={() => setFlight(null)}
+          />
+        )}
+      </GoalNamesContext.Provider>
     </BranchesContext.Provider>
   );
 }
@@ -365,7 +429,6 @@ function Column({
 }) {
   const { setNodeRef } = useDroppable({ id: status });
   const body = useRef<HTMLDivElement | null>(null);
-  useScrollbarRoom(body);
   const slotRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (keyboardSlot)
@@ -443,6 +506,7 @@ function Column({
       aria-label={statusTitle[status]}
     >
       <header className="column-head">
+        <StatusIcon status={status} />
         <h2 className="name">{statusTitle[status]}</h2>
         <span className="count" aria-label={t("{0} tasks", [tasks.length])}>
           {tasks.length}
@@ -461,5 +525,131 @@ function Column({
         )}
       </div>
     </section>
+  );
+}
+
+/**
+ * The dashed bar that rises at the bottom of the board while a card is dragged, with a box: a
+ * card dropped there is concluded and goes into the box, whose lid opens while the card is over
+ * it. It stays up until the card is inside.
+ */
+function ConcludeZone({
+  zoneRef,
+  boxRef,
+  active,
+  over,
+  receiving,
+}: {
+  zoneRef: RefObject<HTMLDivElement | null>;
+  boxRef: RefObject<SVGSVGElement | null>;
+  active: boolean;
+  over: boolean;
+  receiving: boolean;
+}) {
+  const { setNodeRef } = useDroppable({ id: "done", disabled: !active });
+  return (
+    <div
+      ref={(node) => {
+        setNodeRef(node);
+        zoneRef.current = node;
+      }}
+      className={`conclude-zone ${active || receiving ? "shown" : ""} ${over || receiving ? "open" : ""}`}
+      aria-hidden={!active}
+    >
+      <svg
+        ref={boxRef}
+        className="conclude-box"
+        width="33"
+        height="30"
+        viewBox="0 0 44 40"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M6 16h32v18a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z" />
+        <path d="M17 23h10" strokeLinecap="round" />
+        <path className="lid" d="M3 9.5h38v6.5H3z" />
+      </svg>
+      <span>{t("Drop to conclude")}</span>
+    </div>
+  );
+}
+
+/**
+ * The concluded card shrinks and drops into the box, whose lid then closes with a small bounce,
+ * and Archive in the sidebar lights up once. With reduced motion the card is simply gone.
+ */
+function ArchiveFlight({
+  task,
+  rect,
+  box,
+  reduceMotion,
+  onDone,
+}: {
+  task: Task;
+  rect: DOMRect;
+  box: RefObject<SVGSVGElement | null>;
+  reduceMotion: boolean;
+  onDone: () => void;
+}) {
+  const node = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const flash = (element: Element | null | undefined, name: string) => {
+      if (!element) return;
+      element.classList.remove(name);
+      void (element as HTMLElement).getBoundingClientRect();
+      element.classList.add(name);
+      element.addEventListener(
+        "animationend",
+        () => element.classList.remove(name),
+        { once: true },
+      );
+    };
+    const land = () => {
+      flash(box.current, "received");
+      flash(document.querySelector('[data-nav="archive"]'), "received");
+      onDone();
+    };
+    const to = box.current?.getBoundingClientRect();
+    if (reduceMotion || !node.current || !to) {
+      land();
+      return;
+    }
+    const x = to.left + to.width / 2 - (rect.left + rect.width / 2);
+    const y = to.top + to.height / 2 - (rect.top + rect.height / 2);
+    const animation = node.current.animate(
+      [
+        { transform: "rotate(1.2deg) scale(1.02)", opacity: 1 },
+        {
+          transform: `translate(${x}px, ${y - 46}px) scale(0.22)`,
+          opacity: 1,
+          offset: 0.6,
+        },
+        {
+          transform: `translate(${x}px, ${y + 4}px) scale(0.1)`,
+          opacity: 0,
+        },
+      ],
+      { duration: 520, easing: "cubic-bezier(.4,0,.6,1)", fill: "forwards" },
+    );
+    animation.onfinish = land;
+    return () => animation.cancel();
+  }, []);
+  return (
+    <div
+      ref={node}
+      className="card drag-overlay archive-flight"
+      style={{
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      }}
+      aria-hidden="true"
+    >
+      <TaskCardContent task={task} />
+    </div>
   );
 }

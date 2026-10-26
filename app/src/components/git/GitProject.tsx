@@ -20,7 +20,6 @@ import {
 } from "../../lib/fronts";
 import { shortcutLabel, shortcuts } from "../../lib/shortcuts";
 import {
-  isDraft,
   type FileDiff,
   type GitCommit,
   type GitFocus,
@@ -125,7 +124,7 @@ export function GitProject({
   }, [project.id, project.repositoryPath, revision]);
 
   const projectTasks = useMemo(
-    () => tasks.filter((t) => t.projectId === project.id && !isDraft(t.status)),
+    () => tasks.filter((t) => t.projectId === project.id),
     [tasks, project.id],
   );
   const fronts = useMemo(

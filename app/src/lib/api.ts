@@ -116,16 +116,8 @@ export const deleteCategory = (
     name,
     replacement,
   });
-export const promoteDraft = (task: Task) =>
-  call<Task>("promote_draft", { taskId: task.id, projectId: task.projectId });
 export const deleteTask = (task: Task) =>
   call<void>("delete_task", { taskId: task.id, projectId: task.projectId });
-export const archiveTask = (task: Task, archived: boolean) =>
-  call<Task>("archive_task", {
-    taskId: task.id,
-    projectId: task.projectId,
-    archived,
-  });
 export const taskDetails = (task: Task) =>
   call<TaskDetails>("task_details", {
     taskId: task.id,
@@ -187,6 +179,8 @@ export async function chooseDatabase(
   });
 }
 export const listWorkspaces = () => call<Workspaces>("list_workspaces");
+/** Where the MCP server is, next to the app. */
+export const agentPath = () => call<string>("agent_path");
 /** Creates `<folder>/<name>.sqlite` and opens it. */
 export const createWorkspace = (
   name: string,

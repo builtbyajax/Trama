@@ -1,6 +1,5 @@
 import {
   boardStatuses,
-  isDraft,
   statusTitle,
   type Category,
   type Goal,
@@ -65,9 +64,7 @@ export function TaskFields({
     onChange({ ...input, [key]: value });
   const states = allStates
     ? (Object.keys(statusTitle) as TaskStatus[])
-    : isDraft(input.status)
-      ? (["preparing", "reserved"] as TaskStatus[])
-      : boardStatuses;
+    : [...boardStatuses, "done" as const];
   return (
     <div className="task-fields">
       <Field label={t("What needs to be done?")} className="span-all">

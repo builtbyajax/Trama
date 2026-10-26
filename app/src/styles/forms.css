@@ -52,13 +52,12 @@
 .modal-body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: var(--field-gap-y);
   padding: 6px calc(24px - var(--bar)) 20px 24px;
-  scrollbar-gutter: stable;
   container-type: inline-size;
 }
 .modal-footer {
@@ -160,7 +159,6 @@
 /* It doesn't scroll itself, its list does, so it keeps its full padding. */
 .modal-body.category-manager {
   overflow: hidden;
-  scrollbar-gutter: auto;
   padding-right: 24px;
   display: flex;
   flex-direction: column;

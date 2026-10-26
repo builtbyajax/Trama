@@ -2,8 +2,7 @@
   grid-template-columns: 280px minmax(0, 1fr);
 }
 .vaults .notes-tree {
-  overflow-y: auto;
-  scrollbar-gutter: stable;
+  overflow-y: scroll;
   gap: 2px;
   padding: 0 calc(10px - var(--bar)) 24px 10px;
 }

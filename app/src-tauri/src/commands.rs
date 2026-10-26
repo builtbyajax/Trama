@@ -18,6 +18,19 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
     let workspace = || text(&args, "path");
     match command {
         "list_workspaces" => return encoded(Ok(workspaces::list())),
+        // The MCP server ships next to the app's executable, so Preferences can show the command.
+        "agent_path" => {
+            let name = if cfg!(windows) {
+                "trama-agent.exe"
+            } else {
+                "trama-agent"
+            };
+            return encoded(
+                std::env::current_exe()
+                    .map(|exe| exe.with_file_name(name).to_string_lossy().into_owned())
+                    .map_err(|e| e.to_string()),
+            );
+        }
         "create_workspace" => {
             return encoded(workspaces::create(
                 text(&args, "name")?,
@@ -132,17 +145,7 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
             ),
         ),
         "delete_goal" => encoded(store.delete_goal(text(&args, "goalId")?, project()?)),
-        "promote_draft" => encoded(store.promote_draft(task()?, project()?)),
         "delete_task" => encoded(store.delete_task(task()?, project()?)),
-        "archive_task" => encoded(
-            store.archive_task(
-                task()?,
-                project()?,
-                args["archived"]
-                    .as_bool()
-                    .ok_or("Missing argument: archived")?,
-            ),
-        ),
         "task_details" => encoded(store.task_details(task()?, project()?)),
         "handoff_events" => {
             encoded(store.handoff_events(args["since"].as_f64().ok_or("Missing argument: since")?))

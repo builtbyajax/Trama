@@ -150,9 +150,8 @@
 .sheet-main {
   flex: none;
   max-height: 58%;
-  overflow-y: auto;
+  overflow-y: scroll;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
 }
 .sheet-main-inner {
   display: flex;

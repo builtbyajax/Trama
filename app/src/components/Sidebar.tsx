@@ -22,21 +22,20 @@ import { Icon, type IconName } from "./Icon";
 import { KeyHint } from "./KeyHint";
 import { ProjectMark } from "./ProjectMark";
 import { t } from "../lib/i18n";
-import { useScrollbarRoom } from "../hooks/useScrollbarRoom";
 import { SidebarLeaving } from "./SidebarSlot";
+import type { PreferencesSection } from "./Preferences";
 
 export type Destination =
   | { kind: "overview" }
-  | { kind: "drafts" }
+  | { kind: "archive" }
   | { kind: "notes" }
-  | { kind: "preferences" }
+  | { kind: "preferences"; section?: PreferencesSection }
   | { kind: "project"; id: string };
 
 interface SidebarProps {
   projects: Project[];
-  /** Open tasks (not done, not drafts) per project id. */
+  /** Open tasks (not done) per project id. */
   openCounts: Record<string, number>;
-  draftCount: number;
   workingCount: number;
   updateAvailable?: boolean;
   destination: Destination;
@@ -77,7 +76,6 @@ export const projectColor = (project?: Project) =>
 export function Sidebar({
   projects,
   openCounts,
-  draftCount,
   workingCount,
   updateAvailable = false,
   destination,
@@ -93,8 +91,6 @@ export function Sidebar({
   onPeek,
   onPeekLeave,
 }: SidebarProps) {
-  const projectList = useRef<HTMLDivElement>(null);
-  useScrollbarRoom(projectList);
   const [menu, setMenu] = useState<{
     project: Project;
     x: number;
@@ -122,12 +118,12 @@ export function Sidebar({
         />
         <NavItem
           rail={rail}
-          icon="drafts"
-          label={t("Drafts")}
-          keys={shortcuts.drafts}
-          count={draftCount || undefined}
-          selected={destination.kind === "drafts"}
-          onClick={() => onNavigate({ kind: "drafts" })}
+          icon="archive"
+          label={t("Archive")}
+          target="archive"
+          keys={shortcuts.archive}
+          selected={destination.kind === "archive"}
+          onClick={() => onNavigate({ kind: "archive" })}
         />
         <NavItem
           rail={rail}
@@ -154,7 +150,7 @@ export function Sidebar({
           <Icon name="plus" size={13} />
         </button>
       </div>
-      <div ref={projectList} className="sidebar-group grow scroll">
+      <div className="sidebar-group grow scroll">
         {projects.map((project, index) => {
           const open =
             destination.kind === "project" && destination.id === project.id;
@@ -248,7 +244,12 @@ export function Sidebar({
           notice={updateAvailable}
           keys={shortcuts.preferences}
           selected={destination.kind === "preferences"}
-          onClick={() => onNavigate({ kind: "preferences" })}
+          onClick={() =>
+            onNavigate({
+              kind: "preferences",
+              ...(updateAvailable && { section: "updates" }),
+            })
+          }
         />
         <NavItem
           rail={rail}
@@ -267,6 +268,8 @@ interface NavItemProps {
   icon?: IconName;
   leading?: ReactNode;
   count?: number;
+  /** Lets the board find the row a concluded card flies to. */
+  target?: string;
   notice?: boolean;
   selected?: boolean;
   keys?: string[];
@@ -280,11 +283,12 @@ interface NavItemProps {
 }
 
 /** Sidebar row. Its shortcut shows in a tooltip on hover and as a badge while ⌘ is held. */
-function NavItem({
+export function NavItem({
   label,
   icon,
   leading,
   count,
+  target,
   notice = false,
   selected,
   keys,
@@ -301,6 +305,7 @@ function NavItem({
       type="button"
       className={`nav-item ${selected ? "selected" : ""} ${menuOpen ? "menu-open" : ""}`}
       aria-current={selected ? "page" : undefined}
+      data-nav={target}
       aria-label={
         count !== undefined
           ? `${label}, ${count}`

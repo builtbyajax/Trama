@@ -1,4 +1,4 @@
-//! Search across tasks, drafts and messages, ignoring case and accents.
+//! Search across tasks and messages, ignoring case and accents.
 use super::*;
 
 impl Store {
@@ -36,11 +36,7 @@ impl Store {
             let notes_only =
                 !fold(&task.title).contains(&needle) && !fold(&task.details).contains(&needle);
             if !notes_only || fold(task_notes).contains(&needle) {
-                let kind = if ["preparing", "reserved"].contains(&task.status.as_str()) {
-                    "draft"
-                } else {
-                    "task"
-                };
+                let kind = "task";
                 results.push(SearchResult {
                     id: format!("task:{}", task.id),
                     kind,

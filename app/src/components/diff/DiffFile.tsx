@@ -5,6 +5,7 @@ import { DiffBlocks } from "../git/parts";
 import { Icon } from "../Icon";
 import { DiffHunks } from "./DiffHunks";
 import { t } from "../../lib/i18n";
+import { Segmented } from "../Segmented";
 
 /** `src/app/layout.tsx` → folder `src/app`, name `layout.tsx`. */
 export function splitFolder(path: string) {
@@ -110,29 +111,16 @@ export function DiffFile({
           </span>
           <DiffBlocks additions={file.additions} deletions={file.deletions} />
         </span>
-        <div
-          className="segmented small"
-          role="radiogroup"
-          aria-label={t("Display mode")}
-        >
-          {(
-            [
-              ["side", t("Side by side")],
-              ["inline", t("Inline")],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              role="radio"
-              aria-checked={layout === value}
-              className={layout === value ? "on" : ""}
-              onClick={() => onLayout(value)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          size="small"
+          label={t("Display mode")}
+          options={[
+            { value: "side", label: t("Side by side") },
+            { value: "inline", label: t("Inline") },
+          ]}
+          value={layout}
+          onChange={onLayout}
+        />
         <button
           type="button"
           className="icon-button small"

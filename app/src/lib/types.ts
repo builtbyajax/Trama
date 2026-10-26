@@ -1,6 +1,5 @@
 import { locale, t } from "./i18n";
-export type TaskStatus =
-  "todo" | "inProgress" | "review" | "done" | "preparing" | "reserved";
+export type TaskStatus = "backlog" | "todo" | "inProgress" | "review" | "done";
 export type TaskAssignee = "user" | "agent";
 export interface Project {
   id: string;
@@ -36,7 +35,7 @@ export interface Task extends TaskInput {
   position: number;
   createdAt: number;
   updatedAt: number;
-  /** When the person archived it by hand, before the week a done task otherwise waits. */
+  /** When it was done and went to the Archive; null while it is on the board. */
   archivedAt: number | null;
   checksTotal: number;
   checksDone: number;
@@ -149,12 +148,12 @@ export interface Goal {
   completedAt: number | null;
   createdAt: number;
 }
-/** Done tasks over the goal's tasks on the board; drafts don't count. */
+/** Done tasks over all of the goal's tasks, backlog included. */
 export function goalProgress(goal: Goal, tasks: Task[]) {
   let total = 0;
   let done = 0;
   for (const task of tasks)
-    if (task.goalId === goal.id && !isDraft(task.status)) {
+    if (task.goalId === goal.id) {
       total++;
       if (task.status === "done") done++;
     }
@@ -181,7 +180,7 @@ export interface Workspaces {
 }
 export interface SearchResult {
   id: string;
-  kind: "task" | "draft" | "message";
+  kind: "task" | "message";
   projectId: string;
   taskId: string;
   title: string;
@@ -269,22 +268,22 @@ export type GitFocus =
   | { kind: "commit"; id: string }
   | { kind: "pr"; number: number }
   | { kind: "task"; id: string };
+/** How the Board tab shows tasks: columns, or groups of rows. */
+export type BoardView = "kanban" | "list";
+/** The board's columns, left to right. Done tasks leave the board for the Archive. */
 export const boardStatuses: TaskStatus[] = [
+  "backlog",
   "todo",
   "inProgress",
   "review",
-  "done",
 ];
 export const statusTitle: Record<TaskStatus, string> = {
+  backlog: t("Backlog"),
   todo: t("To do"),
-  inProgress: t("In progress"),
+  inProgress: t("Working"),
   review: t("In review"),
   done: t("Done"),
-  preparing: t("Preparing"),
-  reserved: t("Reserved"),
 };
-export const isDraft = (status: TaskStatus) =>
-  status === "preparing" || status === "reserved";
 export const isAgentWorking = (task: Task) =>
   task.assignee === "agent" && task.status === "inProgress";
 export const dateTime = (value: number) =>

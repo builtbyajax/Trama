@@ -10,6 +10,26 @@ Mudanças entregues em cada versão do Trama. A seção **Em desenvolvimento** r
 
 ### Adicionado
 
+- Página Arquivo para as tarefas concluídas, com busca, filtro por projeto e agrupamento; as tarefas arquivadas podem ser reabertas em qualquer etapa do quadro.
+- Conclusão de uma tarefa arrastando-a para a barra que aparece embaixo do quadro durante o arraste, ou pelo menu da tarefa.
+- Página do projeto com o trabalho do agente, as revisões, os objetivos e as entregas recentes.
+- Visualização em lista do quadro, além do Kanban, com arraste pelo teclado; a troca é feita nas Preferências ou com ⇧⌘L.
+- O objetivo de cada tarefa aparece no seu cartão.
+- Avisos com Desfazer mostram o tempo restante, que pausa enquanto o ponteiro ou o foco estiver no aviso.
+
+### Alterado
+
+- Rascunhos e Reservadas viram uma única coluna, Pendências. O banco é atualizado para o schema 12 preservando os dados existentes; após a migração, o Trama 0.2 não consegue abrir esse banco.
+- As ferramentas MCP recusam os status antigos `preparing` e `reserved`, orientando a usar `backlog`, e `promote_draft` foi removida.
+- As Preferências agora são divididas em Geral, Quadro, Projetos, Agente e MCP, e Atualizações, com a lista de seções sempre visível enquanto estão abertas. A seção MCP mostra o comando com o caminho do agente incluído no app e os IDs dos projetos.
+- Os avisos aparecem no topo da janela, com animações de entrada e saída.
+- Um único controle segmentado, navegável pelas setas do teclado, nas abas do projeto, nos filtros do quadro, no agrupamento do Arquivo, na atividade, nos diffs e nas notas.
+- A skill do Trama orienta os agentes a escrever briefings, resumos de entrega e mensagens objetivos, e a nomear e usar objetivos.
+
+## [0.2.2](https://github.com/builtbyajax/Trama/releases/tag/v0.2.2) — 2026-10-25
+
+### Adicionado
+
 - Busca por atualizações assinadas automaticamente ou manualmente nas Preferências; a busca manual continua disponível mesmo após encontrar uma atualização.
 - Instalação da atualização disponível e reinício do app pelo aviso ou pelas Preferências, mantendo um indicador nas Preferências após dispensar o aviso.
 - A atualização encontrada continua disponível após dispensar o aviso; falhas no download permitem nova tentativa e operações simultâneas são evitadas.

@@ -11,6 +11,7 @@ import { noteName } from "../lib/markdown";
 import { Glyph } from "./BoardFilters";
 import { Icon } from "./Icon";
 import { t } from "../lib/i18n";
+import { Segmented } from "./Segmented";
 
 export type ActivityFilter = "all" | "notes" | "agent";
 interface Entry {
@@ -245,24 +246,13 @@ export function Activity({
         <h2 id="activity-title" className="caps">
           {t("Activity")}
         </h2>
-        <div
-          role="radiogroup"
-          aria-label={t("Filter activity")}
-          className="segmented small"
-        >
-          {filters.map((f) => (
-            <button
-              key={f.value}
-              type="button"
-              role="radio"
-              aria-checked={filter === f.value}
-              className={filter === f.value ? "on" : ""}
-              onClick={() => setFilter(f.value)}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          size="small"
+          label={t("Filter activity")}
+          options={filters}
+          value={filter}
+          onChange={setFilter}
+        />
       </header>
       <ol className="activity-list scroll" aria-label={t("Task activity")}>
         {entries.map((e) => (
