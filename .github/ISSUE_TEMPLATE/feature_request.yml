@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest a way to make Trama more useful.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: You can write in English or Portuguese. Please describe the problem you want to solve.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you facing?
+      description: What is difficult or missing in your current workflow?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like Trama to do?
+      description: Describe the outcome that would help you.
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Current workaround
+      description: How do you handle this today? (Optional)
+    validations:
+      required: false

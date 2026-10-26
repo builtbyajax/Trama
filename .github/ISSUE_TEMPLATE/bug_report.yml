@@ -1,0 +1,58 @@
+name: Bug report
+description: Report something that is not working as expected.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Trama. You can write in English or Portuguese.
+        Remove private information from screenshots and logs before sharing them.
+  - type: input
+    id: version
+    attributes:
+      label: Trama version (if known)
+      description: You can find it in the release or installer you downloaded.
+      placeholder: 0.1.0
+    validations:
+      required: false
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Windows
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What did you do before the problem occurred?
+      placeholder: |
+        1. Open...
+        2. Select...
+        3. See the problem...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add sanitized screenshots or details that may help explain the issue.
+    validations:
+      required: false

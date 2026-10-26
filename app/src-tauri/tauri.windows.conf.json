@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "app": {
+    "windows": [
+      {
+        "title": "Trama",
+        "width": 1240,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "theme": "Dark",
+        "backgroundColor": "#0A0A0B",
+        "decorations": false
+      }
+    ]
+  }
+}

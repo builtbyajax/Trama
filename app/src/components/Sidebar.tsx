@@ -1,0 +1,424 @@
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
+import { createPortal } from "react-dom";
+import type { Project } from "../lib/types";
+import {
+  ariaKeys,
+  projectShortcut,
+  shortcutLabel,
+  shortcuts,
+} from "../lib/shortcuts";
+import { Icon, type IconName } from "./Icon";
+import { KeyHint } from "./KeyHint";
+import { ProjectMark } from "./ProjectMark";
+import { t } from "../lib/i18n";
+
+export type Destination =
+  | { kind: "overview" }
+  | { kind: "drafts" }
+  | { kind: "notes" }
+  | { kind: "preferences" }
+  | { kind: "project"; id: string };
+
+interface SidebarProps {
+  projects: Project[];
+  /** Open tasks (not done, not drafts) per project id. */
+  openCounts: Record<string, number>;
+  draftCount: number;
+  workingCount: number;
+  destination: Destination;
+  onNavigate: (destination: Destination) => void;
+  onAddProject: () => void;
+  onEditProject: (project: Project) => void;
+  onDeleteProject: (project: Project) => void;
+  onShortcuts: () => void;
+  /** Icons only, with names in tooltips: the Notes tab keeps it beside its own notes list. */
+  rail?: boolean;
+  /** The pointer resting on the open project's mark in the rail: shows its hidden notes list. */
+  onPeek?: () => void;
+  onPeekLeave?: () => void;
+}
+
+// Project swatches stay clear of blue (you) and purple (the agent).
+export const projectHues = [
+  "#E8B665",
+  "#7FCF9B",
+  "#EE8D7E",
+  "#6CC8D6",
+  "#E79AC2",
+  "#C8C27A",
+];
+export const projectColor = (project?: Project) =>
+  projectHues[(project?.color ?? 0) % projectHues.length];
+
+/**
+ * Navigation on the window background, beside the content island. Hiding it (⌘B) removes it
+ * entirely. On a project's Notes tab it narrows to a rail of icons that stays put, so the notes
+ * list is the one panel that hides.
+ */
+export function Sidebar({
+  projects,
+  openCounts,
+  draftCount,
+  workingCount,
+  destination,
+  onNavigate,
+  onAddProject,
+  onEditProject,
+  onDeleteProject,
+  onShortcuts,
+  rail = false,
+  onPeek,
+  onPeekLeave,
+}: SidebarProps) {
+  const [menu, setMenu] = useState<{
+    project: Project;
+    x: number;
+    y: number;
+    trigger: HTMLElement;
+  } | null>(null);
+  const agentLine =
+    workingCount === 1
+      ? t("The agent is on 1 task")
+      : t("The agent is on {0} tasks", [workingCount]);
+  return (
+    <nav
+      className={`sidebar ${rail ? "rail" : ""}`}
+      aria-label={t("Navigation")}
+    >
+      <div className="sidebar-group">
+        <NavItem
+          rail={rail}
+          icon="overview"
+          label={t("Overview")}
+          keys={shortcuts.overview}
+          selected={destination.kind === "overview"}
+          onClick={() => onNavigate({ kind: "overview" })}
+        />
+        <NavItem
+          rail={rail}
+          icon="drafts"
+          label={t("Drafts")}
+          keys={shortcuts.drafts}
+          count={draftCount || undefined}
+          selected={destination.kind === "drafts"}
+          onClick={() => onNavigate({ kind: "drafts" })}
+        />
+        <NavItem
+          rail={rail}
+          icon="vault"
+          label={t("Vaults")}
+          keys={shortcuts.notes}
+          selected={destination.kind === "notes"}
+          onClick={() => onNavigate({ kind: "notes" })}
+        />
+      </div>
+
+      <div className="sidebar-section">
+        <span>{t("Projects")}</span>
+        <button
+          type="button"
+          className="icon-button small"
+          aria-label={t("Add project")}
+          aria-keyshortcuts={ariaKeys(shortcuts.newProject)}
+          data-tooltip={t("Add project  {0}", [
+            shortcutLabel(shortcuts.newProject),
+          ])}
+          onClick={onAddProject}
+        >
+          <Icon name="plus" size={13} />
+        </button>
+      </div>
+      <div className="sidebar-group grow scroll">
+        {projects.map((project, index) => {
+          const open =
+            destination.kind === "project" && destination.id === project.id;
+          return (
+            <NavItem
+              rail={rail}
+              onHover={open ? onPeek : undefined}
+              onLeave={open ? onPeekLeave : undefined}
+              key={project.id}
+              label={project.name}
+              keys={projectShortcut(index)}
+              count={openCounts[project.id] || undefined}
+              leading={<ProjectMark project={project} />}
+              menuOpen={menu?.project.id === project.id}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                const rect = event.currentTarget.getBoundingClientRect();
+                // The context-menu key reports no pointer position; open under the row then.
+                const keyboard = event.clientX === 0 && event.clientY === 0;
+                setMenu({
+                  project,
+                  x: keyboard ? rect.left + 12 : event.clientX,
+                  y: keyboard ? rect.bottom : event.clientY,
+                  trigger: event.currentTarget,
+                });
+              }}
+              selected={open}
+              onClick={() => onNavigate({ kind: "project", id: project.id })}
+            />
+          );
+        })}
+        {projects.length === 0 && (
+          <button
+            type="button"
+            className="sidebar-empty"
+            onClick={onAddProject}
+          >
+            {t("Add your first project")}
+          </button>
+        )}
+      </div>
+
+      {workingCount > 0 && (
+        <div
+          className="agent-status"
+          role="status"
+          data-tooltip={rail ? agentLine : undefined}
+          data-tooltip-side="right"
+        >
+          <span className="agent-pulse" aria-hidden="true" />
+          <span>{agentLine}</span>
+        </div>
+      )}
+      {menu && (
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          label={t("Actions for {0}", [menu.project.name])}
+          items={[
+            {
+              label: t("Edit project…"),
+              icon: "pencil",
+              onSelect: () => onEditProject(menu.project),
+            },
+            {
+              label: t("Delete project…"),
+              icon: "trash",
+              danger: true,
+              onSelect: () => onDeleteProject(menu.project),
+            },
+          ]}
+          onClose={(restoreFocus) => {
+            if (restoreFocus) menu.trigger.focus();
+            setMenu(null);
+          }}
+        />
+      )}
+      <div className="sidebar-footer">
+        <NavItem
+          rail={rail}
+          icon="gear"
+          label={t("Preferences")}
+          keys={shortcuts.preferences}
+          selected={destination.kind === "preferences"}
+          onClick={() => onNavigate({ kind: "preferences" })}
+        />
+        <NavItem
+          rail={rail}
+          icon="keyboard"
+          label={t("Keyboard shortcuts")}
+          keys={shortcuts.help}
+          onClick={onShortcuts}
+        />
+      </div>
+    </nav>
+  );
+}
+
+interface NavItemProps {
+  label: string;
+  icon?: IconName;
+  leading?: ReactNode;
+  count?: number;
+  selected?: boolean;
+  keys?: string[];
+  menuOpen?: boolean;
+  rail?: boolean;
+  /** Hovering shows something of its own, so the row skips its name tooltip. */
+  onHover?: () => void;
+  onLeave?: () => void;
+  onClick?: () => void;
+  onContextMenu?: (event: MouseEvent<HTMLButtonElement>) => void;
+}
+
+/** Sidebar row. Its shortcut shows in a tooltip on hover and as a badge while ⌘ is held. */
+function NavItem({
+  label,
+  icon,
+  leading,
+  count,
+  selected,
+  keys,
+  menuOpen,
+  rail,
+  onHover,
+  onLeave,
+  onClick,
+  onContextMenu,
+}: NavItemProps) {
+  const hint = keys && shortcutLabel(keys);
+  return (
+    <button
+      type="button"
+      className={`nav-item ${selected ? "selected" : ""} ${menuOpen ? "menu-open" : ""}`}
+      aria-current={selected ? "page" : undefined}
+      aria-label={count !== undefined ? `${label}, ${count}` : label}
+      aria-keyshortcuts={keys && ariaKeys(keys)}
+      data-tooltip={
+        onHover
+          ? undefined
+          : hint
+            ? `${label}  ${hint}`
+            : rail
+              ? label
+              : undefined
+      }
+      data-tooltip-side="right"
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+      onClick={onClick}
+      onContextMenu={onContextMenu}
+    >
+      <span className="nav-leading">
+        {leading ?? (icon && <Icon name={icon} size={15} />)}
+      </span>
+      <span className="nav-label">{label}</span>
+      {count !== undefined && <span className="nav-count">{count}</span>}
+      <KeyHint keys={keys} />
+    </button>
+  );
+}
+
+export interface MenuItem {
+  label: string;
+  icon: IconName;
+  /** A shortcut or gesture that does the same, shown at the end. */
+  hint?: string;
+  danger?: boolean;
+  /** Starts a new group: a line is drawn above it. */
+  separated?: boolean;
+  onSelect: () => void;
+}
+
+/**
+ * Menu opened by a right click, at the pointer and kept inside the window. Arrows move, Enter
+ * chooses; Escape, Tab, a click outside, scrolling or leaving the window closes it.
+ */
+export function ContextMenu({
+  x,
+  y,
+  label,
+  items,
+  onClose,
+}: {
+  x: number;
+  y: number;
+  label: string;
+  items: MenuItem[];
+  onClose: (restoreFocus: boolean) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ left: x, top: y });
+  useLayoutEffect(() => {
+    const menu = ref.current;
+    if (!menu) return;
+    const margin = 8;
+    setPosition({
+      left: Math.max(
+        margin,
+        Math.min(x, window.innerWidth - menu.offsetWidth - margin),
+      ),
+      top: Math.max(
+        margin,
+        Math.min(y, window.innerHeight - menu.offsetHeight - margin),
+      ),
+    });
+    menu.querySelector<HTMLElement>("[role=menuitem]")?.focus();
+  }, [x, y]);
+  useEffect(() => {
+    const outside = (event: Event) => {
+      if (!ref.current?.contains(event.target as Node)) onClose(false);
+    };
+    const dismiss = () => onClose(false);
+    document.addEventListener("pointerdown", outside, true);
+    // Scrolling anywhere but the menu moves the row away from it, so the menu goes too.
+    document.addEventListener("scroll", outside, true);
+    window.addEventListener("blur", dismiss);
+    window.addEventListener("resize", dismiss);
+    return () => {
+      document.removeEventListener("pointerdown", outside, true);
+      document.removeEventListener("scroll", outside, true);
+      window.removeEventListener("blur", dismiss);
+      window.removeEventListener("resize", dismiss);
+    };
+  }, [onClose]);
+  function keyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const options = [
+      ...event.currentTarget.querySelectorAll<HTMLElement>("[role=menuitem]"),
+    ];
+    const index = options.indexOf(document.activeElement as HTMLElement);
+    const move = (next: number) => {
+      event.preventDefault();
+      options[(next + options.length) % options.length]?.focus();
+    };
+    if (event.key === "ArrowDown") move(index + 1);
+    else if (event.key === "ArrowUp") move(index - 1);
+    else if (event.key === "Home") move(0);
+    else if (event.key === "End") move(options.length - 1);
+    else if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      onClose(true);
+    } else if (event.key === "Tab") {
+      event.preventDefault();
+      onClose(true);
+    }
+  }
+  return createPortal(
+    <div
+      ref={ref}
+      role="menu"
+      aria-label={label}
+      className="popover-list context-menu"
+      style={{ position: "fixed", ...position }}
+      onKeyDown={keyDown}
+      onContextMenu={(event) => event.preventDefault()}
+    >
+      {items.map((item, index) => [
+        item.separated && index > 0 && (
+          <div
+            key={`${item.label}-line`}
+            role="separator"
+            className="menu-separator"
+          />
+        ),
+        <button
+          key={item.label}
+          type="button"
+          role="menuitem"
+          tabIndex={-1}
+          className={`popover-option ${item.danger ? "danger" : ""}`}
+          onClick={() => {
+            onClose(false);
+            item.onSelect();
+          }}
+        >
+          <Icon name={item.icon} size={14} />
+          <span className="popover-label">{item.label}</span>
+          {item.hint && <kbd className="popover-hint">{item.hint}</kbd>}
+        </button>,
+      ])}
+    </div>,
+    document.body,
+  );
+}

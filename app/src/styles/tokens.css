@@ -1,0 +1,105 @@
+/* Dark theme only: the "grafite" palette from docs/design. Two threads run through the app —
+   you (blue, a ring) and the agent (purple, a diamond) — so those two hues are reserved for them;
+   everything else stays neutral graphite. Sizes below are the shared rhythm for every screen. */
+:root {
+  color-scheme: dark;
+  --bg-window: #0a0a0b;
+  --bg-sidebar: #0a0a0b;
+  --bg-canvas: #141415;
+  --bg-column: #141415;
+  --bg-raised: #1a1a1c;
+  --bg-sheet: #19191b;
+  --bg-menu: #222225;
+  --card: #1c1c1e;
+  --card-hover: #232326;
+  --control: #232326;
+  --control-hover: #2a2a2e;
+  --control-active: #313136;
+  --field: #0f0f10;
+  --sel: #26262b;
+  --hover: rgba(255, 255, 255, 0.06);
+  --line-subtle: rgba(255, 255, 255, 0.07);
+  --line: rgba(255, 255, 255, 0.12);
+  --line-strong: rgba(255, 255, 255, 0.2);
+  --ink: #ededef;
+  --ink-2: #b2b2b8;
+  --ink-3: #9a9aa2;
+  --ink-off: #5f5f67;
+
+  /* You: blue. Primary actions, focus and selection use it. */
+  --accent: #8db8ff;
+  --accent-hover: #a5c7ff;
+  --accent-press: #7aa8f2;
+  --accent-text: #a9cbff;
+  --accent-soft: rgba(141, 184, 255, 0.14);
+  --accent-line: rgba(141, 184, 255, 0.55);
+  --on-accent: #0a0a0b;
+  --focus: #8db8ff;
+  --focus-ring: rgba(141, 184, 255, 0.24);
+
+  /* The agent: purple. */
+  --agent: #a493ff;
+  --agent-ink: #bcafff;
+  --agent-soft: rgba(164, 147, 255, 0.09);
+  --agent-line: rgba(164, 147, 255, 0.32);
+
+  --danger: #ff8a7e;
+  --danger-soft: rgba(255, 122, 110, 0.13);
+  --danger-line: rgba(255, 138, 126, 0.35);
+  --success: #7fcf9b;
+  --s-todo: #8f8f97;
+  --s-inProgress: #8db8ff;
+  --s-review: #e8b665;
+  --s-done: #7fcf9b;
+  --s-preparing: #c7a6f0;
+  --s-reserved: #e79ac2;
+  --scrim: rgba(0, 0, 0, 0.5);
+  --font:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable",
+    "Segoe UI", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Type scale */
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 14px;
+  --fs-title: 17px;
+
+  /* Spacing scale (4 px grid) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+
+  /* Form rhythm */
+  --field-gap-y: 16px;
+  --field-gap-x: 12px;
+  --label-gap: 6px;
+
+  /* Control heights: small (inline/column), regular (toolbar/buttons), field (forms) */
+  --h-sm: 24px;
+  --h-md: 30px;
+  --h-field: 32px;
+
+  /* Layout */
+  --sidebar-w: 232px;
+  --rail-w: 52px;
+  --topbar-h: 44px;
+  --toolbar-h: 44px;
+  --island-gap: 8px;
+  --page-x: 24px;
+  /* The scrollbar takes room beside the content, so an area that scrolls reserves it and gives
+     it back from its right padding: both sides keep the same inset, scrolling or not. */
+  --bar: 8px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --radius-card: 10px;
+  --radius-control: 7px;
+  --radius-panel: 12px;
+  --shadow-pop:
+    0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --shadow-sheet:
+    0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title">
+<title id="title">Trama</title>
+<g transform="translate(100 100) scale(6.4375)">
+<rect width="128" height="128" rx="29" fill="#1C1C1E"/>
+  <g fill="#A493FF">
+    <path d="M40 43H28a6 6 0 0 0 0 12H40Z"/>
+    <path d="M58 43H100a6 6 0 0 1 0 12H58Z"/>
+    <path d="M70 73H28a6 6 0 0 0 0 12H70Z"/>
+    <path d="M88 73H100a6 6 0 0 1 0 12H88Z"/>
+  </g>
+  <g fill="#8DB8FF">
+    <path d="M43 70V28a6 6 0 0 1 12 0V70Z"/>
+    <path d="M43 88H55V100a6 6 0 0 1 -12 0Z"/>
+    <path d="M73 40V28a6 6 0 0 1 12 0V40Z"/>
+    <path d="M73 58H85V100a6 6 0 0 1 -12 0Z"/>
+  </g>
+</g>
+</svg>

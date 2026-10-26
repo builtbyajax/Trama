@@ -1,0 +1,211 @@
+.notes-tree {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line-subtle);
+  background: var(--bg-canvas);
+}
+.notes-search {
+  position: relative;
+  flex: none;
+  margin: 10px 10px 6px;
+}
+/* Files, the notes changed last and those attached to tasks. */
+.notes-lists {
+  flex: none;
+  display: flex;
+  gap: 2px;
+  padding: 2px 10px 8px;
+}
+.notes-lists button {
+  height: 24px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.notes-lists button:hover {
+  color: var(--ink);
+}
+.notes-lists button.on {
+  background: var(--control);
+  color: var(--ink);
+}
+.notes-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 calc(10px - var(--bar)) 16px 10px;
+  scrollbar-gutter: stable;
+}
+/* A folder's rows keep the spacing of the rows around it. */
+.notes-list [role="group"],
+.vaults .notes-tree [role="group"] {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.notes-foot {
+  flex: none;
+  display: flex;
+  gap: 6px;
+  padding: 10px;
+  border-top: 1px solid var(--line-subtle);
+}
+.notes-foot .button {
+  flex: 1;
+  justify-content: center;
+  gap: 6px;
+  color: var(--ink-2);
+}
+.tree-row.two {
+  align-items: flex-start;
+}
+.tree-row.two > .icon {
+  margin-top: 3px;
+}
+.tree-two {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.tree-two small {
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+.tree-when {
+  flex: none;
+  margin-top: 2px;
+  color: var(--ink-off);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+.notes-search .icon {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-3);
+  pointer-events: none;
+}
+.notes-search input {
+  width: 100%;
+  height: 30px;
+  padding-left: 28px;
+  font-size: var(--fs-sm);
+}
+.tree-row {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 26px;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: var(--fs-md);
+  text-align: left;
+}
+.tree-row:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.tree-row.on {
+  background: var(--sel);
+  color: var(--ink);
+}
+.tree-row[data-menu-open]:not(.on),
+.note-tab[data-menu-open]:not(.on) {
+  background: var(--hover);
+  color: var(--ink);
+}
+.tree-row > .icon {
+  color: var(--ink-off);
+}
+.tree-row.on > .icon {
+  color: var(--ink-3);
+}
+.tree-row.folder {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+/* A folder offers a new note or folder inside it while hovered or focused. */
+.tree-folder-row {
+  position: relative;
+}
+.tree-actions {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 1px;
+  opacity: 0;
+}
+.tree-actions .icon-button {
+  width: 22px;
+  height: 22px;
+  color: var(--ink-3);
+}
+.tree-folder-row:hover .tree-actions,
+.tree-folder-row:focus-within .tree-actions {
+  opacity: 1;
+}
+.tree-folder-row:hover .tree-row.folder {
+  background: var(--hover);
+  color: var(--ink);
+}
+/* Room for the buttons, so a long name ends before them instead of under them. */
+.tree-folder-row:hover .tree-row.folder,
+.tree-folder-row:focus-within .tree-row.folder {
+  padding-right: 54px;
+}
+.tree-row.tree-new {
+  background: var(--hover);
+}
+.tree-new input {
+  flex: 1;
+  min-width: 0;
+  height: 20px;
+  padding: 0 4px;
+  font-size: var(--fs-md);
+}
+.tree-chevron {
+  display: grid;
+  place-items: center;
+  color: var(--ink-off);
+  transition: transform 0.15s var(--ease);
+}
+.tree-chevron.open {
+  transform: rotate(90deg);
+}
+.tree-folder {
+  margin-left: auto;
+  max-width: 45%;
+  font-size: var(--fs-xs);
+  color: var(--ink-off);
+}
+.tree-clip {
+  margin-left: auto;
+  color: var(--agent);
+  display: grid;
+}
+.tree-empty {
+  padding: 6px 10px;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  line-height: 1.45;
+}
+.notes-scrim,
+.tree-toggle {
+  display: none;
+}

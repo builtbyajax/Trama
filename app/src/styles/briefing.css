@@ -1,0 +1,295 @@
+/* Briefing: a collapsed card on the sheet, a document on the page. */
+.caps {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.briefing {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.briefing.card {
+  padding: 12px 16px 14px;
+  border-radius: var(--radius-card);
+  background: var(--bg-canvas);
+  border: 1px solid var(--line-subtle);
+}
+.briefing-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 24px;
+}
+.briefing-note {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.briefing-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--line-subtle);
+}
+.briefing-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+.link-button.muted {
+  color: var(--ink-3);
+}
+.link-button.muted:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--hover);
+}
+.link-button.danger {
+  color: var(--danger);
+}
+.briefing.card {
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+.briefing.card:hover {
+  background: linear-gradient(var(--hover), var(--hover)), var(--bg-canvas);
+  border-color: var(--line);
+}
+.briefing.card:has(.briefing-hit:focus-visible) {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.briefing-preview {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+.briefing.card:hover .briefing-preview {
+  color: var(--ink);
+}
+/* A sign, not a control: it shows while the pointer or the keyboard is on the card. */
+.briefing-pencil {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  color: var(--ink-3);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.briefing.card:hover .briefing-pencil,
+.briefing.card:has(.briefing-hit:focus-visible) .briefing-pencil {
+  opacity: 1;
+}
+@media (hover: none) {
+  .briefing-pencil {
+    opacity: 1;
+  }
+}
+.briefing-empty {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.briefing-shortcuts {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  line-height: 2;
+}
+.inline-code {
+  font-family: var(--mono);
+  font-size: 0.87em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--control);
+  color: var(--ink);
+}
+
+/* Blocks */
+.briefing-doc {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+.sheet.page .briefing-doc {
+  font-size: 15px;
+}
+.blk {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+.blk-text,
+.blk-input {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+.briefing-editor .blk-text {
+  min-height: 1.65em;
+  margin: 0 -6px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  cursor: text;
+}
+.briefing-editor .blk-text:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+.briefing-editor .blk-text:focus-visible {
+  outline: 2px solid var(--focus-ring);
+}
+.briefing-editor .blk-text.empty::before {
+  content: attr(data-placeholder);
+  color: var(--ink-off);
+}
+.blk-input {
+  margin: 0 -6px;
+  padding: 1px 6px;
+  border: 0;
+  border-radius: 5px;
+  outline: none;
+  resize: none;
+  background: rgba(141, 184, 255, 0.06);
+  color: var(--ink);
+  font: inherit;
+  line-height: inherit;
+}
+.briefing-editor textarea.blk-input:focus-visible {
+  border: 0;
+  box-shadow: none;
+  outline: none;
+}
+.blk-input::placeholder {
+  color: var(--ink-off);
+}
+.blk-h .blk-text,
+.blk-h .blk-input {
+  font-weight: 650;
+}
+.blk-h1 {
+  font-size: 1.35em;
+  margin-top: 6px;
+}
+.blk-h2 {
+  font-size: 1.15em;
+  margin-top: 4px;
+}
+.blk-h3 {
+  font-size: 1.04em;
+}
+.blk-quote .blk-text,
+.blk-quote .blk-input {
+  color: var(--ink-2);
+}
+.blk.done .blk-text {
+  color: var(--ink-3);
+  text-decoration: line-through;
+}
+.blk-bullet {
+  flex: none;
+  width: 5px;
+  height: 5px;
+  margin: calc(0.825em - 2px) 2px 0 4px;
+  border-radius: 50%;
+  background: var(--ink-2);
+}
+.blk-bar {
+  flex: none;
+  width: 2px;
+  align-self: stretch;
+  border-radius: 1px;
+  background: var(--line-strong);
+}
+.blk-check {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  margin-top: calc(0.825em - 7.5px);
+  padding: 0;
+  border: 1.5px solid var(--ink-off);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--on-accent);
+}
+.blk-check.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.blk-check:disabled {
+  cursor: default;
+}
+.blk-code .blk-text,
+.blk-code .blk-input {
+  font-family: var(--mono);
+  font-size: 0.87em;
+  padding: 8px 10px;
+  margin: 2px 0;
+  border-radius: 7px;
+  background: var(--field);
+}
+.blk-code pre,
+pre.blk-text {
+  margin: 0;
+  font: inherit;
+  white-space: pre-wrap;
+}
+.briefing-append {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+.briefing-append:hover {
+  color: var(--ink-2);
+}
+.slash-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  width: 250px;
+  padding: 4px;
+  border-radius: 9px;
+  background: var(--bg-menu);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
+  font-size: var(--fs-md);
+  line-height: normal;
+}
+.slash-title {
+  display: block;
+  padding: 4px 8px 3px;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.slash-icon {
+  width: 24px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.slash-hint {
+  font-size: 11.5px;
+  color: var(--ink-3);
+}

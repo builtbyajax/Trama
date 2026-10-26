@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420" viewBox="0 0 1600 420" role="img" aria-labelledby="title desc">
+<title id="title">Trama</title>
+<desc id="desc">Planeje. Construa. Revise. Os fios azul e roxo do ícone do Trama representam você e seu agente de código.</desc>
+<rect width="1600" height="420" rx="24" fill="#0a0a0b"/>
+<g font-family="Arial, Helvetica, sans-serif">
+<text x="98" y="205" fill="#ededef" font-size="128" font-weight="700" letter-spacing="-5">Trama</text>
+<text x="98" y="280" fill="#b2b2b8" font-size="34" letter-spacing="-.5">Planeje. Construa. Revise.</text>
+</g>
+<g transform="translate(1120 64) scale(2.25)">
+<rect width="128" height="128" rx="29" fill="#1C1C1E"/>
+  <g fill="#A493FF">
+    <path d="M40 43H28a6 6 0 0 0 0 12H40Z"/>
+    <path d="M58 43H100a6 6 0 0 1 0 12H58Z"/>
+    <path d="M70 73H28a6 6 0 0 0 0 12H70Z"/>
+    <path d="M88 73H100a6 6 0 0 1 0 12H88Z"/>
+  </g>
+  <g fill="#8DB8FF">
+    <path d="M43 70V28a6 6 0 0 1 12 0V70Z"/>
+    <path d="M43 88H55V100a6 6 0 0 1 -12 0Z"/>
+    <path d="M73 40V28a6 6 0 0 1 12 0V40Z"/>
+    <path d="M73 58H85V100a6 6 0 0 1 -12 0Z"/>
+  </g>
+</g>
+</svg>

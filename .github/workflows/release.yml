@@ -1,0 +1,119 @@
+name: Build installers
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS Apple Silicon
+            runner: macos-latest
+            target: aarch64-apple-darwin
+            bundle: dmg
+            assetNamePattern: '[name]_[version]_macOS_Apple-Silicon[ext]'
+          - name: macOS Intel
+            runner: macos-latest
+            target: x86_64-apple-darwin
+            bundle: dmg
+            assetNamePattern: '[name]_[version]_macOS_Intel[ext]'
+          - name: Windows x64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundle: nsis
+            assetNamePattern: '[name]_[version]_Windows_x64_Setup[ext]'
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Check version and release tag
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const { execFileSync, spawnSync } = require('node:child_process');
+          const app = JSON.parse(fs.readFileSync('app/package.json', 'utf8'));
+          const tauri = JSON.parse(fs.readFileSync('app/src-tauri/tauri.conf.json', 'utf8'));
+          const lock = JSON.parse(fs.readFileSync('app/package-lock.json', 'utf8'));
+          const cargo = fs.readFileSync('app/src-tauri/Cargo.toml', 'utf8');
+          const rustVersion = cargo.match(/^version\s*=\s*"([^"]+)"/m)?.[1];
+          if ([tauri.version, lock.version, lock.packages[''].version, rustVersion]
+              .some(version => version !== app.version)) {
+            throw new Error('Align the npm, Tauri, Rust, and npm lockfile versions before building.');
+          }
+          const tag = `v${app.version}`;
+          const exists = spawnSync('git', ['show-ref', '--verify', '--quiet', `refs/tags/${tag}`]);
+          if (exists.status === 0) {
+            const tagged = execFileSync('git', ['rev-parse', `${tag}^{commit}`], { encoding: 'utf8' }).trim();
+            const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+            if (tagged !== head) {
+              throw new Error(`${tag} points to another commit. Update the unpublished tag or bump the app version.`);
+            }
+          } else if (exists.status !== 1) {
+            throw new Error('Could not check the release tag.');
+          }
+          console.log(`Building ${tag} from ${process.env.GITHUB_SHA}`);
+          NODE
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust build files
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri -> target
+          key: ${{ matrix.target }}
+
+      - name: Install frontend dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Build app and MCP server, then upload installers
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: app
+          # This wrapper builds and bundles trama-agent before the desktop app.
+          tauriScript: npm run tauri
+          args: --target ${{ matrix.target }} --bundles ${{ matrix.bundle }}
+          tagName: v__VERSION__
+          releaseName: Trama __VERSION__
+          releaseAssetNamePattern: ${{ matrix.assetNamePattern }}
+          releaseCommitish: ${{ github.sha }}
+          releaseDraft: true
+          prerelease: true
+          releaseBody: |
+            Desktop installers for testing Trama. Each installer includes the local MCP server.
+
+            - macOS: choose the DMG for Apple Silicon (aarch64) or Intel (x64).
+            - Windows: download the x64 setup executable.
+
+            These test builds aren't notarized by Apple on macOS or code-signed on Windows.
+            macOS may require approval in Privacy & Security; Windows may show a SmartScreen warning.
+            See the [macOS](https://github.com/builtbyajax/Trama/blob/main/docs/installation.md#macos) and [Windows](https://github.com/builtbyajax/Trama/blob/main/docs/installation.md#windows) guides for instructions.
+          uploadUpdaterJson: false
+          uploadWorkflowArtifacts: true

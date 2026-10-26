@@ -1,0 +1,305 @@
+/* Modals: fixed header and footer, scrolling body; forms share the field grid. */
+.modal {
+  width: 560px;
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 48px);
+  margin: auto;
+  padding: 0;
+  background: var(--bg-sheet);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sheet);
+  outline: none;
+  overflow: hidden;
+}
+.modal[open] {
+  display: flex;
+  flex-direction: column;
+  animation: modal-in 0.18s var(--ease);
+}
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+}
+.modal::backdrop {
+  background: var(--scrim);
+}
+.project-modal {
+  width: 520px;
+}
+.modal-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 18px 16px 12px 24px;
+}
+.modal-head h2 {
+  flex: 1;
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 650;
+}
+.modal-form {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--field-gap-y);
+  padding: 6px calc(24px - var(--bar)) 20px 24px;
+  scrollbar-gutter: stable;
+  container-type: inline-size;
+}
+.modal-footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 14px 24px;
+  border-top: 1px solid var(--line-subtle);
+  background: var(--bg-sheet);
+}
+.footer-hint {
+  flex: 1;
+  min-width: 0;
+  margin-right: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+.form-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--field-gap-x);
+}
+.confirm-modal {
+  width: 420px;
+}
+.confirm-modal .modal-body {
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+.form-row .grow {
+  flex: 1;
+}
+.form-error {
+  padding: 8px 10px;
+  border-radius: var(--radius-control);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+/* Task fields: one row of category/assignee/state in wide containers, two columns otherwise.
+   Category and state share the wide columns so the longest state ("Em preparação" in
+   Portuguese) fits; assignee only holds "You" or "Agent".
+   Every form uses the same rhythm: 16 px between rows, 12 px between columns, 6 px label gap. */
+.task-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.6fr) minmax(0, 1.2fr);
+  gap: var(--field-gap-y) var(--field-gap-x);
+}
+/* A fixed eight lines (19 px each, plus padding and border); longer briefings scroll inside. */
+.text-area {
+  height: 166px;
+  resize: none;
+  overflow-y: auto;
+  line-height: 19px;
+  overscroll-behavior: contain;
+}
+
+.task-fields .span-all {
+  grid-column: 1 / -1;
+}
+.title-input {
+  font-size: var(--fs-lg) !important;
+  font-weight: 600 !important;
+}
+@container (max-width: 460px) {
+  .task-fields {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .task-fields .category-field {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-height: 680px) {
+  .modal-body {
+    gap: var(--sp-3);
+  }
+  .task-fields {
+    row-gap: var(--sp-3);
+  }
+  .text-area {
+    height: 128px;
+  }
+}
+
+.modal-text {
+  color: var(--ink-2);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* Categories manager */
+.categories-modal {
+  width: 460px;
+}
+/* It doesn't scroll itself, its list does, so it keeps its full padding. */
+.modal-body.category-manager {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+  padding-right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-height: 0;
+}
+.category-search {
+  position: relative;
+  flex: none;
+}
+.category-search .icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-3);
+  pointer-events: none;
+}
+.category-search input {
+  padding-left: 30px;
+}
+.category-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  /* Whole rows only (40px plus the 1px rule), so the last visible one is never cut. */
+  --rows: 8;
+  max-height: calc(41px * var(--rows) + 1px);
+  overflow-y: auto;
+  border-top: 1px solid var(--line-subtle);
+}
+@media (max-height: 760px) {
+  .category-list {
+    --rows: 6;
+  }
+}
+@media (max-height: 600px) {
+  .category-list {
+    --rows: 4;
+  }
+}
+.category-create {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 32px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--accent-text);
+  font: inherit;
+  text-align: left;
+}
+.category-create:hover:not(:disabled) {
+  background: var(--hover);
+}
+.category-create kbd {
+  margin-left: auto;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: var(--fs-xs);
+}
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 41px;
+  box-sizing: border-box;
+  padding: 0 4px 0 2px;
+  border-bottom: 1px solid var(--line-subtle);
+}
+.category-row > .truncate {
+  flex: 1;
+}
+.category-count {
+  flex: none;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.category-row .icon-button {
+  opacity: 0.6;
+}
+.category-row:hover .icon-button,
+.category-row .icon-button:focus-visible {
+  opacity: 1;
+}
+
+/* Project palette in the project form. */
+.color-picker {
+  display: flex;
+  gap: 8px;
+}
+.color-option {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+.color-option[aria-checked="true"] {
+  box-shadow:
+    0 0 0 2px var(--bg-sheet),
+    0 0 0 4px var(--ink-2);
+}
+.icon-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 30px);
+  gap: 6px;
+}
+.icon-option {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 650;
+}
+.icon-option:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.icon-option[aria-checked="true"] {
+  background: color-mix(in srgb, var(--hue) 20%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hue) 45%, transparent);
+  color: var(--hue);
+}
+.icon-option:focus-visible,
+.color-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}

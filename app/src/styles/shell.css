@@ -1,0 +1,671 @@
+/* Window frame: a thin top bar across the window, the sidebar on the window background and the
+   content as a rounded island beside it. */
+.window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-window);
+}
+.window-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 0 var(--island-gap) var(--island-gap) 0;
+}
+.window-body.sidebar-hidden {
+  padding-left: var(--island-gap);
+}
+
+/* ───── top bar ───── */
+.topbar {
+  /* Above the sliding sidebar, so the shortcut badges that hang below the bar stay visible. */
+  position: relative;
+  z-index: 50;
+  height: var(--topbar-h);
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px 0 12px;
+  min-width: 0;
+}
+/* macOS draws the traffic lights over the overlay title bar (see tauri.conf.json). */
+.traffic-space {
+  display: none;
+  flex: none;
+  width: 68px;
+  align-self: stretch;
+}
+[data-platform="mac"][data-shell="tauri"] .traffic-space {
+  display: block;
+}
+/* Windows has no system title bar (see tauri.windows.conf.json): the bar ends in the window
+   buttons, flush with the window's corner like the system's own and short of the content, so
+   close's red doesn't run into it. */
+.topbar:has(.window-controls) {
+  padding-right: 0;
+}
+.window-controls {
+  display: flex;
+  align-self: flex-start;
+  height: 36px;
+}
+.window-controls button {
+  width: 46px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+}
+.window-controls button:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.window-controls button.close:hover {
+  background: #c42b1c;
+  color: #fff;
+}
+.window-controls svg {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+/* Icon button sizes and badges in context; the base is in controls.css. */
+.topbar .icon-button {
+  width: 28px;
+  height: 28px;
+}
+.topbar-divider {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  margin: 0 8px 0 6px;
+  background: var(--line);
+}
+.crumbs {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-size: var(--fs-md);
+  color: var(--ink-2);
+}
+.crumb-item {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+/* The last crumb gives way first; the others keep up to about 40 characters. A percentage here
+   would be a share of the crumbs' own width, which cut short names in half. */
+.crumb-item:last-child {
+  flex: 0 100 auto;
+}
+.crumb-item:not(:last-child) {
+  flex: 0 1 auto;
+  max-width: 320px;
+}
+.crumb-sep {
+  flex: none;
+  margin: 0 6px;
+  color: var(--ink-off);
+}
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  height: 26px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  white-space: nowrap;
+}
+button.crumb:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.crumb.lead {
+  color: var(--ink);
+  font-weight: 600;
+}
+.crumb.current {
+  color: var(--ink);
+}
+.topbar-spacer {
+  flex: 1;
+  min-width: 16px;
+  align-self: stretch;
+}
+.search-pill {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 210px;
+  height: 28px;
+  margin-right: 4px;
+  padding: 0 6px 0 10px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--hover);
+  color: var(--ink-3);
+  font-size: var(--fs-md);
+  transition: background-color 0.12s;
+}
+.search-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink-2);
+}
+.search-pill-label {
+  flex: 1;
+  text-align: left;
+}
+.search-pill kbd {
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--ink-3);
+  line-height: 17px;
+}
+.menu-list .popover-option {
+  gap: 16px;
+}
+.menu-keys {
+  color: var(--ink-3);
+}
+
+/* ───── sidebar ───── */
+.sidebar {
+  flex: none;
+  width: var(--sidebar-w);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 4px 10px 4px;
+}
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.sidebar-group.grow {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  /* The bar sits in the sidebar's own padding, so the items keep their width. */
+  margin: 0 calc(-1 * var(--bar)) 0 -4px;
+  padding: 0 0 8px 4px;
+}
+.sidebar-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  padding: 10px 2px 0 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+/* Shown while the pointer is over the section, like the rows of the category list. */
+.sidebar-section .icon-button {
+  opacity: 0;
+}
+.sidebar-section:hover .icon-button,
+.sidebar-section .icon-button:focus-visible {
+  opacity: 1;
+}
+.nav-item {
+  flex: none;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 0 10px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-2);
+  text-align: left;
+  white-space: nowrap;
+  transition:
+    background-color 0.12s,
+    color 0.12s;
+}
+.nav-item:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.nav-item.selected {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.nav-item.menu-open:not(.selected) {
+  background: var(--hover);
+  color: var(--ink);
+}
+.nav-leading {
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--ink-3);
+}
+.nav-item.selected .nav-leading {
+  color: var(--accent);
+}
+.nav-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-count {
+  flex: none;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+[data-hints] .nav-count {
+  display: none;
+}
+.swatch {
+  flex: none;
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.swatch.large {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+/* A project's initial or icon on a tile of its color: names it where a dot said little. */
+.project-mark {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--hue) 20%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hue) 26%, transparent);
+  color: var(--hue);
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: 0;
+}
+/* The sidebar's icon slot is 16px; the mark spills evenly so it stays centered in its row. */
+.nav-leading .project-mark {
+  margin: -1px;
+}
+.project-mark .icon {
+  stroke-width: 1.5;
+}
+.project-mark.large {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+.sidebar-empty {
+  margin: 2px 0;
+  padding: 8px 10px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  text-align: left;
+}
+.sidebar-empty:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.agent-status {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 6px;
+  padding: 10px 12px;
+  border-radius: var(--radius-card);
+  background: var(--agent-soft);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+.sidebar-footer {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 0 4px;
+  border-top: 1px solid var(--line-subtle);
+}
+
+/* The rail: the same rows as icons only, names in tooltips. Projects sit under a short rule in
+   place of their heading. */
+.sidebar.rail {
+  width: var(--rail-w);
+  padding: 4px 8px;
+  align-items: center;
+}
+.sidebar.rail .sidebar-group {
+  align-items: center;
+}
+.sidebar.rail .sidebar-group.grow {
+  scrollbar-width: none;
+  margin-right: -4px;
+  padding-right: 4px;
+}
+.sidebar.rail .nav-item {
+  width: 34px;
+  height: 32px;
+  justify-content: center;
+  padding: 0;
+}
+.sidebar.rail .nav-label,
+.sidebar.rail .nav-count,
+.sidebar.rail .sidebar-empty {
+  display: none;
+}
+/* Below-right of each icon: rows are 33px apart, so the badges never meet each other or the
+   topbar's, and they stay inside the rail where the project list would clip them. */
+.sidebar.rail .nav-item .key-hint {
+  position: absolute;
+  right: -4px;
+  bottom: -5px;
+  z-index: 2;
+}
+.sidebar.rail .nav-item {
+  position: relative;
+}
+.sidebar.rail .sidebar-section {
+  width: 20px;
+  height: 1px;
+  margin: 10px 0;
+  padding: 0;
+  background: var(--line);
+}
+.sidebar.rail .sidebar-section > * {
+  display: none;
+}
+.sidebar.rail .agent-status {
+  width: 34px;
+  height: 32px;
+  justify-content: center;
+  margin: 6px 0;
+  padding: 0;
+}
+.sidebar.rail .agent-status > span:not(.agent-pulse) {
+  display: none;
+}
+.sidebar.rail .sidebar-footer {
+  align-self: stretch;
+  align-items: center;
+}
+
+/* ───── content island ───── */
+.island {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-canvas);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-panel);
+  container: page / inline-size;
+}
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.error-banner {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: 38px;
+  padding: 6px 10px 6px var(--page-x);
+  background: var(--danger-soft);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+}
+.error-banner .button {
+  margin-left: auto;
+}
+
+/* ───── project head ───── */
+.page-head {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 20px 10px var(--page-x);
+}
+.page-head-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.page-title {
+  flex: 1;
+  min-width: 0;
+}
+.page-title h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.012em;
+  line-height: 1.25;
+}
+.page-title p {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.page-repo {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* One line of chips; those that do not fit fold into a "+N" list (see CategoryChips). */
+.chips {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 6px;
+  overflow: hidden;
+  /* Room for focus rings inside the clipped row. */
+  margin: -4px;
+  padding: 4px;
+}
+/* Off-screen copy of every chip, measured to decide how many fit. */
+.chips-measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  gap: 6px;
+  visibility: hidden;
+  pointer-events: none;
+}
+.chip-button {
+  flex: none;
+}
+.chip-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  transition:
+    background-color 0.12s,
+    border-color 0.12s,
+    color 0.12s;
+}
+.chip-button:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.chip-button.on {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--ink);
+}
+.chip-button.dashed {
+  border-style: dashed;
+  color: var(--ink-3);
+}
+/* The manager as a gear, when every chip fits but its name does not. */
+.chip-button.chip-icon {
+  justify-content: center;
+  width: 26px;
+  padding: 0;
+}
+.chip-count {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.segmented.small {
+  height: 26px;
+}
+.select.branch-filter {
+  flex: none;
+  max-width: 200px;
+  height: 26px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+}
+.select.branch-filter.on {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--ink);
+}
+.segmented.small button {
+  padding: 0 9px;
+  gap: 6px;
+}
+.segmented .key-hint {
+  margin-left: 2px;
+}
+
+@container page (max-width: 720px) {
+  .page-repo {
+    display: none;
+  }
+}
+@container page (max-width: 560px) {
+  .filter-row .segmented {
+    display: none;
+  }
+}
+@media (max-width: 1080px) {
+  .search-pill {
+    width: auto;
+  }
+  .search-pill-label {
+    display: none;
+  }
+}
+/* In the top bar the badges hang below their buttons, centred; the forward button's leans right,
+   clear of the back button's. A disabled button shows none, since its shortcut does nothing. */
+.topbar .icon-button .key-hint {
+  top: auto;
+  bottom: -14px;
+  right: 50%;
+  padding: 3px;
+  transform: translateX(50%);
+}
+.topbar .forward-button .key-hint {
+  right: -5px;
+  transform: none;
+}
+.topbar .icon-button:disabled .key-hint {
+  display: none;
+}
+
+/* ───── hidden sidebar, shown for a moment over the content ───── */
+.window-body {
+  position: relative;
+}
+.sidebar-edge {
+  position: absolute;
+  z-index: 30;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 6px;
+}
+.sidebar-peek {
+  position: absolute;
+  z-index: 40;
+  top: 0;
+  bottom: var(--island-gap);
+  left: var(--island-gap);
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-menu);
+  box-shadow: var(--shadow-pop);
+  transition:
+    opacity 200ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@starting-style {
+  .sidebar-peek {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+}
+.sidebar-peek.leaving {
+  opacity: 0;
+  transform: translateX(-18px);
+  transition-duration: 160ms, 200ms;
+  transition-timing-function: ease-in;
+}
+.sidebar-peek .sidebar {
+  padding-top: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-peek {
+    transition: none;
+  }
+}

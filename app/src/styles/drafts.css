@@ -1,0 +1,95 @@
+/* ───── Rascunhos ───── */
+/* Rounded rows a little apart, with no rules between them: the hover and the selection are the
+   row's own shape, never a pill inside a ruled band. */
+.rows {
+  list-style: none;
+  margin: 0 -12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.row-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+.row-button:hover {
+  background: var(--hover);
+}
+.row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.row-title {
+  font-size: 13.5px;
+  font-weight: 560;
+}
+.row-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  max-width: 100%;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+.row-text .row-sub {
+  display: block;
+}
+.draft-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 8px;
+}
+.draft-row .row-button {
+  flex: 1;
+}
+.draft-row.selected .row-button {
+  background: var(--accent-soft);
+}
+
+/* ───── Arquivadas: the same rows, in place of a project's board ───── */
+.archive {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 8px calc(var(--page-x) - var(--bar)) 32px var(--page-x);
+}
+.archive > .empty-state {
+  margin-top: 12vh;
+}
+.archive .rows {
+  margin: 0 -12px;
+}
+.row-text .archive-refs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.archive-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+code.archive-ref {
+  font-size: var(--fs-xs);
+}
+.archive-row.selected .row-button {
+  background: var(--accent-soft);
+}

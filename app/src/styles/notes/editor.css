@@ -1,0 +1,214 @@
+/* Its own screen: the formatting bar, then the text alone or beside the page it makes. */
+.note-edit {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.note-edit-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--field);
+}
+.note-edit-body.dual {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.note-edit-body.dual > .note-reader {
+  border-left: 1px solid var(--line-subtle);
+  background: var(--bg-canvas);
+}
+.note-edit-body:not(.dual) .note-input {
+  padding-inline: max(28px, calc((100% - 760px) / 2)) !important;
+}
+.note-tools {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 44px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--line-subtle);
+  overflow-x: auto;
+}
+.note-tools-space {
+  flex: 1;
+}
+.note-tools .segmented button {
+  min-width: 0;
+}
+.note-tools .note-view {
+  margin: 0 6px;
+}
+.note-tools .note-done {
+  color: var(--on-accent);
+  gap: 6px;
+}
+.note-tools .note-done:hover {
+  background: var(--accent-hover);
+  color: var(--on-accent);
+}
+.note-tools > button:not(.button) {
+  flex: none;
+  height: 26px;
+  min-width: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.note-tools > button:not(.button):hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.note-tools > button:not(.button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+.note-tools > button:not(.button).on {
+  background: var(--control-active);
+  color: var(--ink);
+}
+.note-tools .note-heading {
+  padding: 0 4px 0 6px;
+}
+.note-tools .note-heading > .icon:last-child {
+  color: var(--ink-off);
+}
+.note-heading-level {
+  margin-left: -1px;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1;
+  align-self: flex-end;
+  margin-bottom: 6px;
+}
+.note-heading-menu .popover-option.h1 .popover-label {
+  font-size: 15px;
+  font-weight: 650;
+}
+.note-heading-menu .popover-option.h2 .popover-label {
+  font-size: 14px;
+  font-weight: 620;
+}
+.note-heading-menu .popover-option.h3 .popover-label {
+  font-weight: 600;
+}
+.note-link-menu .popover-option {
+  gap: 8px;
+}
+.note-link-folder {
+  margin-left: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+.note-link-menu .popover-label .note-link-folder {
+  margin-left: 8px;
+}
+.note-tools-rule {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: var(--line-subtle);
+}
+.note-input {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  resize: none;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 24px 28px 120px !important;
+  color: var(--ink);
+  font: 13px/1.7 var(--mono);
+  tab-size: 2;
+  outline: none;
+}
+
+@container page (max-width: 1000px) {
+  .notes {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+  .notes.tree-hidden {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .note-edit-body.dual {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .note-edit-body.dual > .note-reader,
+  .note-tools .note-view,
+  .note-tools .note-follow {
+    display: none;
+  }
+}
+@container page (max-width: 680px) {
+  .notes,
+  .notes.editing,
+  .notes.tree-hidden {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .notes-tree {
+    display: none;
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 5;
+    width: min(280px, 85%);
+    border-right: 1px solid var(--line);
+    box-shadow: var(--shadow-sheet);
+  }
+  .notes-tree.open,
+  .notes.tree-hidden .notes-tree.open {
+    display: flex;
+  }
+  .notes-scrim {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    border: 0;
+    background: var(--scrim);
+  }
+  .tree-toggle {
+    display: inline-grid;
+  }
+  .note-bar {
+    padding-left: 8px;
+  }
+  .note-crumb {
+    display: none;
+  }
+  .note-page {
+    padding: 24px 22px 80px;
+  }
+  .note-marks {
+    display: none;
+  }
+}
+
+.notes-setup {
+  max-width: 440px;
+}
+.notes-setup p {
+  line-height: 1.5;
+}
+.notes-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.notes-setup .input-row {
+  width: 100%;
+}

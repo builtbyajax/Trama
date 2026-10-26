@@ -1,0 +1,23 @@
+/* Entry point: tokens first, then shared controls, then one file per area of the window. */
+@import "./tokens.css";
+@import "./base.css";
+@import "./controls.css";
+@import "./shell.css";
+@import "./board.css";
+@import "./forms.css";
+@import "./task-sheet.css";
+@import "./briefing.css";
+@import "./activity.css";
+@import "./pages.css";
+@import "./drafts.css";
+@import "./git.css";
+@import "./diff.css";
+@import "./notes/layout.css";
+@import "./notes/tree.css";
+@import "./notes/tabs.css";
+@import "./notes/page.css";
+@import "./notes/marks.css";
+@import "./notes/editor.css";
+@import "./notes/markdown.css";
+@import "./notes/task-docs.css";
+@import "./notes/vaults.css";

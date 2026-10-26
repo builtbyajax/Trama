@@ -1,0 +1,567 @@
+/* The diff opens in the project's island, under the app's topbar and beside its rail. Both
+   layouts wrap long lines, so a file never scrolls sideways. */
+.diff-screen {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  container: diff / inline-size;
+  color: var(--ink);
+  background: var(--bg-canvas);
+  --add-row: color-mix(in srgb, var(--success) 7.5%, var(--bg-raised));
+  --add-gutter: color-mix(in srgb, var(--success) 13%, var(--bg-raised));
+  --add-mark: rgba(127, 207, 155, 0.28);
+  --del-row: color-mix(in srgb, var(--danger) 7.5%, var(--bg-raised));
+  --del-gutter: color-mix(in srgb, var(--danger) 13%, var(--bg-raised));
+  --del-mark: rgba(255, 122, 110, 0.3);
+}
+.diff-screen:focus {
+  outline: none;
+}
+.diff-files[hidden] {
+  display: none;
+}
+.diff-files {
+  flex: none;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line-subtle);
+  overflow: hidden;
+}
+.diff-files-head {
+  flex: none;
+  display: grid;
+  gap: 10px;
+  padding: 14px 14px 8px;
+}
+.diff-files-head .section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 4px;
+}
+.diff-files-head h3 {
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+.diff-filter {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-control);
+  background: var(--field);
+  color: var(--ink-3);
+}
+.diff-filter:focus-within {
+  border-color: var(--accent);
+}
+.diff-filter input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+.diff-filter input::placeholder {
+  color: var(--ink-off);
+}
+.diff-tree {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px calc(8px - var(--bar)) 12px 8px;
+  scrollbar-gutter: stable;
+}
+/* Folders close with everything below; each level steps in 12px. */
+.diff-folder {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 26px;
+  margin-top: 2px;
+  padding: 0 8px 0 calc(4px + var(--depth, 0) * 12px);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-3);
+  font: var(--fs-xs) / 1.3 var(--mono);
+  text-align: left;
+}
+.diff-folder:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+/* Closed over the file being read. */
+.diff-folder.holds-current {
+  color: var(--ink);
+}
+.diff-folder-count {
+  margin-left: auto;
+  color: var(--ink-off);
+  font-family: var(--font);
+}
+.diff-tree .file-item {
+  height: 30px;
+  gap: 8px;
+  padding: 0 8px 0 calc(4px + var(--depth, 0) * 12px);
+  font-size: var(--fs-md);
+}
+.diff-tree .file-name {
+  flex: 1;
+}
+.change-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin: 0 3px;
+  border-radius: 50%;
+  background: var(--s-review);
+}
+.change-dot.added,
+.change-dot.untracked {
+  background: var(--s-done);
+}
+.change-dot.deleted {
+  background: var(--danger);
+}
+.change-dot.renamed,
+.change-dot.copied {
+  background: var(--s-inProgress);
+}
+.diff-tree-empty {
+  padding: 8px;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.diff-files-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--line-subtle);
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+.diff-files-foot kbd {
+  padding: 3px 5px;
+  border: 1px solid var(--line-subtle);
+  border-radius: 4px;
+  background: var(--control);
+  font-size: 10px;
+  line-height: 1;
+}
+.diff-files-foot span {
+  margin-left: 2px;
+}
+
+/* the change and its files, in one scroll */
+.diff-main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+/* Focused only so the keys scroll it; the page is not a control to ring. */
+.diff-main:focus {
+  outline: none;
+}
+.diff-context {
+  display: grid;
+  gap: 10px;
+  padding: 20px calc(24px - var(--bar)) 18px 24px;
+  border-bottom: 1px solid var(--line-subtle);
+}
+.diff-context-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.diff-context h1 {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-title);
+  font-weight: 600;
+  line-height: 1.35;
+  text-wrap: balance;
+  user-select: text;
+}
+/* The commit's node, as on the history line. */
+.diff-mark {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  display: grid;
+  place-items: center;
+}
+.diff-mark::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+}
+.diff-hash {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+  color: var(--ink-2);
+  font: var(--fs-sm) / 1 var(--mono);
+}
+.diff-hash:hover {
+  background: var(--control-hover);
+  color: var(--ink);
+}
+.diff-meta,
+.diff-body {
+  padding-left: 34px;
+}
+.diff-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.diff-task {
+  min-width: 0;
+  max-width: 420px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 24px;
+  padding: 0 9px 0 8px;
+  border: 1px solid var(--line-subtle);
+  border-radius: 6px;
+  background: var(--hover);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+.diff-task.agent {
+  border-color: var(--agent-line);
+  background: var(--agent-soft);
+  color: var(--agent-ink);
+}
+.diff-task:hover {
+  color: var(--ink);
+}
+.diff-totals {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--fs-sm) / 1 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.diff-totals b {
+  color: var(--s-done);
+  font-weight: 500;
+}
+.diff-totals i {
+  color: var(--danger);
+  font-style: normal;
+}
+.diff-body p,
+.diff-body ul {
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  user-select: text;
+}
+.diff-body p {
+  white-space: pre-wrap;
+}
+.diff-body ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0 0 0 16px;
+}
+.diff-body li::marker {
+  color: var(--ink-off);
+}
+.diff-more {
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+.diff-more:hover {
+  color: var(--ink);
+}
+.diff-sections {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px calc(16px - var(--bar)) 40vh 16px;
+}
+/* The section clips its head, so a head pushed to the end of the file keeps the rounded corners.
+   Clip, unlike hidden, doesn't make a scroll box, so the head still sticks. */
+.diff-file {
+  border: 1px solid var(--line-subtle);
+  border-radius: 10px;
+  background: var(--bg-raised);
+  overflow: clip;
+}
+.diff-file-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 0 10px;
+  border-radius: 10px 10px 0 0;
+  background: var(--bg-raised);
+  /* A shadow, not a border: pushed to the end of the file it falls under the section's border,
+     which clips it, so the two lines never stack. */
+  box-shadow: 0 1px 0 var(--line-subtle);
+}
+.diff-letter {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--s-review) 13%, transparent);
+  color: var(--s-review);
+  font: 600 10px / 1 var(--mono);
+}
+.diff-letter.added,
+.diff-letter.untracked {
+  background: color-mix(in srgb, var(--s-done) 13%, transparent);
+  color: var(--s-done);
+}
+.diff-letter.deleted {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.diff-letter.renamed,
+.diff-letter.copied {
+  background: var(--accent-soft);
+  color: var(--s-inProgress);
+}
+.diff-new {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--s-done) 30%, transparent);
+  border-radius: 5px;
+  color: var(--s-done);
+  font-size: var(--fs-xs);
+}
+.diff-file-stats {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.diff-file-stats .diff-stats {
+  font-size: var(--fs-xs);
+}
+.diff-file-head .segmented {
+  margin-left: 4px;
+}
+.diff-file.collapsed .diff-file-head {
+  box-shadow: none;
+  border-radius: 10px;
+}
+/* Stuck over the code, the head is square, so the lines under it don't show past its corners. */
+.diff-file[data-stuck] .diff-file-head {
+  border-radius: 0;
+}
+.diff-chevron .icon {
+  transition: transform 0.18s var(--ease);
+}
+.diff-file.collapsed .diff-chevron .icon {
+  transform: rotate(-90deg);
+}
+.diff-path {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-md);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+  user-select: text;
+}
+.diff-path span {
+  color: var(--ink-3);
+}
+.diff-file-body {
+  overflow: hidden;
+  border-radius: 0 0 10px 10px;
+  font: var(--fs-sm) / 20px var(--mono);
+  user-select: text;
+}
+.diff-hunks {
+  padding-bottom: 8px;
+}
+.hunk-gap {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  border-block: 1px solid var(--line-subtle);
+  background: var(--bg-canvas);
+  color: var(--ink-3);
+  font: var(--fs-xs) / 1 var(--font);
+}
+.diff-hunk:first-child .hunk-gap {
+  border-top: 0;
+}
+.hunk-gap > span {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+.hunk-gap .icon {
+  color: var(--ink-off);
+}
+.hunk-gap code {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--mono);
+  color: var(--ink-2);
+}
+.diff-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.diff-cell,
+.diff-inline {
+  display: flex;
+  min-width: 0;
+}
+.diff-cell + .diff-cell {
+  border-left: 1px solid var(--line-subtle);
+}
+.diff-cell code,
+.diff-inline code {
+  flex: 1;
+  min-width: 0;
+  padding-right: var(--sp-4);
+  color: var(--ink-2);
+  font: inherit;
+  tab-size: 4;
+}
+.addition code,
+.deletion code {
+  color: var(--ink);
+}
+.diff-cell code,
+.diff-inline code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.line-number {
+  flex: none;
+  width: var(--num-w, 6ch);
+  padding-right: 8px;
+  text-align: right;
+  color: var(--ink-off);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+.line-sign {
+  flex: none;
+  width: 18px;
+  text-align: center;
+  user-select: none;
+}
+.diff-inline .gutter {
+  flex: none;
+  display: flex;
+  background: var(--bg-raised);
+}
+.addition {
+  background: var(--add-row);
+}
+.deletion {
+  background: var(--del-row);
+}
+/* The numbers of a changed line take a stronger tint than its text. */
+.diff-cell.addition .line-number,
+.diff-inline.addition .gutter {
+  background: var(--add-gutter);
+}
+.diff-cell.deletion .line-number,
+.diff-inline.deletion .gutter {
+  background: var(--del-gutter);
+}
+.addition .line-number {
+  color: color-mix(in srgb, var(--s-done) 75%, transparent);
+}
+.deletion .line-number {
+  color: color-mix(in srgb, var(--danger) 75%, transparent);
+}
+.diff-cell.blank {
+  background: repeating-linear-gradient(
+    135deg,
+    transparent 0 6px,
+    rgba(255, 255, 255, 0.018) 6px 7px
+  );
+}
+.addition .line-sign {
+  color: var(--s-done);
+}
+.deletion .line-sign {
+  color: var(--danger);
+}
+.diff-file-body mark {
+  background: var(--add-mark);
+  color: inherit;
+  border-radius: 3px;
+}
+.diff-file-body .deletion mark {
+  background: var(--del-mark);
+}
+.newline-note {
+  color: var(--ink-off);
+  user-select: none;
+}
+.diff-placeholder {
+  padding: var(--sp-6);
+  color: var(--ink-3);
+  font-family: var(--font);
+}
+@container diff (max-width: 980px) {
+  .diff-files {
+    width: 200px;
+  }
+  .diff-file-stats .diff-blocks {
+    display: none;
+  }
+}
+@container diff (max-width: 760px) {
+  .diff-new {
+    display: none;
+  }
+}

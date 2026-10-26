@@ -1,0 +1,266 @@
+.note-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 12px 0 20px;
+  border-bottom: 1px solid var(--line-subtle);
+}
+.note-crumbs {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+.note-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+.note-crumb .icon {
+  color: var(--ink-off);
+}
+.note-crumbs b {
+  color: var(--ink);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.save-state.conflict {
+  color: var(--s-review);
+}
+.save-state.conflict .save-dot {
+  background: var(--s-review);
+}
+.note-bar .segmented button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.note-alert {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 8px 20px;
+  background: var(--danger-soft);
+  font-size: var(--fs-sm);
+}
+.note-alert > span {
+  flex: 1;
+  min-width: 200px;
+}
+.note-read {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.note-read > .note-reader {
+  flex: 1;
+}
+/* The page is centred, so the bar's room is kept on both sides. */
+.note-reader {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable both-edges;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+/* The searched text, marked for a moment after the note opens on it. */
+.find-flash {
+  position: absolute;
+  inset: 0 auto auto 0;
+  pointer-events: none;
+  animation: find-flash 1.8s ease-out forwards;
+}
+.find-flash span {
+  position: absolute;
+  margin: -1px -2px;
+  padding: 1px 2px;
+  box-sizing: content-box;
+  border-radius: 3px;
+  background: rgba(141, 184, 255, 0.3);
+  box-shadow: 0 0 0 1px var(--accent-line);
+}
+@keyframes find-flash {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .find-flash {
+    animation-duration: 2.4s;
+  }
+}
+.note-page {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 56px 160px;
+}
+.note-edit .note-page {
+  padding: 28px 32px 120px;
+}
+/* Where the note lives, when it changed and the tasks it is attached to. */
+.note-where {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-bottom: 18px;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.note-where-path {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.note-where-path .icon {
+  color: var(--ink-off);
+}
+.note-where .note-task {
+  height: 22px;
+  padding: 0 8px;
+}
+.heading-flash {
+  animation: heading-flash 1.4s ease-out;
+  border-radius: 4px;
+}
+@keyframes heading-flash {
+  0%,
+  35% {
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 6px var(--accent-soft);
+  }
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+.note-empty {
+  color: var(--ink-3);
+}
+
+.note-tasks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.note-task {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--line-subtle);
+  border-radius: 7px;
+  background: var(--bg-raised);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+.note-task:hover {
+  background: var(--card-hover);
+  color: var(--ink);
+}
+.note-task > .icon {
+  color: var(--ink-3);
+}
+.note-task.active {
+  background: var(--card-hover);
+  color: var(--ink);
+}
+/* Every task of a note attached to many, those still moving first. */
+.note-task-status {
+  flex: none;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+.note-task-list .popover-option.done .popover-label {
+  color: var(--ink-3);
+}
+
+.note-props {
+  margin-bottom: 24px;
+  border: 1px solid var(--line-subtle);
+  border-radius: 9px;
+  background: var(--bg-raised);
+}
+.note-props-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 34px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  text-align: left;
+}
+.note-props-head:hover {
+  color: var(--ink);
+}
+.note-props-head > .icon {
+  transition: transform 0.15s var(--ease);
+}
+.note-props.open .note-props-head > .icon {
+  transform: rotate(90deg);
+}
+.note-props-summary {
+  display: flex;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  margin-left: 4px;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 5px;
+  background: var(--control);
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+.note-props dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 18px;
+  margin: 0;
+  padding: 2px 14px 14px 32px;
+  font-size: var(--fs-sm);
+}
+.note-props dl > div {
+  display: contents;
+}
+.note-props dt {
+  color: var(--ink-3);
+}
+.note-props dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  user-select: text;
+}

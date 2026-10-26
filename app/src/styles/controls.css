@@ -1,0 +1,561 @@
+/* Buttons, fields, segmented controls and popover lists share one set of heights:
+   --h-sm (24) inside dense rows, --h-md (30) for toolbars and actions, --h-field (32) in forms. */
+
+/* ───── buttons ───── */
+.button,
+.icon-button,
+.link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  gap: 6px;
+  border-radius: var(--radius-control);
+  white-space: nowrap;
+  transition:
+    background-color 0.12s,
+    border-color 0.12s,
+    color 0.12s,
+    opacity 0.12s;
+}
+.button {
+  height: var(--h-md);
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  background: var(--control);
+  color: var(--ink);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  line-height: 1;
+}
+.button .icon {
+  margin-left: -2px;
+}
+.button:hover:not(:disabled) {
+  background: var(--control-hover);
+  border-color: var(--line-strong);
+}
+.button:active:not(:disabled) {
+  background: var(--control-active);
+}
+.button.primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.button.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: transparent;
+}
+.button.primary:active:not(:disabled) {
+  background: var(--accent-press);
+}
+.button.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink-2);
+}
+.button.ghost:hover:not(:disabled) {
+  background: var(--hover);
+  border-color: transparent;
+  color: var(--ink);
+}
+.button.danger {
+  background: var(--danger-soft);
+  border-color: var(--danger-line);
+  color: var(--danger);
+}
+.button.danger:hover:not(:disabled) {
+  background: rgba(255, 122, 110, 0.2);
+  border-color: rgba(255, 138, 126, 0.5);
+}
+.button.small {
+  height: var(--h-sm);
+  padding: 0 8px;
+  font-size: var(--fs-sm);
+}
+.button:disabled,
+.icon-button:disabled,
+.link-button:disabled {
+  opacity: 0.45;
+}
+.button[aria-busy="true"] {
+  opacity: 0.75;
+}
+.icon-button {
+  position: relative;
+  width: var(--h-md);
+  height: var(--h-md);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+}
+.icon-button.small {
+  width: var(--h-sm);
+  height: var(--h-sm);
+  border-radius: 6px;
+}
+.icon-button:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--ink);
+}
+.icon-button:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+.icon-button.active {
+  background: var(--hover);
+  color: var(--ink);
+}
+.icon-button.danger-hover:hover:not(:disabled) {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+/* Icon-only buttons float their badge over the corner instead of growing. */
+.icon-button .key-hint {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  z-index: 2;
+}
+.link-button {
+  height: var(--h-sm);
+  max-width: 100%;
+  padding: 0 6px;
+  margin-right: -6px;
+  border: 0;
+  background: transparent;
+  color: var(--accent-text);
+  font-size: var(--fs-sm);
+}
+.link-button code {
+  font-size: var(--fs-xs);
+}
+.link-button:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+kbd {
+  font: 500 10.5px var(--font);
+  color: var(--ink-2);
+  letter-spacing: 0.02em;
+}
+
+/* ───── segmented ───── */
+.segmented {
+  display: inline-flex;
+  flex: none;
+  height: var(--h-md);
+  padding: 2px;
+  gap: 2px;
+  border-radius: 8px;
+  background: var(--hover);
+}
+.segmented button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 100%;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color 0.12s,
+    color 0.12s;
+}
+.segmented button:hover {
+  color: var(--ink);
+}
+.segmented button.on {
+  background: var(--card-hover);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.segmented-field {
+  height: var(--h-field);
+}
+.segmented-field button {
+  flex: 1;
+  padding: 0 14px;
+}
+
+/* ───── select trigger ───── */
+.select {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  height: var(--h-field);
+  padding: 0 8px 0 10px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--line);
+  background: var(--control);
+  color: var(--ink);
+  font-size: var(--fs-md);
+  text-align: left;
+  transition:
+    background-color 0.12s,
+    border-color 0.12s;
+}
+.select:hover:not(:disabled),
+.select.open {
+  background: var(--control-hover);
+  border-color: var(--line-strong);
+}
+.select .select-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.select > .icon {
+  color: var(--ink-3);
+  transition: transform 0.15s var(--ease);
+}
+.select.open > .icon {
+  transform: rotate(180deg);
+}
+.select-sm {
+  height: var(--h-md);
+  font-size: var(--fs-sm);
+}
+.field .select {
+  width: 100%;
+}
+
+/* ───── popover list (Select, CategoryCombobox) ───── */
+.popover-list {
+  z-index: 200;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 9px;
+  background: var(--bg-menu);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
+  animation: popover-in 0.12s var(--ease);
+}
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+.popover-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--ink-2);
+  font-size: var(--fs-md);
+}
+.popover-option.active {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.popover-option[aria-selected="true"] {
+  color: var(--ink);
+}
+.popover-option > .icon {
+  color: var(--accent-text);
+}
+.popover-option.create {
+  color: var(--accent-text);
+}
+/* Right-click menu: plain rows that act, not choices. */
+.context-menu {
+  min-width: 180px;
+  max-height: calc(100vh - 16px);
+  display: flex;
+  flex-direction: column;
+}
+.context-menu .popover-option {
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-md);
+  text-align: left;
+}
+.context-menu .popover-option > .icon {
+  color: var(--ink-3);
+}
+.menu-separator {
+  flex: none;
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--line-subtle);
+}
+.popover-hint {
+  flex: none;
+  margin-left: 12px;
+  color: var(--ink-off);
+  font: inherit;
+  font-size: var(--fs-xs);
+}
+.context-menu .popover-option:hover,
+.context-menu .popover-option:focus-visible {
+  outline: none;
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.context-menu .popover-option.danger,
+.context-menu .popover-option.danger > .icon {
+  color: var(--danger);
+}
+.context-menu .popover-option.danger:hover,
+.context-menu .popover-option.danger:focus-visible {
+  background: var(--danger-soft);
+}
+.popover-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ───── fields ───── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--label-gap);
+  min-width: 0;
+}
+.field-control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--label-gap);
+  min-width: 0;
+}
+/* Labels focus their control (see Field); they are not text to select. */
+.field-label {
+  align-self: flex-start;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink-2);
+  user-select: none;
+}
+.field-hint {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+input:not([type="checkbox"]),
+textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 10px;
+  background: var(--field);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  font-size: var(--fs-md);
+  font-weight: 400;
+  line-height: 19px;
+  user-select: text;
+  transition:
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+input:not([type="checkbox"]) {
+  height: var(--h-field);
+}
+textarea {
+  display: block;
+  resize: vertical;
+}
+.auto-textarea {
+  resize: none;
+  overflow-y: auto;
+}
+input:not([type="checkbox"]):hover,
+textarea:hover {
+  border-color: var(--line-strong);
+}
+input:not([type="checkbox"]):focus-visible,
+textarea:focus-visible,
+.select:focus-visible {
+  outline: none;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+input[aria-invalid="true"] {
+  border-color: var(--danger-line);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--ink-off);
+}
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.input-row input {
+  flex: 1;
+}
+.path-input {
+  font-family: var(--mono);
+  font-size: var(--fs-sm) !important;
+}
+.combo-field {
+  position: relative;
+  display: flex;
+}
+.combo-field input {
+  padding-right: 30px;
+}
+.combo-toggle {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 0 6px 6px 0;
+  background: transparent;
+  color: var(--ink-3);
+}
+.combo-toggle:hover {
+  color: var(--ink);
+}
+.combo-field.open .combo-toggle .icon {
+  transform: rotate(180deg);
+}
+
+/* ───── checkbox ───── */
+input[type="checkbox"] {
+  appearance: none;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  border: 1px solid var(--line-strong);
+  background: var(--field);
+  transition:
+    background-color 0.12s,
+    border-color 0.12s;
+}
+input[type="checkbox"]::after {
+  content: "";
+  width: 9px;
+  height: 5px;
+  margin-top: -2px;
+  border: solid var(--on-accent);
+  border-width: 0 0 1.6px 1.6px;
+  transform: rotate(-45deg) scale(0);
+  transition: transform 0.12s var(--ease);
+}
+input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+input[type="checkbox"]:checked::after {
+  transform: rotate(-45deg) scale(1);
+}
+
+/* ───── pills ───── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: var(--h-sm);
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line-subtle);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+.pill.accent {
+  color: var(--accent-text);
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 5px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font: 500 10.5px var(--font);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chip.head {
+  background: rgba(127, 207, 155, 0.14);
+  color: var(--s-done);
+}
+.chip.muted {
+  background: var(--hover);
+  color: var(--ink-3);
+}
+.progress {
+  display: flex;
+  gap: 2px;
+  height: 5px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--line-subtle);
+}
+.progress.thin {
+  height: 3px;
+  gap: 0;
+}
+.progress.thin span {
+  transition: width 0.25s var(--ease);
+}
+
+/* ───── toast ───── */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(560px, calc(100vw - 40px));
+  transform: translateX(-50%);
+  padding: 9px 14px;
+  border-radius: 9px;
+  background: var(--bg-menu);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
+  font-size: 12.5px;
+  animation: toast-in 0.2s var(--ease);
+}
+.toast.error {
+  border-color: var(--danger-line);
+}
+.toast.error .icon {
+  color: var(--danger);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+}

@@ -1,0 +1,312 @@
+/* Board: four lanes separated by hairlines inside the content island; each lane scrolls. */
+.board {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(210px, 1fr));
+  padding: 0 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+}
+.column {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--line-subtle);
+  transition: background-color 0.15s;
+}
+.column:first-child {
+  border-left-color: transparent;
+}
+.column.drop-target {
+  background: linear-gradient(to bottom, var(--accent-soft), transparent 70%);
+}
+.column-head {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: 12px 14px 8px;
+}
+.column-head .name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-md);
+  font-weight: 650;
+  transition: color 0.15s;
+}
+.column.drop-target .column-head .name {
+  color: var(--accent-text);
+}
+.column-head .count {
+  font-size: var(--fs-md);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.column-body {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: 2px calc(10px - var(--bar)) 24px 10px;
+  scrollbar-gutter: stable;
+}
+.column-empty {
+  flex: none;
+  padding: 16px 12px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-card);
+  text-align: center;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+
+/* ───── cards ───── */
+.card {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 11px 13px 11px;
+  border-radius: var(--radius-card);
+  background: var(--card);
+  border: 1px solid var(--line-subtle);
+  touch-action: none;
+  container-type: inline-size;
+  transition:
+    background-color 0.12s,
+    border-color 0.12s,
+    box-shadow 0.12s,
+    opacity 0.12s;
+}
+.card:hover {
+  background: var(--card-hover);
+}
+.card:focus-visible {
+  outline-offset: 1px;
+}
+.card.done {
+  background: transparent;
+}
+.card.done:hover {
+  background: var(--hover);
+}
+.card.done .card-title {
+  color: var(--ink-3);
+}
+.card.working {
+  background: var(--agent-soft);
+  border-color: transparent;
+}
+.card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+/* The card whose right-click menu is open. */
+.card.menu-open {
+  border-color: var(--line-strong);
+  background: var(--card-hover);
+}
+/* The card that is being moved stays in place as an outline, so its column never jumps; one
+   flying back keeps it until it lands. */
+.card.drag-origin,
+.card[data-returning] {
+  background: transparent;
+  border: 1px dashed var(--line-strong);
+  box-shadow: none;
+}
+.card[data-returning] {
+  transition: none;
+}
+.card.drag-origin > *,
+.card[data-returning] > * {
+  opacity: 0.32;
+}
+.card.drag-origin .agent-trail,
+.card[data-returning] .agent-trail {
+  display: none;
+}
+.card.drag-hidden {
+  display: none;
+}
+.card.drag-overlay {
+  background: var(--card-hover);
+  border-color: transparent;
+  transform: rotate(1.2deg) scale(1.02);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px var(--accent-line);
+}
+/* Flying back, it straightens and loses its lift, so it lands looking like the card it covers. */
+[data-returning] > .card.drag-overlay {
+  transform: none;
+  box-shadow: none;
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.18s;
+}
+.card.landed {
+  animation: card-landed 0.9s var(--ease);
+}
+@keyframes card-landed {
+  from {
+    border-color: var(--accent-line);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+}
+.drop-slot {
+  flex: none;
+  border-radius: var(--radius-card);
+  border: 1px dashed var(--accent-line);
+  background: var(--accent-soft);
+  animation: slot-in 0.16s var(--ease);
+  overflow: hidden;
+}
+.drop-slot.with-preview {
+  animation-name: fade-in;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 11px 13px;
+}
+.drop-slot.with-preview > * {
+  opacity: 0.75;
+}
+@keyframes slot-in {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+}
+.card-category {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+.card-title {
+  font-size: 13.5px;
+  font-weight: 560;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-branch {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-2);
+}
+.card-branch .icon {
+  flex: none;
+  color: var(--ink-3);
+}
+.card-branch.gone {
+  color: var(--ink-3);
+  text-decoration: line-through;
+}
+.card-live {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  color: var(--agent-ink);
+}
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.card-pr {
+  flex: none;
+  margin-left: auto;
+  color: var(--ink-2);
+}
+
+/* ───── the two threads ───── */
+.glyph {
+  flex: none;
+  display: inline-block;
+}
+.glyph.user {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+}
+.glyph.agent {
+  width: 7px;
+  height: 7px;
+  margin: 0 1px;
+  border-radius: 1.5px;
+  background: var(--agent);
+  transform: rotate(45deg);
+}
+.agent-pulse {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--agent);
+  animation: agent-pulse 1.8s ease-in-out infinite;
+}
+@keyframes agent-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ───── agent trail: a stitched border that keeps moving ───── */
+.agent-trail {
+  position: absolute;
+  inset: -0.5px;
+  width: calc(100% + 1px);
+  height: calc(100% + 1px);
+  overflow: visible;
+  pointer-events: none;
+}
+.agent-trail rect {
+  fill: none;
+  stroke: var(--agent);
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  /* Fixed stitches in pixels, so small cards and the wide summary box run at the same pace. */
+  stroke-dasharray: 5 4;
+  animation: agent-stitch 1.2s linear infinite;
+}
+@keyframes agent-stitch {
+  to {
+    stroke-dashoffset: -9;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .agent-trail rect,
+  .agent-pulse {
+    animation: none;
+  }
+  .card.drag-overlay {
+    transform: none;
+  }
+}

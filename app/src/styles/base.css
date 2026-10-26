@@ -1,0 +1,255 @@
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+html {
+  overscroll-behavior: none;
+}
+body {
+  background: var(--bg-window);
+  color: var(--ink);
+  font: var(--fs-md) / 1.45 var(--font);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+/* Controls keep the arrow, as in native macOS apps; only links show the pointing hand. */
+button,
+label,
+summary,
+select,
+[role="button"],
+[role="checkbox"],
+[role="option"],
+[role="tab"],
+[role="radio"] {
+  cursor: default;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+code,
+kbd,
+pre {
+  font-family: var(--mono);
+}
+.muted {
+  color: var(--ink-3);
+}
+.small {
+  font-size: var(--fs-xs);
+}
+.truncate {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.selectable {
+  user-select: text;
+}
+.path-text {
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+.icon {
+  display: block;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* One thin scrollbar everywhere, instead of the wide native one. */
+::-webkit-scrollbar {
+  width: var(--bar);
+  height: var(--bar);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--line-strong);
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.is-dragging,
+.is-dragging * {
+  cursor: grabbing !important;
+}
+
+/* ───── tooltips and shortcut hints ───── */
+/* Drawn by <Tooltips/> in a fixed layer; "Label  ⌘K" puts the shortcut in a key. */
+.tooltip {
+  position: fixed;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Short labels stay on one line; a long explanation wraps inside the box. */
+  width: max-content;
+  max-width: 280px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--bg-menu);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1.4;
+  pointer-events: none;
+  animation: fade-in 0.12s both;
+}
+.tooltip kbd {
+  flex: none;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+/* Shortcut badges: hidden until the hint key is held (useHintKey sets data-hints). */
+.key-hint {
+  display: none;
+  flex: none;
+  padding: 3px 4px;
+  border-radius: 5px;
+  background: var(--control-hover);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: 600 10.5px/1 var(--font);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+[data-hints] .key-hint {
+  display: inline-block;
+}
+.hint-pill {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  z-index: 350;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px 7px 8px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--bg-menu);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  pointer-events: none;
+}
+[data-hints] .hint-pill {
+  display: flex;
+  animation: fade-in 0.12s both;
+}
+.hint-pill kbd {
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ───── shared states ───── */
+.empty-state {
+  margin: auto;
+  max-width: 360px;
+  padding: var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--ink-3);
+  text-align: center;
+  text-wrap: balance;
+}
+.empty-state .icon {
+  color: var(--ink-off);
+}
+.empty-state strong {
+  color: var(--ink);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+.fatal {
+  display: grid;
+  place-items: center;
+  height: 100%;
+}
+.fatal > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.error {
+  color: var(--danger);
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+.icon-dots {
+  stroke-width: 2.6;
+}

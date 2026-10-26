@@ -1,0 +1,15 @@
+.DS_Store
+/.vite/
+
+# Local app data
+.trama-local/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+.env
+.env.*
+
+# Machine-local agent configuration
+.codex/
+.claude/

@@ -1,0 +1,99 @@
+.notes.vaults {
+  grid-template-columns: 280px minmax(0, 1fr);
+}
+.vaults .notes-tree {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  gap: 2px;
+  padding: 0 calc(10px - var(--bar)) 24px 10px;
+}
+.vaults .notes-search {
+  margin: 10px 0 8px;
+}
+/* Narrow, the tree sits above the note instead of hiding behind a toggle. */
+@container page (max-width: 680px) {
+  .notes.vaults {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 45%) minmax(0, 1fr);
+  }
+  .vaults .notes-tree {
+    display: flex;
+    position: static;
+    width: auto;
+    box-shadow: none;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-subtle);
+  }
+}
+.vault-row {
+  margin-top: 6px;
+  color: var(--ink);
+  font-weight: 600;
+}
+.vault-row:first-of-type {
+  margin-top: 0;
+}
+.vault-row .swatch,
+.vault-label .swatch {
+  flex: none;
+}
+.vault-count {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--ink-off);
+  font-variant-numeric: tabular-nums;
+}
+.vault-row.off {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+.vault-row.off .tree-chevron {
+  width: 12px;
+}
+.vault-row.off .vault-count {
+  color: var(--accent-text);
+}
+.vaults .note-crumb .swatch {
+  margin-right: 4px;
+}
+.vault-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.vault-note {
+  padding-left: 30px;
+}
+.vault-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.vault-meta > span:first-child {
+  margin-right: 4px;
+}
+.vault-task {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 260px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.tree-row mark {
+  padding: 0 1px;
+  border-radius: 2px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.note-tools .note-follow.on {
+  color: var(--accent-text);
+}
