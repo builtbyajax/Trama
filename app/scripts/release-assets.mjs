@@ -25,9 +25,10 @@ const platforms = {
   },
   Windows_x64_Setup: {
     installerExtension: ".exe",
-    updaterExtension: ".nsis.zip",
+    updaterExtension: ".exe",
     updaterSubdirectory: ".",
     target: "windows-x86_64-nsis",
+    updaterUsesInstaller: true,
   },
 };
 const validVersion = (version) => /^\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(version);
@@ -108,12 +109,12 @@ export function stageUpdaterArtifact(
     "Expected exactly one updater signature",
   );
   mkdirSync(destination, { recursive: true });
-  const prefix = `Trama_${version}_${platformName}_updater`;
-  const bundle = copyNew(
-    source,
-    resolve(destination, `${prefix}${platform.updaterExtension}`),
-  );
-  copyNew(signature, `${bundle}.sig`);
+  const bundleName = platform.updaterUsesInstaller
+    ? `Trama_${version}_${platformName}${platform.installerExtension}`
+    : `Trama_${version}_${platformName}_updater${platform.updaterExtension}`;
+  const bundle = resolve(destination, bundleName);
+  if (!existsSync(bundle)) copyNew(source, bundle);
+  if (!existsSync(`${bundle}.sig`)) copyNew(signature, `${bundle}.sig`);
   return bundle;
 }
 
@@ -132,8 +133,10 @@ export function createLatestManifest(
     const bundleName = uniquePath(
       readdirSync(directory),
       (name) =>
-        name.startsWith(`${prefix}${platformName}_updater`) &&
-        name.endsWith(platform.updaterExtension),
+        name ===
+        (platform.updaterUsesInstaller
+          ? `${prefix}${platformName}${platform.installerExtension}`
+          : `${prefix}${platformName}_updater${platform.updaterExtension}`),
       `Missing updater bundle for ${platformName}`,
     );
     const signature = readFileSync(
@@ -169,8 +172,10 @@ export function checksums(directory) {
     )
     .sort();
   const installers = files.filter((name) => /\.(?:dmg|exe)$/.test(name));
-  const bundles = files.filter((name) =>
-    /_updater\.(?:app\.tar\.gz|nsis\.zip)$/.test(name),
+  const bundles = files.filter(
+    (name) =>
+      /_updater\.(?:app\.tar\.gz|nsis\.zip)$/.test(name) ||
+      /_Windows_x64_Setup\.exe$/.test(name),
   );
   const signatures = files.filter((name) => name.endsWith(".sig"));
   if (

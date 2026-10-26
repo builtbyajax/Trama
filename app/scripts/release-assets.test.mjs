@@ -25,15 +25,19 @@ test("stages signed update bundles, emits latest.json and checksums all assets",
   const definitions = [
     ["macOS_Apple-Silicon", ".dmg", ".app.tar.gz", "darwin-aarch64-app"],
     ["macOS_Intel", ".dmg", ".app.tar.gz", "darwin-x86_64-app"],
-    ["Windows_x64_Setup", ".exe", ".nsis.zip", "windows-x86_64-nsis"],
+    ["Windows_x64_Setup", ".exe", ".exe", "windows-x86_64-nsis"],
   ];
 
   assert.throws(() => checksums(dest), /three installers/);
   for (const [platform, installerExtension, updaterExtension] of definitions) {
     const installer = join(dir, `${platform}${installerExtension}`);
-    const updater = join(dir, `${platform}${updaterExtension}`);
+    const updater =
+      updaterExtension === installerExtension
+        ? installer
+        : join(dir, `${platform}${updaterExtension}`);
     writeFileSync(installer, `Installer ${platform}`);
-    writeFileSync(updater, `Updater bundle ${platform}`);
+    if (updater !== installer)
+      writeFileSync(updater, `Updater bundle ${platform}`);
     writeFileSync(`${updater}.sig`, `Signature ${platform}\n`);
     stageInstaller([installer], "0.2.2", platform, dest);
     stageUpdaterArtifact([updater, `${updater}.sig`], "0.2.2", platform, dest);
@@ -50,6 +54,11 @@ test("stages signed update bundles, emits latest.json and checksums all assets",
   assert.ok(
     manifest.platforms["windows-x86_64-nsis"].url.includes("builtbyajax/Trama"),
   );
+  assert.ok(
+    manifest.platforms["windows-x86_64-nsis"].url.endsWith(
+      "/Trama_0.2.2_Windows_x64_Setup.exe",
+    ),
+  );
   assert.equal(
     manifest.platforms["darwin-aarch64-app"].signature,
     "Signature macOS_Apple-Silicon",
@@ -57,10 +66,10 @@ test("stages signed update bundles, emits latest.json and checksums all assets",
 
   const text = checksums(dest);
   const lines = text.trim().split("\n");
-  assert.equal(lines.length, 10);
+  assert.equal(lines.length, 9);
   assert.ok(lines.some((line) => line.endsWith("latest.json")));
   assert.ok(lines.some((line) => line.endsWith("_updater.app.tar.gz")));
-  assert.ok(lines.some((line) => line.endsWith("_updater.nsis.zip.sig")));
+  assert.ok(lines.some((line) => line.endsWith("Windows_x64_Setup.exe.sig")));
   assert.ok(
     text.includes(
       createHash("sha256")
@@ -104,7 +113,7 @@ test("finds Tauri updater bundles outside the reported installer paths", (t) => 
   const definitions = [
     ["macOS_Apple-Silicon", ".dmg", ".app.tar.gz", "dmg", "macos"],
     ["macOS_Intel", ".dmg", ".app.tar.gz", "dmg", "macos"],
-    ["Windows_x64_Setup", ".exe", ".nsis.zip", "nsis", "nsis"],
+    ["Windows_x64_Setup", ".exe", ".exe", "nsis", "nsis"],
   ];
 
   for (const [
@@ -128,12 +137,18 @@ test("finds Tauri updater bundles outside the reported installer paths", (t) => 
       `Trama_${platform}${updaterExtension}`,
     );
     writeFileSync(installer, `Installer ${platform}`);
-    writeFileSync(updater, `Updater bundle ${platform}`);
+    if (updater !== installer)
+      writeFileSync(updater, `Updater bundle ${platform}`);
     writeFileSync(`${updater}.sig`, `Signature ${platform}\n`);
 
     const staged = stageUpdaterArtifact([installer], "0.2.2", platform, dest);
 
-    assert.equal(readFileSync(staged, "utf8"), `Updater bundle ${platform}`);
+    assert.equal(
+      readFileSync(staged, "utf8"),
+      updater === installer
+        ? `Installer ${platform}`
+        : `Updater bundle ${platform}`,
+    );
     assert.equal(
       readFileSync(`${staged}.sig`, "utf8"),
       `Signature ${platform}\n`,

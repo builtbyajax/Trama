@@ -26,12 +26,12 @@ jobs:
           - name: macOS Apple Silicon
             runner: macos-latest
             target: aarch64-apple-darwin
-            bundle: dmg
+            bundle: app,dmg
             asset: macOS_Apple-Silicon
           - name: macOS Intel
             runner: macos-15-intel
             target: x86_64-apple-darwin
-            bundle: dmg
+            bundle: app,dmg
             asset: macOS_Intel
           - name: Windows x64
             runner: windows-latest
