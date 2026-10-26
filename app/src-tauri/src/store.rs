@@ -1,4 +1,5 @@
 //! Shared SQLite core for the desktop app and the project-bound MCP process.
+pub mod backups;
 mod categories;
 mod conversation;
 mod goals;
@@ -310,6 +311,17 @@ impl Store {
         // One immediate transaction for every step: a window and an agent opening an old
         // database together must not both migrate it.
         let tx = sql(db.transaction_with_behavior(TransactionBehavior::Immediate))?;
+        let version = migrations::check_version(&tx)?;
+        if version < SCHEMA_VERSION && path != Path::new(":memory:") {
+            let has_tables: bool = sql(tx.query_row(
+                "SELECT EXISTS(SELECT 1 FROM sqlite_schema WHERE type='table')",
+                [],
+                |r| r.get(0),
+            ))?;
+            if has_tables {
+                backups::create(path, version)?;
+            }
+        }
         migrations::migrate(&tx)?;
         sql(tx.commit())?;
         sql(db.set_db_config(
