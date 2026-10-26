@@ -50,6 +50,11 @@ fn has_running_agent() -> Result<bool, String> {
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
+            // Before anything opens a database: workspaces left loose by Trama 0.3.0 move into
+            // folders of their own. One that can't move now is tried again next time.
+            if let Err(error) = workspaces::organize() {
+                eprintln!("Trama: {error}");
+            }
             #[cfg(target_os = "macos")]
             menu::install(app)?;
             #[cfg(feature = "diagnostic")]

@@ -1,6 +1,8 @@
 //! Development/test transport. Not bundled with the desktop app.
 use std::io::{self, Read};
 fn main() {
+    // Like the app's start, before anything opens a database.
+    let _ = trama_lib::workspaces::organize();
     let mut input = String::new();
     let response = match io::stdin().read_to_string(&mut input) {
         Ok(_) => match serde_json::from_str::<serde_json::Value>(&input) {

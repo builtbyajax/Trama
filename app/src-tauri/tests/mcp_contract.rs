@@ -578,6 +578,36 @@ fn newer_database_exits_clearly_instead_of_waiting_for_the_client() {
 }
 
 #[test]
+fn without_a_workspace_the_agent_asks_for_one_and_finds_it_once_created() {
+    let dir = tempfile::tempdir().unwrap();
+    let home = dir.path().join("home");
+    let mut agent = Mcp::start(None, None, &home);
+    assert!(agent.request("tools/list", json!({}))["result"]["tools"]
+        .as_array()
+        .is_some_and(|tools| !tools.is_empty()));
+    let waiting = agent.call("list_projects", json!({}));
+    assert_eq!(waiting["result"]["isError"], true);
+    assert_eq!(
+        waiting["result"]["content"][0]["text"],
+        "Open Trama and create a workspace."
+    );
+    assert!(!home.exists());
+    let registry = Registry::at(home.clone(), None);
+    let created = registry.create("First", None, None).unwrap().active;
+    common::project(&Store::open(Path::new(&created)).unwrap(), "Alpha");
+    assert_eq!(
+        agent.ok("list_projects", json!({}))["projects"][0]["name"],
+        "Alpha"
+    );
+    // Deleting the last one leaves the agent connected, waiting for the next.
+    registry.delete(&created).unwrap();
+    assert_eq!(
+        agent.call("list_projects", json!({}))["result"]["isError"],
+        true
+    );
+}
+
+#[test]
 fn malformed_requests_and_unsupported_protocols_leave_the_process_usable() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("protocol.sqlite");
@@ -626,8 +656,8 @@ fn workspace_mode_follows_switches_but_explicit_database_remains_pinned() {
     common::project(&Store::open(&a).unwrap(), "Alpha");
     common::project(&Store::open(&b).unwrap(), "Beta");
     let registry = Registry::at(home.clone(), None);
-    registry.open(a.to_str().unwrap()).unwrap();
-    registry.open(b.to_str().unwrap()).unwrap();
+    registry.open(a.to_str().unwrap(), None).unwrap();
+    registry.open(b.to_str().unwrap(), None).unwrap();
     registry.switch(a.to_str().unwrap()).unwrap();
     let mut following = Mcp::start(None, None, &home);
     let mut pinned = Mcp::start(Some(&a), None, &home);

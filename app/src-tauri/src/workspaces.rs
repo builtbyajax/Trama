@@ -1,10 +1,17 @@
 //! Workspaces: each one is a separate database file. The list and the open one live in
-//! `workspaces.json`, beside the default database, so the window and the MCP read the same choice.
-//! A workspace's color and icon live in its own database, so they travel with the file.
+//! `workspaces.json`, in Trama's folder, so the window and the MCP read the same choice.
+//! A workspace Trama creates gets a folder of its own, `Workspaces/<id>/workspace.sqlite`, which
+//! also holds its backups; a file opened from elsewhere stays where it is. Names live only in the
+//! list, so renaming touches no file. Color and icon live in the database, so they travel with it.
 use crate::store::{Result, Store};
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+
+/// The folder in Trama's folder that holds a folder for each workspace Trama created.
+const FOLDER: &str = "Workspaces";
+/// A workspace's database, inside its folder.
+const FILE: &str = "workspace.sqlite";
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -18,6 +25,9 @@ struct Entry {
 struct SavedRegistry {
     active: Option<String>,
     workspaces: Vec<Entry>,
+    /// `organize` moved workspaces and the app hasn't told the person to reconnect the agents yet.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    organized: bool,
 }
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -37,11 +47,12 @@ pub struct Workspaces {
     pub active: String,
     /// `TRAMA_DB` chose the database, so there's nothing to switch.
     pub pinned: bool,
-    pub default_folder: String,
+    /// The app moved workspaces into their folders when it started: connected agents must reconnect.
+    pub organized: bool,
     pub workspaces: Vec<Workspace>,
 }
 
-/// Trama's own folder: the default database and the workspace list. `TRAMA_HOME` moves it, for
+/// Trama's own folder: the workspace list and the workspaces' folders. `TRAMA_HOME` moves it, for
 /// trying the app without touching the real one.
 fn home() -> PathBuf {
     std::env::var_os("TRAMA_HOME")
@@ -113,16 +124,6 @@ fn clean_name(name: &str) -> Result<String> {
     Ok(name.into())
 }
 
-impl Store {
-    /// Writes a consistent copy of the whole database to a new file.
-    pub fn copy_to(&self, target: &Path) -> Result<()> {
-        self.db
-            .execute("VACUUM INTO ?", [target.display().to_string()])
-            .map_err(|e| e.to_string())?;
-        Ok(())
-    }
-}
-
 /// An isolated registry. Only `from_env` reads process configuration; operations and tests
 /// use explicit paths so parallel registries cannot modify each other's data.
 pub struct Registry {
@@ -139,20 +140,34 @@ impl Registry {
     fn registry_path(&self) -> PathBuf {
         self.home.join("workspaces.json")
     }
-    fn default_path(&self) -> PathBuf {
+    /// Where Trama 0.3.0 and earlier kept the workspace they created on their own.
+    fn legacy_path(&self) -> PathBuf {
         self.home.join("trama.sqlite")
     }
-    /// The list as saved. The default workspace starts it on first use; after that it can leave like
-    /// any other, as long as one remains.
+    /// A new, empty folder for a workspace, named by a short id that never changes.
+    fn new_folder(&self) -> Result<PathBuf> {
+        let parent = self.home.join(FOLDER);
+        std::fs::create_dir_all(&parent).map_err(|e| e.to_string())?;
+        loop {
+            let folder = parent.join(crate::store::id()[..8].to_lowercase());
+            match std::fs::create_dir(&folder) {
+                Ok(()) => return Ok(folder),
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(e) => return Err(e.to_string()),
+            }
+        }
+    }
+    /// The list as saved. Before Trama 0.3.1 there was no list until the person made a second
+    /// workspace, only the one Trama created; that one still counts until `organize` moves it.
     fn load(&self) -> SavedRegistry {
         let mut registry: SavedRegistry = std::fs::read(self.registry_path())
             .ok()
             .and_then(|bytes| serde_json::from_slice(&bytes).ok())
             .unwrap_or_default();
-        if registry.workspaces.is_empty() {
+        if registry.workspaces.is_empty() && self.legacy_path().is_file() {
             registry.workspaces.push(Entry {
                 name: String::new(),
-                path: self.default_path().display().to_string(),
+                path: self.legacy_path().display().to_string(),
             });
         }
         registry
@@ -170,38 +185,35 @@ impl Registry {
     }
     /// The database the app and the MCP open: `TRAMA_DB` when set, otherwise the open workspace. One
     /// whose file went missing falls back to the first one in the list that exists, instead of
-    /// creating an empty file there; with none, to the first, which Trama then creates.
-    pub fn active_path(&self) -> PathBuf {
+    /// creating an empty file there. None until the person creates or opens a workspace.
+    pub fn active_path(&self) -> Option<PathBuf> {
         if let Some(path) = self.pinned.clone() {
-            return path;
+            return Some(path);
         }
         let registry = self.load();
-        let paths = || registry.workspaces.iter().map(|w| PathBuf::from(&w.path));
         registry
             .active
-            .as_ref()
+            .iter()
+            .chain(registry.workspaces.iter().map(|w| &w.path))
             .map(PathBuf::from)
-            .filter(|path| path.is_file())
-            .or_else(|| paths().find(|path| path.is_file()))
-            .or_else(|| paths().next())
-            .unwrap_or_else(|| self.default_path())
+            .find(|path| path.is_file())
     }
     pub fn list(&self) -> Workspaces {
         let registry = self.load();
-        let active = self.active_path();
         Workspaces {
-            active: active.display().to_string(),
+            active: self
+                .active_path()
+                .map(|p| p.display().to_string())
+                .unwrap_or_default(),
             pinned: self.pinned.is_some(),
-            default_folder: self.home.display().to_string(),
+            organized: registry.organized,
             workspaces: registry
                 .workspaces
                 .into_iter()
                 .map(|w| {
                     let (color, icon) = look(Path::new(&w.path));
                     Workspace {
-                        // The default one is only created by its first use.
-                        missing: !Path::new(&w.path).is_file()
-                            && !same(&w.path, &self.default_path()),
+                        missing: !Path::new(&w.path).is_file(),
                         name: w.name,
                         path: w.path,
                         color,
@@ -217,24 +229,16 @@ impl Registry {
         }
         Ok(self.load())
     }
-    /// Creates `<folder>/<name>.sqlite` and opens it.
-    pub fn create(
-        &self,
-        name: &str,
-        folder: &str,
-        color: Option<i64>,
-        icon: Option<&str>,
-    ) -> Result<Workspaces> {
+    /// Creates the workspace in a folder of its own, `Workspaces/<id>/workspace.sqlite`, and opens it.
+    pub fn create(&self, name: &str, color: Option<i64>, icon: Option<&str>) -> Result<Workspaces> {
         let mut registry = self.unpinned()?;
         let name = clean_name(name)?;
-        if name.contains(['/', '\\', ':']) || name.starts_with('.') {
-            return Err("The name can't have slashes, colons or start with a dot.".into());
+        let folder = self.new_folder()?;
+        let path = folder.join(FILE);
+        if let Err(e) = Store::open(&path).and_then(|store| store.set_look(color, icon)) {
+            let _ = std::fs::remove_dir_all(&folder);
+            return Err(e);
         }
-        let path = Path::new(folder).join(format!("{name}.sqlite"));
-        if path.exists() {
-            return Err("A file with that name already exists in the folder.".into());
-        }
-        Store::open(&path)?.set_look(color, icon)?;
         let path = path.display().to_string();
         registry.workspaces.push(Entry {
             name,
@@ -244,23 +248,34 @@ impl Registry {
         self.save(&registry)?;
         Ok(self.list())
     }
-    /// Opens an existing database file, adding it to the list the first time. Opening it brings an
-    /// older file up to date, and refuses one from a newer Trama.
-    pub fn open(&self, path: &str) -> Result<Workspaces> {
+    /// Opens an existing database file, adding it to the list the first time as `name`, or else as
+    /// its file is named. A workspace Trama made is always `workspace.sqlite`, which names nothing,
+    /// so that one needs `name`. Opening brings an older file up to date, and refuses one from a
+    /// newer Trama.
+    pub fn open(&self, path: &str, name: Option<&str>) -> Result<Workspaces> {
         let mut registry = self.unpinned()?;
         let file = Path::new(path);
         if !file.is_file() {
             return Err("The workspace file doesn't exist.".into());
         }
-        Store::open(file)?;
         if !registry.workspaces.iter().any(|w| w.path == path) {
-            registry.workspaces.push(Entry {
-                name: file
+            let name = match name {
+                Some(name) => clean_name(name)?,
+                None if file.file_name() == Some(FILE.as_ref()) => {
+                    return Err("The workspace needs a name.".into())
+                }
+                None => file
                     .file_stem()
                     .map(|s| s.to_string_lossy().into_owned())
                     .unwrap_or_default(),
+            };
+            Store::open(file)?;
+            registry.workspaces.push(Entry {
+                name,
                 path: path.into(),
             });
+        } else {
+            Store::open(file)?;
         }
         registry.active = Some(path.into());
         self.save(&registry)?;
@@ -269,7 +284,7 @@ impl Registry {
     pub fn switch(&self, path: &str) -> Result<Workspaces> {
         let mut registry = self.unpinned()?;
         find(&mut registry, path)?;
-        if !Path::new(path).is_file() && !same(path, &self.default_path()) {
+        if !Path::new(path).is_file() {
             return Err("The workspace file doesn't exist.".into());
         }
         registry.active = Some(path.into());
@@ -287,7 +302,7 @@ impl Registry {
         let mut registry = self.unpinned()?;
         let name = clean_name(name)?;
         find(&mut registry, path)?;
-        if !Path::new(path).is_file() && !same(path, &self.default_path()) {
+        if !Path::new(path).is_file() {
             return Err("The workspace file doesn't exist.".into());
         }
         Store::open(Path::new(path))?.set_look(color, icon)?;
@@ -295,94 +310,146 @@ impl Registry {
         self.save(&registry)?;
         Ok(self.list())
     }
-    /// Takes a workspace off the list; its file stays where it is.
+    /// Takes a workspace off the list; its file stays where it is. The open one can go too.
     pub fn remove(&self, path: &str) -> Result<Workspaces> {
         let mut registry = self.unpinned()?;
-        if same(path, &self.active_path()) {
-            return Err("Switch to another workspace before removing this one.".into());
-        }
-        find(&mut registry, path)?;
-        if registry.workspaces.len() == 1 {
-            return Err("Trama needs at least one workspace.".into());
-        }
-        registry.workspaces.retain(|w| w.path != path);
+        self.leave(&mut registry, path)?;
         self.save(&registry)?;
         Ok(self.list())
     }
-    /// Removes a workspace from the list and deletes its file with its journal files: its projects and
-    /// tasks are gone. Like removing, never the open one or the last.
+    /// Removes a workspace from the list and deletes its file with its journal files and its backups,
+    /// then its folder once empty: its projects and tasks are gone. The open one too, like removing.
     pub fn delete(&self, path: &str) -> Result<Workspaces> {
         let mut registry = self.unpinned()?;
-        if same(path, &self.active_path()) {
-            return Err("Switch to another workspace before deleting this one.".into());
-        }
-        find(&mut registry, path)?;
-        if registry.workspaces.len() == 1 {
-            return Err("Trama needs at least one workspace.".into());
-        }
+        self.leave(&mut registry, path)?;
+        let backups = crate::store::backups::files(Path::new(path))?;
         for file in [
-            path.to_string(),
-            format!("{path}-wal"),
-            format!("{path}-shm"),
-        ] {
+            PathBuf::from(path),
+            PathBuf::from(format!("{path}-wal")),
+            PathBuf::from(format!("{path}-shm")),
+        ]
+        .into_iter()
+        .chain(backups)
+        {
             match std::fs::remove_file(&file) {
                 Err(e) if e.kind() != std::io::ErrorKind::NotFound => return Err(e.to_string()),
                 _ => {}
             }
         }
-        registry.workspaces.retain(|w| w.path != path);
+        // Only empty folders go: a Backups folder beside a file opened from elsewhere may hold other
+        // databases' backups, and a workspace's folder may hold something the person put there.
+        let _ = std::fs::remove_dir(crate::store::backups::folder(Path::new(path)));
+        if let Some(folder) = self.own_folder(Path::new(path)) {
+            let _ = std::fs::remove_dir(folder);
+        }
         self.save(&registry)?;
         Ok(self.list())
     }
-    /// Moves a workspace's file into `folder`, keeping its name. The copy is written whole by SQLite
-    /// and checked before the original and its journal files are deleted.
-    pub fn relocate(&self, path: &str, folder: &str) -> Result<Workspaces> {
+    /// Takes `path` off the list. When it is the open one, the first other workspace that exists
+    /// opens instead; with none, the list waits for a new one.
+    fn leave(&self, registry: &mut SavedRegistry, path: &str) -> Result<()> {
+        find(registry, path)?;
+        if self.is_active(path) {
+            registry.active = registry
+                .workspaces
+                .iter()
+                .find(|w| w.path != path && Path::new(&w.path).is_file())
+                .map(|w| w.path.clone());
+        }
+        registry.workspaces.retain(|w| w.path != path);
+        Ok(())
+    }
+    fn is_active(&self, path: &str) -> bool {
+        self.active_path().is_some_and(|active| same(path, &active))
+    }
+    /// The folder Trama made for the workspace at `path`; none for a file opened from elsewhere.
+    fn own_folder<'a>(&self, path: &'a Path) -> Option<&'a Path> {
+        let folder = path.parent()?;
+        (path.file_name()? == FILE && folder.parent()? == self.home.join(FOLDER)).then_some(folder)
+    }
+    /// Moves the workspaces Trama 0.3.0 and earlier left loose in its folder each into a folder of
+    /// its own, with its journal files, and saves the list. Files opened from elsewhere stay put. One
+    /// that can't move now, such as a file in use on Windows, stays where it is, and the next start
+    /// tries again. True when something moved, so connected agents must reconnect.
+    pub fn organize(&self) -> Result<bool> {
+        if self.pinned.is_some() {
+            return Ok(false);
+        }
+        let mut registry = self.load();
+        let mut moved = false;
+        for entry in &mut registry.workspaces {
+            let file = PathBuf::from(&entry.path);
+            if file.parent() != Some(self.home.as_path()) || !file.is_file() {
+                continue;
+            }
+            let Ok(target) = self.move_into_folder(&file) else {
+                continue;
+            };
+            let target = target.display().to_string();
+            if registry.active.as_deref() == Some(entry.path.as_str()) {
+                registry.active = Some(target.clone());
+            }
+            entry.path = target;
+            moved = true;
+        }
+        if moved {
+            registry.organized = true;
+            self.save(&registry)?;
+        }
+        Ok(moved)
+    }
+    /// The app told the person to reconnect the agents.
+    pub fn dismiss_organized(&self) -> Result<Workspaces> {
         let mut registry = self.unpinned()?;
-        if same(path, &self.default_path()) {
-            return Err("The default workspace stays in Trama's folder.".into());
+        if registry.organized {
+            registry.organized = false;
+            self.save(&registry)?;
         }
-        let source = PathBuf::from(path);
-        let name = source.file_name().ok_or("Invalid workspace path.")?;
-        let target = Path::new(folder).join(name);
-        if target.exists() {
-            return Err("A file with that name already exists in the folder.".into());
-        }
-        let store = Store::open(&source)?;
-        store.copy_to(&target)?;
-        drop(store);
-        Store::open(&target)?;
+        Ok(self.list())
+    }
+    /// Renames the database and its journal files into a new folder, all or none.
+    fn move_into_folder(&self, file: &Path) -> Result<PathBuf> {
+        let folder = self.new_folder()?;
+        let target = folder.join(FILE);
+        let mut done: Vec<(PathBuf, PathBuf)> = Vec::new();
         for suffix in ["", "-wal", "-shm"] {
-            let file = PathBuf::from(format!("{path}{suffix}"));
-            if file.exists() {
-                std::fs::remove_file(file).map_err(|e| e.to_string())?;
+            let from = PathBuf::from(format!("{}{suffix}", file.display()));
+            let to = PathBuf::from(format!("{}{suffix}", target.display()));
+            if suffix.is_empty() || from.exists() {
+                if let Err(e) = std::fs::rename(&from, &to) {
+                    for (from, to) in done.iter().rev() {
+                        let _ = std::fs::rename(to, from);
+                    }
+                    let _ = std::fs::remove_dir(&folder);
+                    return Err(e.to_string());
+                }
+                done.push((from, to));
             }
         }
-        let target = target.display().to_string();
-        find(&mut registry, path)?.path = target.clone();
-        if registry.active.as_deref() == Some(path) {
-            registry.active = Some(target);
-        }
-        self.save(&registry)?;
-        Ok(self.list())
+        Ok(target)
     }
 }
 
-pub fn active_path() -> PathBuf {
-    Registry::from_env().active_path()
+/// The open workspace's database. None exists until the person creates or opens one in the app.
+pub fn active_path() -> Result<PathBuf> {
+    Registry::from_env()
+        .active_path()
+        .ok_or_else(|| "Open Trama and create a workspace.".into())
+}
+pub fn organize() -> Result<bool> {
+    Registry::from_env().organize()
+}
+pub fn dismiss_organized() -> Result<Workspaces> {
+    Registry::from_env().dismiss_organized()
 }
 pub fn list() -> Workspaces {
     Registry::from_env().list()
 }
-pub fn create(
-    name: &str,
-    folder: &str,
-    color: Option<i64>,
-    icon: Option<&str>,
-) -> Result<Workspaces> {
-    Registry::from_env().create(name, folder, color, icon)
+pub fn create(name: &str, color: Option<i64>, icon: Option<&str>) -> Result<Workspaces> {
+    Registry::from_env().create(name, color, icon)
 }
-pub fn open(path: &str) -> Result<Workspaces> {
-    Registry::from_env().open(path)
+pub fn open(path: &str, name: Option<&str>) -> Result<Workspaces> {
+    Registry::from_env().open(path, name)
 }
 pub fn switch(path: &str) -> Result<Workspaces> {
     Registry::from_env().switch(path)
@@ -395,7 +462,4 @@ pub fn remove(path: &str) -> Result<Workspaces> {
 }
 pub fn delete(path: &str) -> Result<Workspaces> {
     Registry::from_env().delete(path)
-}
-pub fn relocate(path: &str, folder: &str) -> Result<Workspaces> {
-    Registry::from_env().relocate(path, folder)
 }

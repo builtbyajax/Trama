@@ -86,7 +86,10 @@ fn duplicate_project_is_rejected_without_changes() {
     let source = Store::open(&dir.path().join("source.sqlite")).unwrap();
     let (p, t) = seeded(&source, dir.path());
     let target = dir.path().join("target.sqlite");
-    source.copy_to(&target).unwrap();
+    rusqlite::Connection::open(dir.path().join("source.sqlite"))
+        .unwrap()
+        .execute("VACUUM INTO ?1", [target.to_str().unwrap()])
+        .unwrap();
     let before = serde_json::to_value(source.task_details(&t, &p).unwrap()).unwrap();
     assert!(source
         .move_project_to(&p, &target)

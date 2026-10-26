@@ -9,6 +9,8 @@ const INSTRUCTIONS: &str = "Manage the local Trama through these tools. Read get
 pub struct Agent {
     store: Store,
     project_id: Option<String>,
+    /// Why there is no database to work on: every tool call answers with it.
+    unavailable: Option<String>,
 }
 impl Agent {
     pub fn new(store: Store, project_id: &str) -> Result<Self> {
@@ -16,13 +18,23 @@ impl Agent {
         Ok(Self {
             store,
             project_id: Some(project.id),
+            unavailable: None,
         })
     }
     pub fn workspace(store: Store) -> Self {
         Self {
             store,
             project_id: None,
+            unavailable: None,
         }
+    }
+    /// Connects and lists the tools without a workspace to work on; each tool call says `reason`.
+    pub fn without_workspace(reason: &str) -> Result<Self> {
+        Ok(Self {
+            store: Store::open(std::path::Path::new(":memory:"))?,
+            project_id: None,
+            unavailable: Some(reason.into()),
+        })
     }
     pub fn handle(&self, request: Value) -> Option<Value> {
         let id = request.get("id").cloned().unwrap_or(Value::Null);
@@ -92,8 +104,10 @@ impl Agent {
                     return Some(error(id, -32602, "Arguments must be an object"));
                 }
                 let outcome = self
-                    .store
-                    .check_supported_schema()
+                    .unavailable
+                    .clone()
+                    .map_or(Ok(()), Err)
+                    .and_then(|_| self.store.check_supported_schema())
                     .and_then(|_| schema::validate(arguments, &definition["inputSchema"]))
                     .and_then(|_| self.execute(name, arguments.as_object().unwrap()));
                 match outcome {

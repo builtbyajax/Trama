@@ -2,6 +2,7 @@ use std::{
     io::{self, BufRead, Write},
     path::PathBuf,
 };
+type Database = Result<PathBuf, String>;
 use trama_lib::{agent::Agent, store::Store};
 fn run() -> Result<(), String> {
     let mut project = None;
@@ -31,15 +32,20 @@ fn run() -> Result<(), String> {
     // In workspace mode without --database, the agent follows the workspace open in the app: the
     // file is checked before each request and reopened when the person switched. A project-bound
     // agent stays with the database that holds its project.
+    // Following the app, it connects even while there is no workspace: tool calls then say to create
+    // one, and the request after the person does finds it.
     let follow = workspace && database.is_none();
-    let mut path = database.unwrap_or_else(trama_lib::store::default_database_path);
-    let store = Store::open(&path)?;
+    let mut path: Database = match database {
+        Some(path) => Ok(path),
+        None if follow => trama_lib::store::default_database_path(),
+        None => Ok(trama_lib::store::default_database_path()?),
+    };
     let mut agent = if workspace {
-        Agent::workspace(store)
+        workspace_agent(&path)?
     } else {
         let id = uuid::Uuid::parse_str(project.as_deref().unwrap())
             .map_err(|_| "Uso: trama-agent --project-id UUID [--database CAMINHO]".to_string())?;
-        Agent::new(store, &id.to_string())?
+        Agent::new(Store::open(path.as_ref()?)?, &id.to_string())?
     };
     let stdin = io::stdin();
     let mut stdout = io::stdout().lock();
@@ -48,7 +54,7 @@ fn run() -> Result<(), String> {
         if follow {
             let active = trama_lib::store::default_database_path();
             if active != path {
-                agent = Agent::workspace(Store::open(&active)?);
+                agent = workspace_agent(&active)?;
                 path = active;
             }
         }
@@ -64,6 +70,12 @@ fn run() -> Result<(), String> {
         }
     }
     Ok(())
+}
+fn workspace_agent(path: &Database) -> Result<Agent, String> {
+    match path {
+        Ok(path) => Ok(Agent::workspace(Store::open(path)?)),
+        Err(reason) => Agent::without_workspace(reason),
+    }
 }
 fn main() {
     if let Err(error) = run() {

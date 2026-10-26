@@ -52,7 +52,7 @@ pub fn id() -> String {
     uuid::Uuid::new_v4().to_string().to_uppercase()
 }
 /// The open workspace's database, or the one `TRAMA_DB` names.
-pub fn default_database_path() -> PathBuf {
+pub fn default_database_path() -> Result<PathBuf> {
     crate::workspaces::active_path()
 }
 
@@ -344,7 +344,7 @@ impl Store {
         Ok(())
     }
     pub fn open_default() -> Result<Self> {
-        Self::open(&default_database_path())
+        Self::open(&default_database_path()?)
     }
     pub fn projects(&self) -> Result<Vec<Project>> {
         let mut stmt = sql(self.db.prepare(
