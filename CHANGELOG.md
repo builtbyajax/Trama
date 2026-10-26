@@ -10,8 +10,10 @@ Changes delivered in each Trama version. **Unreleased** lists implemented change
 
 ### Added
 
-- Check for signed updates from the app, with automatic checks and a manual check in Preferences.
-- Install an available update and restart the app from the update notice or Preferences. Keep a blue indicator in Preferences after dismissing the notice.
+- Check for signed updates automatically or manually in Preferences; manual checks remain available after finding an update.
+- Install an available update and restart the app from the update notice or Preferences, with a persistent Preferences indicator after dismissing the notice.
+- Keep a found update installable after dismissing the notice, allow retry after a failed download, and prevent overlapping update operations.
+- Relaunch macOS updates through the existing Dock item and block Windows installation while `trama-agent.exe` is in use.
 - After a version change, recommend restarting agent sessions to reconnect to the MCP included with the installed version, including after a downgrade.
 
 ### Changed
@@ -20,12 +22,7 @@ Changes delivered in each Trama version. **Unreleased** lists implemented change
 
 ### Fixed
 
-- Reuse the existing macOS Dock icon when relaunching after an update.
-- Keep dismissed updates installable from Preferences, preserve retries after a failed download, and prevent concurrent update operations.
-- Keep manual checking available when an update has already been found.
-
 - Refuse MCP tool calls from an agent connected to a database migrated by a newer app.
-- Prevent installing an update on Windows while `trama-agent.exe` is in use.
 
 ## [0.2.1](https://github.com/builtbyajax/Trama/releases/tag/v0.2.1) — 2026-10-24
 
