@@ -92,16 +92,16 @@ describe("useAppUpdater", () => {
     expect(result.current.updateNoticeDismissed).toBe(false);
   });
 
-  it("shows the agent-session notice once after an app version changes", async () => {
+  it("persists a restart notice until dismissed for the current transition", async () => {
     localStorage.setItem("trama.updater.installed-version", "0.2.1");
     const first = renderHook(() => useAppUpdater());
     await act(async () => Promise.resolve());
     expect(first.result.current.restartNotice).toBe(true);
 
     act(() => first.result.current.dismissRestartNotice());
-    expect(localStorage.getItem("trama.updater.pending-restart-version")).toBe(
-      "",
-    );
+    expect(
+      JSON.parse(localStorage.getItem("trama.updater.restart-notice") ?? "{}"),
+    ).toMatchObject({ from: "0.2.1", to: "0.2.2", dismissed: true });
     first.unmount();
 
     const next = renderHook(() => useAppUpdater());
@@ -109,35 +109,47 @@ describe("useAppUpdater", () => {
     expect(next.result.current.restartNotice).toBe(false);
   });
 
-  it("keeps a pending reconnection notice across reopening and resets dismissal for each version change", async () => {
+  it("does not create a restart notice on first launch or a same-version reopen", async () => {
+    const first = renderHook(() => useAppUpdater());
+    await act(async () => Promise.resolve());
+    expect(first.result.current.restartNotice).toBe(false);
+    first.unmount();
+
+    const reopened = renderHook(() => useAppUpdater());
+    await act(async () => Promise.resolve());
+    expect(reopened.result.current.restartNotice).toBe(false);
+  });
+
+  it("shows a fresh notice after A to B to A and after a downgrade", async () => {
     const openVersion = async (version: string) => {
       mocks.installedAppVersion.mockResolvedValue(version);
       const hook = renderHook(() => useAppUpdater());
       await act(async () => Promise.resolve());
       return hook;
     };
-    const initial = await openVersion("0.2.2");
-    expect(initial.result.current.restartNotice).toBe(false);
-    initial.unmount();
 
-    const upgrade = await openVersion("0.2.3");
-    expect(upgrade.result.current.restartNotice).toBe(true);
-    upgrade.unmount();
-    const reopened = await openVersion("0.2.3");
-    expect(reopened.result.current.restartNotice).toBe(true);
-    act(() => reopened.result.current.dismissRestartNotice());
-    reopened.unmount();
+    localStorage.setItem("trama.updater.installed-version", "0.2.1");
+    const firstA = await openVersion("0.2.2");
+    expect(firstA.result.current.restartNotice).toBe(true);
+    act(() => firstA.result.current.dismissRestartNotice());
+    firstA.unmount();
 
-    const same = await openVersion("0.2.3");
-    expect(same.result.current.restartNotice).toBe(false);
-    same.unmount();
-    const downgrade = await openVersion("0.2.2");
+    const versionB = await openVersion("0.2.3");
+    expect(versionB.result.current.restartNotice).toBe(true);
+    act(() => versionB.result.current.dismissRestartNotice());
+    versionB.unmount();
+
+    const backToA = await openVersion("0.2.2");
+    expect(backToA.result.current.restartNotice).toBe(true);
+    act(() => backToA.result.current.dismissRestartNotice());
+    backToA.unmount();
+
+    const sameA = await openVersion("0.2.2");
+    expect(sameA.result.current.restartNotice).toBe(false);
+    sameA.unmount();
+
+    const downgrade = await openVersion("0.2.1");
     expect(downgrade.result.current.restartNotice).toBe(true);
-    act(() => downgrade.result.current.dismissRestartNotice());
-    downgrade.unmount();
-    localStorage.setItem("trama.updater.dismissed-restart-version", "0.2.3");
-    const upgradeAgain = await openVersion("0.2.3");
-    expect(upgradeAgain.result.current.restartNotice).toBe(true);
   });
 
   it("restores a dismissed update after reopening and clears the indicator when a check finds no update", async () => {

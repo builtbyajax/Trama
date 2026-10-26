@@ -11,9 +11,31 @@ import {
 
 const autoCheckKey = "trama.updater.auto-check";
 const installedVersionKey = "trama.updater.installed-version";
-const pendingRestartVersionKey = "trama.updater.pending-restart-version";
+const restartNoticeKey = "trama.updater.restart-notice";
 const dismissedUpdateVersionKey = "trama.updater.dismissed-update-version";
 const checkIntervalMs = 24 * 60 * 60 * 1000;
+
+type RestartNotice = { from: string; to: string; dismissed: boolean };
+
+function readRestartNotice(): RestartNotice | null {
+  try {
+    const value: unknown = JSON.parse(stored(restartNoticeKey) ?? "null");
+    if (
+      value &&
+      typeof value === "object" &&
+      "from" in value &&
+      typeof value.from === "string" &&
+      "to" in value &&
+      typeof value.to === "string" &&
+      "dismissed" in value &&
+      typeof value.dismissed === "boolean"
+    )
+      return value as RestartNotice;
+  } catch {
+    /* Ignore malformed local state. */
+  }
+  return null;
+}
 
 export type UpdateStatus =
   "idle" | "checking" | "current" | "available" | "error";
@@ -69,9 +91,11 @@ export function useAppUpdater() {
   }, []);
 
   const dismissRestartNotice = useCallback(() => {
-    store(pendingRestartVersionKey, "");
+    const notice = readRestartNotice();
+    if (notice?.to === installedVersion)
+      store(restartNoticeKey, JSON.stringify({ ...notice, dismissed: true }));
     setRestartNotice(false);
-  }, []);
+  }, [installedVersion]);
 
   const install = useCallback(async () => {
     const update = updateRef.current;
@@ -102,9 +126,18 @@ export function useAppUpdater() {
         if (!active || !version) return;
         const previous = stored(installedVersionKey);
         setInstalledVersion(version);
-        if (previous && previous !== version)
-          store(pendingRestartVersionKey, version);
-        setRestartNotice(stored(pendingRestartVersionKey) === version);
+        if (previous && previous !== version) {
+          store(
+            restartNoticeKey,
+            JSON.stringify({ from: previous, to: version, dismissed: false }),
+          );
+          setRestartNotice(true);
+        } else {
+          const notice = readRestartNotice();
+          setRestartNotice(
+            Boolean(previous && notice?.to === version && !notice.dismissed),
+          );
+        }
         store(installedVersionKey, version);
       })
       .catch(() => undefined);
