@@ -1049,6 +1049,8 @@ export type Key = keyof typeof ptBR;
  * the core filled in, such as a name or a path.
  */
 export const errors: Record<string, string> = {
+  "Couldn't restart Trama. Close and reopen the app to use the installed update.":
+    "Não foi possível reiniciar o Trama. Feche e abra o app para usar a atualização instalada.",
   "TRAMA_DB chooses the database, so workspaces can't be changed.":
     "O TRAMA_DB escolhe o banco, então os espaços não podem mudar.",
   "The workspace isn't in the list.": "O espaço não está na lista.",

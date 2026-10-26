@@ -1,5 +1,5 @@
 import type { Update } from "@tauri-apps/plugin-updater";
-import { t } from "./i18n";
+import { known, t } from "./i18n";
 
 export const isDesktopApp = () =>
   typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -30,7 +30,6 @@ export async function installAppUpdate(update: Update): Promise<void> {
   try {
     await update.downloadAndInstall();
   } catch {
-    await update.close().catch(() => undefined);
     throw new Error(t("Couldn't install the update. Try again later."));
   }
 }
@@ -49,5 +48,9 @@ async function hasRunningAgent(): Promise<boolean> {
 export async function restartUpdatedApp(): Promise<void> {
   if (!isDesktopApp()) return;
   const { invoke } = await import("@tauri-apps/api/core");
-  await invoke("restart_app");
+  try {
+    await invoke("restart_app");
+  } catch (error) {
+    throw new Error(known(String(error)));
+  }
 }
