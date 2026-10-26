@@ -53,7 +53,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "untrusted comment: minisign public key: 1AAD22D6D888A556\nRWRWpYjY1iKtGqWVfFedylQnzEZHoaSP3GXcO0v2qh2GhKw/hBqG7olf",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFBQUQyMkQ2RDg4OEE1NTYKUldSV3BZalkxaUt0R3FXVmZGZWR5bFFuekVaSG9hU1AzR1hjTzB2MnFoMkdoS3cvaEJxRzdvbGYK",
       "endpoints": [
         "https://github.com/builtbyajax/Trama/releases/latest/download/latest.json"
       ]
