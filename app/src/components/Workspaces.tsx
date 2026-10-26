@@ -1,13 +1,14 @@
 import { useRef, useState, type CSSProperties, type FormEvent } from "react";
 import {
-  chooseDirectory,
+  chooseDatabase,
+  createWorkspace,
   deleteWorkspace,
   errorMessage,
-  folderExample,
+  openWorkspace,
   removeWorkspace,
-  switchWorkspace,
 } from "../lib/api";
 import type { Workspace, Workspaces } from "../lib/types";
+import { BrandMark } from "./BrandMark";
 import { Field } from "./Field";
 import { Icon, type IconName } from "./Icon";
 import { Modal } from "./Modal";
@@ -22,6 +23,14 @@ export const workspaceName = (workspace?: Workspace) =>
 
 export const activeWorkspace = (list: Workspaces | null) =>
   list?.workspaces.find((w) => w.path === list.active);
+
+/**
+ * Every workspace Trama makes is a `workspace.sqlite`, so opening one the list doesn't have asks
+ * what it's called.
+ */
+export const needsName = (path: string, list: Workspaces | null) =>
+  /(^|[\\/])workspace\.sqlite$/.test(path) &&
+  !list?.workspaces.some((w) => w.path === path);
 
 const known = new Set<string>(projectIcons.map((icon) => icon.name));
 const hueOf = (color: number) => projectHues[color % projectHues.length];
@@ -187,11 +196,64 @@ export function WorkspaceButton({
   );
 }
 
-/** Names a new workspace and chooses its folder, or edits one's name, color and icon. */
+type Look = { name: string; color: number | null; icon: string | null };
+
+/** A workspace's name, color and icon, as the composer and the first screen ask for them. */
+function WorkspaceFields({
+  look,
+  onChange,
+}: {
+  look: Look;
+  onChange: (look: Look) => void;
+}) {
+  const { name, color, icon } = look;
+  return (
+    <>
+      <Field label={t("Workspace name")}>
+        {({ id }) => (
+          <input
+            id={id}
+            autoFocus
+            data-autofocus
+            required
+            autoComplete="off"
+            maxLength={60}
+            value={name}
+            onChange={(e) => onChange({ ...look, name: e.target.value })}
+            placeholder={t("E.g. Work")}
+          />
+        )}
+      </Field>
+      <Field label={t("Color")}>
+        {({ id, labelId }) => (
+          <ColorPicker
+            id={id}
+            labelId={labelId}
+            value={color}
+            onChange={(color) => onChange({ ...look, color })}
+          />
+        )}
+      </Field>
+      <Field label={t("Icon")}>
+        {({ id, labelId }) => (
+          <IconPicker
+            id={id}
+            labelId={labelId}
+            name={name}
+            hue={color === null ? "var(--line)" : hueOf(color)}
+            value={icon}
+            onChange={(icon) => onChange({ ...look, icon })}
+          />
+        )}
+      </Field>
+    </>
+  );
+}
+
+/** Names a new workspace, which Trama keeps in a folder of its own, or edits one's name, color and icon. */
 export function WorkspaceComposer({
   workspace,
   workspaces,
-  defaultFolder,
   onClose,
   onSubmit,
 }: {
@@ -199,34 +261,32 @@ export function WorkspaceComposer({
   workspace?: Workspace;
   /** All of them, so a new one gets the color fewest use. */
   workspaces: Workspace[];
-  defaultFolder: string;
   onClose: () => void;
   onSubmit: (
     name: string,
-    folder: string,
-    color: number,
+    color: number | null,
     icon: string | null,
   ) => Promise<unknown>;
 }) {
-  const [name, setName] = useState(workspace ? workspaceName(workspace) : "");
-  const [folder, setFolder] = useState(defaultFolder);
-  const [color, setColor] = useState(() => {
-    if (workspace?.color != null) return workspace.color;
+  const [look, setLook] = useState<Look>(() => {
     const use = projectHues.map(
       (_, hue) => workspaces.filter((w) => w.color === hue).length,
     );
-    return use.indexOf(Math.min(...use));
+    return {
+      name: workspace ? workspaceName(workspace) : "",
+      color: workspace?.color ?? use.indexOf(Math.min(...use)),
+      icon: workspace?.icon ?? null,
+    };
   });
-  const [icon, setIcon] = useState(workspace?.icon ?? null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
+    // The last error stays until the next result: clearing it first moves the form while waiting.
     setBusy(true);
-    setError("");
     try {
-      await onSubmit(name, folder.trim(), color, icon);
+      await onSubmit(look.name, look.color, look.icon);
     } catch (e) {
       setError(errorMessage(e));
       setBusy(false);
@@ -240,81 +300,7 @@ export function WorkspaceComposer({
     >
       <form className="modal-form" onSubmit={submit}>
         <div className="modal-body scroll">
-          <Field label={t("Workspace name")}>
-            {({ id }) => (
-              <input
-                id={id}
-                autoFocus
-                data-autofocus
-                required
-                autoComplete="off"
-                maxLength={60}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t("E.g. Work")}
-              />
-            )}
-          </Field>
-          <Field label={t("Color")}>
-            {({ id, labelId }) => (
-              <ColorPicker
-                id={id}
-                labelId={labelId}
-                value={color}
-                onChange={setColor}
-              />
-            )}
-          </Field>
-          <Field label={t("Icon")}>
-            {({ id, labelId }) => (
-              <IconPicker
-                id={id}
-                labelId={labelId}
-                name={name}
-                hue={hueOf(color)}
-                value={icon}
-                onChange={setIcon}
-              />
-            )}
-          </Field>
-          {!workspace && (
-            <Field
-              label={t("Folder")}
-              hint={t(
-                "The workspace is one file in this folder. Copy or move it like any other file.",
-              )}
-            >
-              {({ id, describedBy }) => (
-                <div className="input-row">
-                  <input
-                    id={id}
-                    className="path-input"
-                    aria-describedby={describedBy}
-                    required
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={folder}
-                    title={folder || undefined}
-                    onChange={(e) => setFolder(e.target.value)}
-                    placeholder={folderExample()}
-                  />
-                  <button
-                    type="button"
-                    className="button"
-                    aria-label={t("Choose workspace folder")}
-                    onClick={() =>
-                      void chooseDirectory(t("Workspace folder"), folder)
-                        .then((chosen) => chosen && setFolder(chosen))
-                        .catch((e) => setError(errorMessage(e)))
-                    }
-                  >
-                    <Icon name="folder" size={14} />
-                    {t("Choose…")}
-                  </button>
-                </div>
-              )}
-            </Field>
-          )}
+          <WorkspaceFields look={look} onChange={setLook} />
           {error && (
             <p className="form-error" role="alert">
               {error}
@@ -346,20 +332,166 @@ export function WorkspaceComposer({
 }
 
 /**
+ * The whole window until there is a workspace: the person names the first one, with nothing
+ * filled in for them, or opens a database they already have.
+ */
+export function FirstWorkspace({
+  onEnter,
+}: {
+  onEnter: (list: Workspaces) => void;
+}) {
+  const [look, setLook] = useState<Look>({ name: "", color: null, icon: null });
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [naming, setNaming] = useState<string | null>(null);
+  async function run(action: () => Promise<Workspaces | null>) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const list = await action();
+      if (list) return onEnter(list);
+    } catch (e) {
+      setError(errorMessage(e));
+    }
+    setBusy(false);
+  }
+  return (
+    <main className="first-workspace" data-tauri-drag-region>
+      <form
+        className="first-workspace-form"
+        aria-labelledby="first-workspace-title"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void run(() => createWorkspace(look.name, look.color, look.icon));
+        }}
+      >
+        <BrandMark size={40} />
+        <h1 id="first-workspace-title">{t("Create your first workspace")}</h1>
+        <p className="first-workspace-lead">
+          {t(
+            "A workspace holds your projects and tasks. You can create others later.",
+          )}
+        </p>
+        <WorkspaceFields look={look} onChange={setLook} />
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+        <div className="first-workspace-actions">
+          <button
+            type="button"
+            className="button"
+            disabled={busy}
+            onClick={() =>
+              void run(async () => {
+                const path = await chooseDatabase();
+                if (path && needsName(path, null)) setNaming(path);
+                else if (path) return openWorkspace(path);
+                return null;
+              })
+            }
+          >
+            <Icon name="folder" size={14} />
+            {t("Open existing workspace…")}
+          </button>
+          <button className="button primary" disabled={busy} aria-busy={busy}>
+            {t("Create workspace")}
+          </button>
+        </div>
+      </form>
+      {naming && (
+        <WorkspaceNaming
+          onClose={() => setNaming(null)}
+          onSubmit={async (name) => onEnter(await openWorkspace(naming, name))}
+        />
+      )}
+    </main>
+  );
+}
+
+/** Asks for the name of a workspace file being opened, since its file name says nothing. */
+export function WorkspaceNaming({
+  onClose,
+  onSubmit,
+}: {
+  onClose: () => void;
+  onSubmit: (name: string) => Promise<unknown>;
+}) {
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    try {
+      await onSubmit(name);
+    } catch (e) {
+      setError(errorMessage(e));
+      setBusy(false);
+    }
+  }
+  return (
+    <Modal title={t("Name the workspace")} onClose={onClose}>
+      <form className="modal-form" onSubmit={submit}>
+        <div className="modal-body">
+          <Field label={t("Workspace name")}>
+            {({ id }) => (
+              <input
+                id={id}
+                autoFocus
+                data-autofocus
+                required
+                autoComplete="off"
+                maxLength={60}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t("E.g. Work")}
+              />
+            )}
+          </Field>
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+        </div>
+        <footer className="modal-footer">
+          <span className="footer-hint">
+            {t("Its projects, tasks, color and icon stay as they are.")}
+          </span>
+          <button type="button" className="button" onClick={onClose}>
+            {t("Cancel")}
+          </button>
+          <button className="button primary" disabled={busy} aria-busy={busy}>
+            {busy ? t("Opening…") : t("Open workspace")}
+          </button>
+        </footer>
+      </form>
+    </Modal>
+  );
+}
+
+/**
  * Confirmation before a workspace leaves the list, keeping its file, or is deleted with it.
- * Deleting asks for its name. The open one can go too: Trama first switches to `fallback`.
+ * Deleting asks for its name. The open one can go too: Trama then opens `fallback`, or, with no
+ * other workspace, asks for a new one.
  */
 export function WorkspaceLeave({
   workspace,
   mode,
   fallback,
+  last,
   onClose,
   onDone,
 }: {
   workspace: Workspace;
   mode: "remove" | "delete";
-  /** The workspace to switch to first, present when `workspace` is the open one. */
+  /** The workspace that opens next, present when `workspace` is the open one. */
   fallback?: Workspace;
+  /** The open one with no other to switch to. */
+  last?: boolean;
   onClose: () => void;
   onDone: (list: Workspaces) => void;
 }) {
@@ -382,12 +514,10 @@ export function WorkspaceLeave({
           event.preventDefault();
           if (busy || !armed) return;
           setBusy(true);
-          (fallback ? switchWorkspace(fallback.path) : Promise.resolve())
-            .then(() =>
-              mode === "remove"
-                ? removeWorkspace(workspace.path)
-                : deleteWorkspace(workspace.path),
-            )
+          (mode === "remove"
+            ? removeWorkspace(workspace.path)
+            : deleteWorkspace(workspace.path)
+          )
             .then(onDone)
             .catch((e) => {
               setError(errorMessage(e));
@@ -403,12 +533,16 @@ export function WorkspaceLeave({
                   [name],
                 )
               : t(
-                  "“{0}” and every project and task in it are deleted from this computer, along with its file. This can't be undone.",
+                  "“{0}” and every project and task in it are deleted from this computer, along with its file and backups. This can't be undone.",
                   [name],
                 )}
             {fallback &&
+              " " + t("Trama then opens “{0}”.", [workspaceName(fallback)])}
+            {last &&
               " " +
-                t("Trama switches to “{0}” first.", [workspaceName(fallback)])}
+                t(
+                  "It's your only workspace, so Trama then asks you to create a new one.",
+                )}
           </p>
           {mode === "delete" && (
             <Field label={t("Type “{0}” to confirm", [name])}>

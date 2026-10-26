@@ -174,8 +174,8 @@ export interface Workspaces {
   active: string;
   /** `TRAMA_DB` chose the database, so it can't be switched. */
   pinned: boolean;
-  /** Where Trama keeps its own database, offered for new workspaces. */
-  defaultFolder: string;
+  /** Trama moved the workspaces into folders of their own, so connected agents must reconnect. */
+  organized: boolean;
   workspaces: Workspace[];
 }
 export interface SearchResult {

@@ -181,16 +181,17 @@ export async function chooseDatabase(
 export const listWorkspaces = () => call<Workspaces>("list_workspaces");
 /** Where the MCP server is, next to the app. */
 export const agentPath = () => call<string>("agent_path");
-/** Creates `<folder>/<name>.sqlite` and opens it. */
+/** Creates the workspace in a folder of its own inside Trama's and opens it. */
 export const createWorkspace = (
   name: string,
-  folder: string,
   color: number | null,
   icon: string | null,
-) => call<Workspaces>("create_workspace", { name, folder, color, icon });
-/** Opens an existing database file, adding it to the list. */
-export const openWorkspace = (path: string) =>
-  call<Workspaces>("open_workspace", { path });
+) => call<Workspaces>("create_workspace", { name, color, icon });
+/** Clears the notice that the workspaces moved into folders of their own. */
+export const dismissOrganized = () => call<Workspaces>("dismiss_organized");
+/** Opens an existing database file, adding it to the list as `name` or as the file is named. */
+export const openWorkspace = (path: string, name?: string) =>
+  call<Workspaces>("open_workspace", { path, name });
 export const switchWorkspace = (path: string) =>
   call<Workspaces>("switch_workspace", { path });
 /** Renames it and saves its color and icon inside its file. */

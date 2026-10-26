@@ -288,12 +288,6 @@ function WorkspacesGroup({
     y: number;
     trigger: HTMLElement;
   } | null>(null);
-  const list = workspaces?.workspaces ?? [];
-  // Any workspace can go as long as one remains; the open one also needs another to switch to.
-  const canLeave = (workspace: Workspace) =>
-    workspace.path === workspaces?.active
-      ? list.some((w) => w.path !== workspace.path && !w.missing)
-      : list.length > 1;
   const actions = (workspace: Workspace): MenuItem[] => [
     {
       label: t("Edit…"),
@@ -309,25 +303,22 @@ function WorkspacesGroup({
             onSelect: () => void revealPath(workspace.path).catch(fail),
           },
         ]),
-    ...(!canLeave(workspace)
+    // Any one can go, even the last: Trama then asks for a new one.
+    {
+      label: t("Remove from list…"),
+      icon: "close" as const,
+      separated: true,
+      onSelect: () => onLeaveWorkspace(workspace, "remove"),
+    },
+    ...(workspace.missing
       ? []
       : [
           {
-            label: t("Remove from list…"),
-            icon: "close" as const,
-            separated: true,
-            onSelect: () => onLeaveWorkspace(workspace, "remove"),
+            label: t("Delete…"),
+            icon: "trash" as const,
+            danger: true,
+            onSelect: () => onLeaveWorkspace(workspace, "delete"),
           },
-          ...(workspace.missing
-            ? []
-            : [
-                {
-                  label: t("Delete…"),
-                  icon: "trash" as const,
-                  danger: true,
-                  onSelect: () => onLeaveWorkspace(workspace, "delete"),
-                },
-              ]),
         ]),
   ];
   return (

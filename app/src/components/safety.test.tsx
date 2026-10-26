@@ -46,7 +46,7 @@ it("requires the exact workspace name even when Enter submits the form", async (
   vi.mocked(deleteWorkspace).mockResolvedValue({
     active: "",
     pinned: false,
-    defaultFolder: "",
+    organized: false,
     workspaces: [],
   });
   render(
@@ -69,23 +69,35 @@ it("requires the exact workspace name even when Enter submits the form", async (
   await waitFor(() => expect(done).toHaveBeenCalledTimes(1));
   expect(deleteWorkspace).toHaveBeenCalledExactlyOnceWith(workspace.path);
 });
-it("switches away before deletion and never deletes if switching fails", async () => {
+it("deletes the open workspace without switching first and shows a failure", async () => {
   const user = userEvent.setup();
-  vi.mocked(switchWorkspace).mockRejectedValueOnce(new Error("Switch failed"));
+  vi.mocked(deleteWorkspace).mockRejectedValueOnce(new Error("Delete failed"));
   render(
     <WorkspaceLeave
       workspace={workspace}
-      fallback={{ ...workspace, path: "/synthetic/other.sqlite" }}
+      fallback={{
+        ...workspace,
+        name: "Other",
+        path: "/synthetic/other.sqlite",
+      }}
       mode="delete"
       onClose={vi.fn()}
       onDone={vi.fn()}
     />,
   );
+  expect(screen.getByText(/Trama then opens “Other”/)).toBeInTheDocument();
   await user.type(screen.getByRole("textbox"), "Test Space{Enter}");
-  expect(await screen.findByRole("alert")).toHaveTextContent("Switch failed");
-  expect(deleteWorkspace).not.toHaveBeenCalled();
+  expect(await screen.findByRole("alert")).toHaveTextContent("Delete failed");
+  expect(deleteWorkspace).toHaveBeenCalledWith(workspace.path);
+  expect(switchWorkspace).not.toHaveBeenCalled();
 });
 it("removing from the list calls removal rather than file deletion", async () => {
+  vi.mocked(removeWorkspace).mockResolvedValue({
+    active: "",
+    pinned: false,
+    organized: false,
+    workspaces: [],
+  });
   render(
     <WorkspaceLeave
       workspace={workspace}
