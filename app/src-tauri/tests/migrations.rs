@@ -45,6 +45,285 @@ fn rows(db: &Connection, table: &str, columns: &[String]) -> Vec<Vec<Value>> {
         .unwrap()
 }
 
+fn backups(path: &std::path::Path) -> Vec<std::path::PathBuf> {
+    let prefix = format!("{}.v", path.file_name().unwrap().to_string_lossy());
+    let Ok(entries) = fs::read_dir(path.parent().unwrap().join("Backups")) else {
+        return Vec::new();
+    };
+    let mut paths = entries
+        .map(|e| e.unwrap().path())
+        .filter(|p| {
+            let name = p.file_name().unwrap().to_string_lossy();
+            name.starts_with(&prefix) && name.ends_with(".bak")
+        })
+        .collect::<Vec<_>>();
+    paths.sort();
+    paths
+}
+
+#[test]
+fn migration_backup_preserves_the_old_schema_and_all_committed_wal_data() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("team's.sqlite");
+    let db = Connection::open(&path).unwrap();
+    db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA wal_autocheckpoint=0;")
+        .unwrap();
+    db.execute_batch(V11).unwrap();
+    db.execute_batch("INSERT INTO settings VALUES('pending-wal','Data in WAL');")
+        .unwrap();
+    assert!(
+        fs::metadata(format!("{}-wal", path.display()))
+            .unwrap()
+            .len()
+            > 0
+    );
+    let original = strings(&db, "SELECT name FROM sqlite_schema WHERE type='table'")
+        .into_iter()
+        .map(|table| {
+            let columns = strings(
+                &db,
+                &format!("SELECT name FROM pragma_table_info('{table}')"),
+            );
+            let data = rows(&db, &table, &columns);
+            (table, columns, data)
+        })
+        .collect::<Vec<_>>();
+    let store = Store::open(&path).unwrap();
+    assert_eq!(
+        store
+            .db
+            .query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0))
+            .unwrap(),
+        SCHEMA_VERSION
+    );
+    let copies = backups(&path);
+    assert_eq!(copies.len(), 1);
+    assert!(
+        copies[0].file_name().unwrap().to_string_lossy()
+            == format!("team's.sqlite.v{}.schema-11.bak", env!("CARGO_PKG_VERSION"))
+    );
+    let copy = Connection::open_with_flags(&copies[0], rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+        .unwrap();
+    assert_eq!(
+        copy.query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0))
+            .unwrap(),
+        11
+    );
+    for (table, columns, expected) in original {
+        assert_eq!(
+            rows(&copy, &table, &columns),
+            expected,
+            "backup lost {table} data"
+        );
+    }
+    assert_eq!(strings(&copy, "PRAGMA integrity_check"), ["ok"]);
+    assert!(strings(&copy, "PRAGMA foreign_key_check").is_empty());
+    drop(store);
+    drop(db);
+    Store::open(&path).unwrap();
+    assert_eq!(
+        backups(&path),
+        copies,
+        "an up-to-date database needs no new backup"
+    );
+}
+
+#[test]
+fn new_and_current_databases_do_not_create_backups() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("new.sqlite");
+    Store::open(&path).unwrap();
+    Store::open(&path).unwrap();
+    assert!(backups(&path).is_empty());
+    assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 1);
+}
+
+#[test]
+fn four_upgrades_retain_only_the_three_latest_backups_of_that_workspace() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("trama.sqlite");
+    let folder = dir.path().join("Backups");
+    fs::create_dir(&folder).unwrap();
+    let unrelated = folder.join("other.sqlite.v0.3.0.schema-1.bak");
+    let invalid = folder.join("trama.sqlite.v0.3.0.schema-manual.bak");
+    fs::write(&unrelated, "keep other workspace").unwrap();
+    fs::write(&invalid, "keep unrecognized file").unwrap();
+    for version in 8..=11 {
+        if path.exists() {
+            fs::remove_file(&path).unwrap();
+        }
+        Connection::open(&path)
+            .unwrap()
+            .execute_batch(FIXTURES[version - 1])
+            .unwrap();
+        Store::open(&path).unwrap();
+        let copies = backups(&path)
+            .into_iter()
+            .filter(|p| p != &invalid)
+            .collect::<Vec<_>>();
+        assert_eq!(copies.len(), (version - 7).min(3));
+        let newest = copies
+            .iter()
+            .find(|p| {
+                p.file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .contains(&format!(".schema-{version}."))
+            })
+            .unwrap();
+        fs::OpenOptions::new()
+            .write(true)
+            .open(newest)
+            .unwrap()
+            .set_modified(std::time::UNIX_EPOCH + std::time::Duration::from_secs(version as u64))
+            .unwrap();
+    }
+    let versions = backups(&path)
+        .into_iter()
+        .filter(|p| p != &invalid)
+        .map(|p| {
+            Connection::open(p)
+                .unwrap()
+                .query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0))
+                .unwrap()
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(versions.len(), 3);
+    assert!(versions.contains(&9) && versions.contains(&10) && versions.contains(&11));
+    assert_eq!(
+        fs::read_to_string(unrelated).unwrap(),
+        "keep other workspace"
+    );
+    assert_eq!(
+        fs::read_to_string(invalid).unwrap(),
+        "keep unrecognized file"
+    );
+}
+
+#[test]
+fn failed_migration_retries_keep_existing_backups_intact() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("broken.sqlite");
+    let db = Connection::open(&path).unwrap();
+    db.execute_batch(FIXTURES[0]).unwrap();
+    db.execute_batch("CREATE TABLE task_categories(unexpected TEXT);")
+        .unwrap();
+    drop(db);
+    assert!(Store::open(&path).is_err());
+    let original_path = backups(&path).pop().unwrap();
+    let original_bytes = fs::read(&original_path).unwrap();
+    assert!(Store::open(&path).is_err());
+    assert_eq!(backups(&path).len(), 2);
+    assert_eq!(fs::read(original_path).unwrap(), original_bytes);
+    for copy in backups(&path) {
+        let db = Connection::open(copy).unwrap();
+        assert_eq!(
+            db.query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0))
+                .unwrap(),
+            1
+        );
+        assert_eq!(strings(&db, "PRAGMA integrity_check"), ["ok"]);
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn backup_failure_aborts_before_any_migration() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("readonly-folder.sqlite");
+    let db = Connection::open(&path).unwrap();
+    db.execute_batch("PRAGMA journal_mode=WAL;").unwrap();
+    db.execute_batch(V11).unwrap();
+    let permissions = fs::metadata(dir.path()).unwrap().permissions();
+    fs::set_permissions(dir.path(), fs::Permissions::from_mode(0o500)).unwrap();
+    let result = Store::open(&path);
+    fs::set_permissions(dir.path(), permissions).unwrap();
+    let error = result.err().expect("a backup requires a writable folder");
+    assert!(error.contains("Could not save the backup"), "{error}");
+    assert!(error.contains("database was not migrated"), "{error}");
+    assert_eq!(
+        db.query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0))
+            .unwrap(),
+        11
+    );
+    assert!(backups(&path).is_empty());
+    assert!(!fs::read_dir(dir.path()).unwrap().any(|e| e
+        .unwrap()
+        .path()
+        .extension()
+        .is_some_and(|ext| ext == "partial")));
+}
+
+#[cfg(feature = "agent-cli")]
+#[test]
+fn relative_database_paths_retain_three_backups() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("relative.sqlite");
+    for version in 8..=11 {
+        if path.exists() {
+            fs::remove_file(&path).unwrap();
+        }
+        Connection::open(&path)
+            .unwrap()
+            .execute_batch(FIXTURES[version - 1])
+            .unwrap();
+        let output = std::process::Command::new(env!("CARGO_BIN_EXE_trama-agent"))
+            .current_dir(dir.path())
+            .args(["--workspace", "--database", "relative.sqlite"])
+            .stdin(std::process::Stdio::null())
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(backups(&path).len(), (version - 7).min(3));
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn backup_preserves_database_file_permissions() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("private.sqlite");
+    Connection::open(&path).unwrap().execute_batch(V11).unwrap();
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+    Store::open(&path).unwrap();
+    let copy = backups(&path).pop().unwrap();
+    assert_eq!(
+        fs::metadata(copy).unwrap().permissions().mode() & 0o777,
+        0o600
+    );
+}
+
+#[cfg(feature = "agent-cli")]
+#[test]
+fn app_and_mcp_process_share_one_migration_backup() {
+    for _ in 0..5 {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("shared.sqlite");
+        Connection::open(&path).unwrap().execute_batch(V11).unwrap();
+        let child = std::process::Command::new(env!("CARGO_BIN_EXE_trama-agent"))
+            .args(["--workspace", "--database"])
+            .arg(&path)
+            .stdin(std::process::Stdio::null())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        Store::open(&path).unwrap();
+        let output = child.wait_with_output().unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(backups(&path).len(), 1);
+    }
+}
+
 #[test]
 fn empty_database_has_latest_schema_and_foreign_keys() {
     let store = Store::open(std::path::Path::new(":memory:")).unwrap();
@@ -274,6 +553,7 @@ fn simultaneous_openers_migrate_legacy_notes_only_once() {
                 .unwrap()
                 .unwrap_or_else(|e| panic!("round {round}: {e}"));
         }
+        assert_eq!(backups(&path).len(), 1, "round {round}: duplicate backups");
         let store = Store::open(&path).unwrap();
         assert_eq!(
             strings(&store.db, "SELECT body FROM task_notes"),

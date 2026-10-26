@@ -28,32 +28,39 @@ fn run() -> Result<(), String> {
             "Uso: trama-agent (--project-id UUID | --workspace) [--database CAMINHO]".into(),
         );
     }
-    // In workspace mode without --database, the agent follows the workspace open in the app: the
-    // file is checked before each request and reopened when the person switched. A project-bound
-    // agent stays with the database that holds its project.
+    // In workspace mode without --database, the agent follows the workspace open in the app. It
+    // opens it for each request and closes it after, so the person can switch, or delete it even on
+    // Windows, while the agent waits. With no workspace, or one it can't open, the tool calls say
+    // why and the agent stays connected. A project-bound agent keeps the database of its project.
     let follow = workspace && database.is_none();
-    let mut path = database.unwrap_or_else(trama_lib::store::default_database_path);
-    let store = Store::open(&path)?;
-    let mut agent = if workspace {
-        Agent::workspace(store)
+    let agent = if follow {
+        None
     } else {
-        let id = uuid::Uuid::parse_str(project.as_deref().unwrap())
-            .map_err(|_| "Uso: trama-agent --project-id UUID [--database CAMINHO]".to_string())?;
-        Agent::new(store, &id.to_string())?
+        let path = match database {
+            Some(path) => path,
+            None => trama_lib::store::default_database_path()?,
+        };
+        let store = Store::open(&path)?;
+        Some(if workspace {
+            Agent::workspace(store)
+        } else {
+            let id = uuid::Uuid::parse_str(project.as_deref().unwrap()).map_err(|_| {
+                "Uso: trama-agent --project-id UUID [--database CAMINHO]".to_string()
+            })?;
+            Agent::new(store, &id.to_string())?
+        })
     };
     let stdin = io::stdin();
     let mut stdout = io::stdout().lock();
     for line in stdin.lock().lines() {
         let line = line.map_err(|e| e.to_string())?;
-        if follow {
-            let active = trama_lib::store::default_database_path();
-            if active != path {
-                agent = Agent::workspace(Store::open(&active)?);
-                path = active;
-            }
-        }
         let response = match serde_json::from_str(&line) {
-            Ok(request) => agent.handle(request),
+            Ok(request) if follow => trama_lib::store::default_database_path()
+                .and_then(|path| Store::open(&path))
+                .map(Agent::workspace)
+                .or_else(|reason| Agent::without_workspace(&reason))?
+                .handle(request),
+            Ok(request) => agent.as_ref().unwrap().handle(request),
             Err(_) => Some(
                 serde_json::json!({"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"Parse error"}}),
             ),

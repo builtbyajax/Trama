@@ -67,6 +67,7 @@ import {
 import {
   WorkspaceButton,
   WorkspaceComposer,
+  WorkspaceNaming,
   WorkspaceLeave,
   otherWorkspaces,
   workspaceName,
@@ -74,7 +75,9 @@ import {
 import {
   completeGoal,
   createWorkspace,
+  dismissOrganized,
   editWorkspace,
+  openWorkspace,
   revealPath,
 } from "./lib/api";
 import {
@@ -163,6 +166,13 @@ export function App() {
     workspace: Workspace;
     mode: "remove" | "delete";
   } | null>(null);
+  // Leaving the open workspace switches to another that exists first, when there is one.
+  const leaveFallback =
+    workspaceLeave?.workspace.path === workspaces.list?.active
+      ? workspaces.list?.workspaces.find(
+          (w) => w.path !== workspaceLeave?.workspace.path && !w.missing,
+        )
+      : undefined;
   const [noteRequest, setNoteRequest] = useState<{
     path: string;
     at: number;
@@ -673,8 +683,15 @@ export function App() {
                 : (updater.availableUpdate?.version ?? null)
             }
             installing={updater.installing}
-            restartNotice={updater.restartNotice}
-            onDismissRestart={updater.dismissRestartNotice}
+            restartNotice={
+              updater.restartNotice || Boolean(workspaces.list?.organized)
+            }
+            onDismissRestart={() => {
+              updater.dismissRestartNotice();
+              // Moving the workspaces into folders also asks agents to reconnect, once.
+              if (workspaces.list?.organized)
+                void dismissOrganized().then(workspaces.setList, () => {});
+            }}
             onDismissUpdate={updater.dismissUpdate}
             onInstall={() =>
               void updater.install().catch((e) => notify(errorMessage(e), true))
@@ -1221,16 +1238,14 @@ export function App() {
       {workspaceLeave && workspaces.list && (
         <WorkspaceLeave
           {...workspaceLeave}
-          fallback={
-            workspaceLeave.workspace.path === workspaces.list.active
-              ? workspaces.list.workspaces.find(
-                  (w) => w.path !== workspaceLeave.workspace.path && !w.missing,
-                )
-              : undefined
+          fallback={leaveFallback}
+          last={
+            workspaceLeave.workspace.path === workspaces.list.active &&
+            !leaveFallback
           }
           onClose={() => setWorkspaceLeave(null)}
           onDone={(list) => {
-            // Leaving the open one switched workspaces, so the window reloads into the new one.
+            // Leaving the open one switched workspaces, or left none, so the window reloads.
             if (workspaceLeave.workspace.path === workspaces.list?.active)
               return workspaces.enter(list);
             workspaces.setList(list);
@@ -1244,23 +1259,27 @@ export function App() {
           }}
         />
       )}
+      {workspaces.naming && (
+        <WorkspaceNaming
+          onClose={() => workspaces.setNaming(null)}
+          onSubmit={async (name) =>
+            workspaces.enter(await openWorkspace(workspaces.naming ?? "", name))
+          }
+        />
+      )}
       {workspaces.composer && workspaces.list && (
         <WorkspaceComposer
           workspace={edited}
           workspaces={workspaces.list.workspaces}
-          defaultFolder={workspaces.list.defaultFolder}
           onClose={() => workspaces.setComposer(null)}
-          onSubmit={async (name, folder, color, icon) => {
+          onSubmit={async (name, color, icon) => {
             const editing = workspaces.composer?.workspace;
             if (editing) {
               workspaces.setList(
                 await editWorkspace(editing.path, name, color, icon),
               );
               workspaces.setComposer(null);
-            } else
-              workspaces.enter(
-                await createWorkspace(name, folder, color, icon),
-              );
+            } else workspaces.enter(await createWorkspace(name, color, icon));
           }}
         />
       )}

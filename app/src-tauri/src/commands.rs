@@ -18,6 +18,7 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
     let workspace = || text(&args, "path");
     match command {
         "list_workspaces" => return encoded(Ok(workspaces::list())),
+        "dismiss_organized" => return encoded(workspaces::dismiss_organized()),
         // The MCP server ships next to the app's executable, so Preferences can show the command.
         "agent_path" => {
             let name = if cfg!(windows) {
@@ -34,12 +35,11 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
         "create_workspace" => {
             return encoded(workspaces::create(
                 text(&args, "name")?,
-                text(&args, "folder")?,
                 args["color"].as_i64(),
                 args["icon"].as_str(),
             ))
         }
-        "open_workspace" => return encoded(workspaces::open(workspace()?)),
+        "open_workspace" => return encoded(workspaces::open(workspace()?, args["name"].as_str())),
         "switch_workspace" => return encoded(workspaces::switch(workspace()?)),
         "edit_workspace" => {
             return encoded(workspaces::edit(
@@ -51,9 +51,6 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
         }
         "remove_workspace" => return encoded(workspaces::remove(workspace()?)),
         "delete_workspace" => return encoded(workspaces::delete(workspace()?)),
-        "relocate_workspace" => {
-            return encoded(workspaces::relocate(workspace()?, text(&args, "folder")?))
-        }
         #[cfg(feature = "dev-bridge")]
         "choose_file" => {
             return encoded(choose_file(args["title"].as_str().unwrap_or("Choose file")))

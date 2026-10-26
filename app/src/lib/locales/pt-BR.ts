@@ -738,22 +738,27 @@ export const ptBR = {
   "Manage workspaces…": "Gerenciar espaços…",
   "“{0}” leaves the list. Its file stays in the folder, and Open workspace… brings it back.":
     "“{0}” sai da lista. O arquivo continua na pasta, e Abrir espaço… traz de volta.",
-  "Trama switches to “{0}” first.": "Antes, o Trama troca para “{0}”.",
+  "Trama then opens “{0}”.": "Depois, o Trama abre “{0}”.",
   "Delete workspace": "Excluir espaço",
   "Workspace “{0}” deleted.": "Espaço “{0}” excluído.",
   "Type “{0}” to confirm": "Digite “{0}” para confirmar",
-  "“{0}” and every project and task in it are deleted from this computer, along with its file. This can't be undone.":
-    "“{0}” e todos os projetos e tarefas dele são apagados deste computador, junto com o arquivo. Isso não pode ser desfeito.",
+  "“{0}” and every project and task in it are deleted from this computer, along with its file and backups. This can't be undone.":
+    "“{0}” e todos os projetos e tarefas dele são apagados deste computador, junto com o arquivo e as cópias. Isso não pode ser desfeito.",
   "Workspace name": "Nome do espaço",
   "E.g. Work": "Ex.: Trabalho",
-  Folder: "Pasta",
-  "The workspace is one file in this folder. Copy or move it like any other file.":
-    "O espaço é um arquivo nesta pasta. Copie ou mova como qualquer outro arquivo.",
-  "Choose workspace folder": "Escolher pasta do espaço",
-  "Workspace folder": "Pasta do espaço",
   "Each workspace has its own projects and tasks.":
     "Cada espaço tem os próprios projetos e tarefas.",
   "Create workspace": "Criar espaço",
+  "It's your only workspace, so Trama then asks you to create a new one.":
+    "É o seu único espaço, então o Trama vai pedir para criar um novo.",
+  "Create your first workspace": "Crie seu primeiro espaço",
+  "Name the workspace": "Dê um nome ao espaço",
+  "Its projects, tasks, color and icon stay as they are.":
+    "Os projetos, as tarefas, a cor e o ícone continuam como estão.",
+  "Opening…": "Abrindo…",
+  "A workspace holds your projects and tasks. You can create others later.":
+    "Um espaço guarda seus projetos e tarefas. Você pode criar outros depois.",
+  "Open existing workspace…": "Abrir espaço existente…",
   "Edit…": "Editar…",
   "Remove from list": "Remover da lista",
   "“{0}” left the list. The file wasn't touched.":
@@ -1108,24 +1113,16 @@ export type Key = keyof typeof ptBR;
  * the core filled in, such as a name or a path.
  */
 export const errors: Record<string, string> = {
+  "Could not save the backup beside {0}. The database was not migrated. Check free space and folder permissions: {1}":
+    "Não foi possível salvar a cópia ao lado de {0}. O banco não foi atualizado. Confira o espaço livre em disco e as permissões da pasta: {1}",
   "Couldn't restart Trama. Close and reopen the app to use the installed update.":
     "Não foi possível reiniciar o Trama. Feche e abra o app para usar a atualização instalada.",
   "TRAMA_DB chooses the database, so workspaces can't be changed.":
     "O TRAMA_DB escolhe o banco, então os espaços não podem mudar.",
   "The workspace isn't in the list.": "O espaço não está na lista.",
   "The workspace needs a name.": "O espaço precisa de um nome.",
-  "The name can't have slashes, colons or start with a dot.":
-    "O nome não pode ter barras, dois-pontos ou começar com ponto.",
-  "A file with that name already exists in the folder.":
-    "Já existe um arquivo com esse nome na pasta.",
+  "Open Trama and create a workspace.": "Abra o Trama e crie um espaço.",
   "The workspace file doesn't exist.": "O arquivo do espaço não existe.",
-  "Switch to another workspace before removing this one.":
-    "Troque para outro espaço antes de remover este.",
-  "The default workspace stays in the list.":
-    "O espaço padrão continua na lista.",
-  "The default workspace stays in Trama's folder.":
-    "O espaço padrão fica na pasta do Trama.",
-  "Invalid workspace path.": "Caminho de espaço inválido.",
   "The project is already in this workspace.":
     "O projeto já está neste espaço.",
   "The other workspace already has this project.":

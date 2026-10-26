@@ -1,4 +1,5 @@
 //! Shared SQLite core for the desktop app and the project-bound MCP process.
+pub mod backups;
 mod categories;
 mod conversation;
 mod goals;
@@ -51,7 +52,7 @@ pub fn id() -> String {
     uuid::Uuid::new_v4().to_string().to_uppercase()
 }
 /// The open workspace's database, or the one `TRAMA_DB` names.
-pub fn default_database_path() -> PathBuf {
+pub fn default_database_path() -> Result<PathBuf> {
     crate::workspaces::active_path()
 }
 
@@ -310,6 +311,17 @@ impl Store {
         // One immediate transaction for every step: a window and an agent opening an old
         // database together must not both migrate it.
         let tx = sql(db.transaction_with_behavior(TransactionBehavior::Immediate))?;
+        let version = migrations::check_version(&tx)?;
+        if version < SCHEMA_VERSION && path != Path::new(":memory:") {
+            let has_tables: bool = sql(tx.query_row(
+                "SELECT EXISTS(SELECT 1 FROM sqlite_schema WHERE type='table')",
+                [],
+                |r| r.get(0),
+            ))?;
+            if has_tables {
+                backups::create(path, version)?;
+            }
+        }
         migrations::migrate(&tx)?;
         sql(tx.commit())?;
         sql(db.set_db_config(
@@ -332,7 +344,7 @@ impl Store {
         Ok(())
     }
     pub fn open_default() -> Result<Self> {
-        Self::open(&default_database_path())
+        Self::open(&default_database_path()?)
     }
     pub fn projects(&self) -> Result<Vec<Project>> {
         let mut stmt = sql(self.db.prepare(

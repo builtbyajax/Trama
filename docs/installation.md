@@ -145,11 +145,33 @@ The MCP server cannot read or change private task notes. Project Markdown notes 
 
 ## Local data
 
-| Platform | Task database |
+Trama keeps its data in one folder:
+
+| Platform | Trama folder |
 | --- | --- |
-| macOS | `~/Library/Application Support/Trama/trama.sqlite` |
-| Windows | `%APPDATA%\Trama\trama.sqlite` |
+| macOS | `~/Library/Application Support/Trama` |
+| Windows | `%APPDATA%\Trama` |
+
+Each workspace created in the app has a folder of its own, `Workspaces/<id>/`, with its database, `workspace.sqlite`, and its backups in `Backups/`. The id is short and never changes; the workspace's name only lives in the list, `workspaces.json`, so renaming a workspace moves no files. A database opened with **Open workspace…** stays where it is, with its backups in a `Backups` folder beside it. Deleting a workspace deletes its database, its backups and the folder Trama made for it.
+
+The first time Trama 0.3.1 starts, it moves the workspaces earlier versions kept loose in the Trama folder, such as `trama.sqlite`, each into a folder of its own, and asks you to restart your agent sessions. A file that can't move yet stays where it is and Trama tries again the next time it starts. Databases opened from other folders are not moved.
 
 Project notes stay in the folders you choose in the app. They are ordinary Markdown files and are not stored inside the task database.
 
-Set `TRAMA_DB` to use a different SQLite path for development. Make sure the app and the MCP server point to the same database if you override it.
+Set `TRAMA_DB` to use a different SQLite path for development. Make sure the app and the MCP server point to the same database if you override it. Without `TRAMA_DB` and before you create a workspace, the MCP server still connects, but each tool call asks you to open Trama and create one; it uses the workspace as soon as you do, without reconnecting.
+
+### Restore a database backup
+
+Starting with Trama 0.3.1, opening an existing workspace that needs a schema upgrade saves a consistent database copy before changing its schema. The copy includes committed changes still in the SQLite WAL file. Each upgrade saves the original schema once, even when it runs several migration steps or the app and MCP open the workspace together. Opening a current database or creating an empty one does not create a backup.
+
+Copies are saved in the `Backups` folder beside the workspace's database, named after the database, the Trama version that saved it and the schema before migration, for example `workspace.sqlite.v0.3.1.schema-12.bak`. If that name already exists, an extra identifier keeps the previous copy intact. Trama keeps the three most recent copies per workspace and removes older ones after saving a new copy. If a backup cannot be saved, the schema upgrade stops with an error; check free disk space and folder permissions before trying again.
+
+Restoring is manual:
+
+1. Find the workspace's database path in **Preferences → General → Workspaces**. Then close Trama and quit the connected MCP clients, or disable their Trama connection, making sure all `trama-agent` processes have stopped.
+2. Move the current database to a separate safety folder. If files with the same name plus `-wal` or `-shm` remain, move them to that folder too. Keep this set together; those files must not remain beside the restored database.
+3. Copy the chosen `.bak` from `Backups` into the workspace's folder and rename that copy to the original database filename. For example, copy `Backups/workspace.sqlite.v0.3.1.schema-12.bak` as `workspace.sqlite`. Keep the `.bak` itself.
+4. To return to an older Trama version, install one that supports the backup's schema before reopening the app. For example, schema 12 is supported by Trama 0.3.0 and 0.3.1, while Trama 0.2.2 supports schemas up to 10. A newer app can open an older backup but will migrate it again; an app that does not support the backup's schema refuses it.
+5. Open Trama and check the workspace's projects and tasks before restarting your agents. Changes made after the selected backup are absent from the restored database.
+
+Database backups do not include the project's Markdown note folders. Keep separate copies of those folders if you need to restore their files too.

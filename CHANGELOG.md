@@ -6,7 +6,19 @@
 
 Changes delivered in each Trama version. **Unreleased** lists implemented changes that have not shipped yet; when publishing a version, replace that heading with the release number and date.
 
-## [Unreleased]
+## [0.3.1](https://github.com/builtbyajax/Trama/releases/tag/v0.3.1) — 2026-10-26
+
+### Changed
+
+- Keep each workspace in a folder of its own, `Workspaces/<id>/` inside the Trama folder, so renaming one moves no files. On first start, move the workspaces earlier versions left loose in the Trama folder and ask to restart agent sessions once. Reopening a workspace file asks for its name, since every file is `workspace.sqlite`. See [local data](docs/installation.md#local-data).
+- Create workspaces without choosing a folder; **Open workspace…** still opens a database anywhere.
+- Ask for the first workspace on a new installation instead of creating one, and have the MCP server ask to open Trama and create one until then.
+
+### Fixed
+
+- Save a recoverable copy in a `Backups` folder beside each workspace database before upgrading its schema, including committed WAL data, named with the Trama version and the schema; keep the latest three copies and stop the migration if the backup cannot be saved. Deleting a workspace deletes its copies too. See [how to restore a backup](docs/installation.md#restore-a-database-backup).
+
+## [0.3.0](https://github.com/builtbyajax/Trama/releases/tag/v0.3.0) — 2026-10-25
 
 ### Added
 

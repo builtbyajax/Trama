@@ -7,6 +7,7 @@ import {
   switchWorkspace,
 } from "../lib/api";
 import type { Workspace, Workspaces } from "../lib/types";
+import { needsName } from "../components/Workspaces";
 
 /**
  * The workspace list and the open one. Entering another workspace reloads the window: its
@@ -20,6 +21,8 @@ export function useWorkspaces(
   const [composer, setComposer] = useState<{ workspace?: Workspace } | null>(
     null,
   );
+  /** A file being opened that waits for its name. */
+  const [naming, setNaming] = useState<string | null>(null);
   useEffect(() => {
     listWorkspaces().then(setList, () => setList(null));
   }, []);
@@ -33,12 +36,18 @@ export function useWorkspaces(
     setList,
     composer,
     setComposer,
+    naming,
+    setNaming,
     enter,
     switchTo: (workspace: Workspace) =>
       void switchWorkspace(workspace.path).then(enter, fail),
     open: () =>
       void chooseDatabase()
-        .then((path) => (path ? openWorkspace(path).then(enter) : undefined))
+        .then((path) => {
+          if (!path) return;
+          if (needsName(path, list)) setNaming(path);
+          else return openWorkspace(path).then(enter);
+        })
         .catch(fail),
   };
 }

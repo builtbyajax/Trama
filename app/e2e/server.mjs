@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
@@ -11,6 +11,23 @@ const binary = resolve(
   "src-tauri/target/debug/trama-agent" +
     (process.platform === "win32" ? ".exe" : ""),
 );
+// A new home has no workspace until one is created, as the first screen would.
+const api = spawnSync(
+  resolve(
+    "src-tauri/target/debug/trama-api" +
+      (process.platform === "win32" ? ".exe" : ""),
+  ),
+  {
+    env,
+    input: JSON.stringify({
+      command: "create_workspace",
+      args: { name: "Seed", color: null, icon: null },
+    }),
+    encoding: "utf8",
+  },
+);
+if (api.status !== 0 || JSON.parse(api.stdout).error)
+  throw new Error(`Seed workspace failed: ${api.stdout}${api.stderr}`);
 const agent = spawn(binary, ["--workspace"], {
   env,
   stdio: ["pipe", "pipe", "inherit"],

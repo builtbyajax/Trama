@@ -89,7 +89,9 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
     page.getByRole("button", { name: `Workspace: ${name}`, exact: true }),
   ).toBeVisible();
   const spaces = await command<Workspaces>(request, "list_workspaces");
-  expect(spaces.active.startsWith(home)).toBeTruthy();
+  // Created in a folder of its own inside Trama's, named by an id.
+  expect(spaces.active.startsWith(join(home, "Workspaces"))).toBeTruthy();
+  expect(spaces.active.endsWith("workspace.sqlite")).toBeTruthy();
   await page
     .getByRole("button", { name: "Add project", exact: true })
     .first()
@@ -274,7 +276,6 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   const source = spaces.active;
   const destination = await command<Workspaces>(request, "create_workspace", {
     name: `Destination ${run}`,
-    folder: home,
   });
   await command(request, "switch_workspace", { path: source });
   await page.reload();
@@ -336,7 +337,17 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
       (w) => w.path === source,
     ),
   ).toBe(false);
-  await command(request, "open_workspace", { path: source });
+  // Its file is a workspace.sqlite, which names nothing, so reopening it needs the name.
+  expect(
+    (
+      await (
+        await request.post("/api/command", {
+          data: { command: "open_workspace", args: { path: source } },
+        })
+      ).json()
+    ).error,
+  ).toBe("The workspace needs a name.");
+  await command(request, "open_workspace", { path: source, name });
   await command(request, "switch_workspace", { path: destination.active });
   await page.reload();
   await page.getByRole("button", { name: "Preferences", exact: true }).click();
@@ -374,7 +385,10 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   expect(
     (await command<Workspaces>(request, "list_workspaces")).active,
   ).not.toBe(destination.active);
-  await command(request, "open_workspace", { path: destination.active });
+  await command(request, "open_workspace", {
+    path: destination.active,
+    name: `Destination ${run}`,
+  });
   await page.reload();
   await page.getByRole("button", { name: "Preferences", exact: true }).click();
   await openWorkspaceActions(page, `Destination ${run}`);
@@ -414,14 +428,8 @@ test("concluding from the board and the list, and reopening from the Archive", a
   page,
   request,
 }, info) => {
-  const { home } = JSON.parse(
-    await readFile("../.trama-local/e2e-state.json", "utf8"),
-  );
   const run = `${info.project.name}-${info.repeatEachIndex}`;
-  await command(request, "create_workspace", {
-    name: `Archive ${run}`,
-    folder: home,
-  });
+  await command(request, "create_workspace", { name: `Archive ${run}` });
   const project = await command<{ id: string }>(request, "save_project", {
     projectId: null,
     name: "Archive Project",
