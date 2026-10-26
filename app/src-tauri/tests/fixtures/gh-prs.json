@@ -1,0 +1,4 @@
+[
+  {"number":12,"title":"Synthetic feature","state":"MERGED","url":"https://github.com/example/synthetic/pull/12","headRefName":"feat/example","baseRefName":"main","reviewDecision":"APPROVED","statusCheckRollup":[{"name":"Rust","conclusion":"SUCCESS","status":"COMPLETED"},{"context":"legacy check","state":"SUCCESS"}],"mergeCommit":{"oid":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},
+  {"number":13,"title":"Synthetic fix","state":"OPEN","url":"https://github.com/example/synthetic/pull/13","headRefName":"fix/example","baseRefName":"main","reviewDecision":"","statusCheckRollup":null,"mergeCommit":null}
+]

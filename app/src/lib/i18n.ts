@@ -20,7 +20,7 @@ function initial(): Language {
 export const language: Language = initial();
 /** The locale for dates, sorting and case: the interface's language. */
 export const locale = language;
-document.documentElement.lang = language;
+if (typeof document !== "undefined") document.documentElement.lang = language;
 
 const fill = (text: string, values: unknown[]) =>
   text.replace(/\{(\d+)\}/g, (_, i) => String(values[+i]));

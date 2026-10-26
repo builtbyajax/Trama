@@ -3,17 +3,22 @@ name: Build installers
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: release
   cancel-in-progress: false
 
 jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
   build:
+    needs: checks
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
-    permissions:
-      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -22,101 +27,116 @@ jobs:
             runner: macos-latest
             target: aarch64-apple-darwin
             bundle: dmg
-            assetNamePattern: '[name]_[version]_macOS_Apple-Silicon[ext]'
+            asset: macOS_Apple-Silicon
           - name: macOS Intel
-            runner: macos-latest
+            runner: macos-15-intel
             target: x86_64-apple-darwin
             bundle: dmg
-            assetNamePattern: '[name]_[version]_macOS_Intel[ext]'
+            asset: macOS_Intel
           - name: Windows x64
             runner: windows-latest
             target: x86_64-pc-windows-msvc
             bundle: nsis
-            assetNamePattern: '[name]_[version]_Windows_x64_Setup[ext]'
-
+            asset: Windows_x64_Setup
     steps:
-      - name: Check out source
-        uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: app/package-lock.json
-
-      - name: Check version and release tag
+      - name: Check version, release tag and installation guide
         id: version
         shell: bash
         run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const { execFileSync, spawnSync } = require('node:child_process');
-          const app = JSON.parse(fs.readFileSync('app/package.json', 'utf8'));
-          const tauri = JSON.parse(fs.readFileSync('app/src-tauri/tauri.conf.json', 'utf8'));
-          const lock = JSON.parse(fs.readFileSync('app/package-lock.json', 'utf8'));
-          const cargo = fs.readFileSync('app/src-tauri/Cargo.toml', 'utf8');
-          const rustVersion = cargo.match(/^version\s*=\s*"([^"]+)"/m)?.[1];
-          if ([tauri.version, lock.version, lock.packages[''].version, rustVersion]
-              .some(version => version !== app.version)) {
-            throw new Error('Align the npm, Tauri, Rust, and npm lockfile versions before building.');
-          }
-          const tag = `v${app.version}`;
-          const exists = spawnSync('git', ['show-ref', '--verify', '--quiet', `refs/tags/${tag}`]);
-          if (exists.status === 0) {
-            const tagged = execFileSync('git', ['rev-parse', `${tag}^{commit}`], { encoding: 'utf8' }).trim();
-            const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-            if (tagged !== head) {
-              throw new Error(`${tag} points to another commit. Update the unpublished tag or bump the app version.`);
-            }
-          } else if (exists.status !== 1) {
-            throw new Error('Could not check the release tag.');
-          }
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${app.version}\n`);
-          console.log(`Building ${tag} from ${process.env.GITHUB_SHA}`);
-          NODE
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
+          test -f docs/installation.md
+          if [[ "$GITHUB_REF" == refs/heads/main ]]; then
+            node app/scripts/check-version.mjs --release
+          else
+            node app/scripts/check-version.mjs
+          fi
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           targets: ${{ matrix.target }}
-
-      - name: Cache Rust build files
-        uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@e9d7b9f1e587218970671bac74e5511ed9506e6a # v2
         with:
           workspaces: app/src-tauri -> target
           key: ${{ matrix.target }}
-
-      - name: Install frontend dependencies
-        working-directory: app
+      - working-directory: app
         run: npm ci
-
-      - name: Build app and MCP server, then upload installers
-        uses: tauri-apps/tauri-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build installers without uploading
+        id: bundle
+        uses: tauri-apps/tauri-action@944946e3e4cac6603d1fe8f514171e9ecd3c78aa # v1
         with:
           projectPath: app
-          # This wrapper builds and bundles trama-agent before the desktop app.
           tauriScript: npm run tauri
           args: --target ${{ matrix.target }} --bundles ${{ matrix.bundle }}
-          tagName: v__VERSION__
-          releaseName: Trama __VERSION__
-          releaseAssetNamePattern: ${{ matrix.assetNamePattern }}
-          releaseCommitish: ${{ github.sha }}
-          releaseDraft: true
-          prerelease: true
-          releaseBody: |
-            Trama ${{ steps.version.outputs.version }} is an early test release. Each installer includes the local MCP server.
-
-            - **macOS Apple Silicon:** DMG for Apple Silicon Macs.
-            - **macOS Intel:** DMG for Intel Macs.
-            - **Windows x64:** installer for 64-bit Windows.
-
-            These test builds are not notarized on macOS or code-signed on Windows. macOS may require approval in Privacy & Security; Windows may show a SmartScreen warning.
-
-            See the [macOS installation guide](https://github.com/builtbyajax/Trama/blob/main/docs/installation.md#macos) or [Windows installation guide](https://github.com/builtbyajax/Trama/blob/main/docs/installation.md#windows) before opening the app.
           uploadUpdaterJson: false
-          uploadWorkflowArtifacts: true
+      - name: Test the MCP server from the packaged app
+        working-directory: app
+        env:
+          ARTIFACT_PATHS: ${{ steps.bundle.outputs.artifactPaths }}
+        run: node scripts/verify-packaged-agent.mjs ${{ matrix.target }}
+      - name: Stage the verified installer
+        working-directory: app
+        env:
+          ARTIFACT_PATHS: ${{ steps.bundle.outputs.artifactPaths }}
+          APP_VERSION: ${{ steps.version.outputs.version }}
+          ASSET_PLATFORM: ${{ matrix.asset }}
+        shell: bash
+        run: node scripts/release-assets.mjs stage "$APP_VERSION" "$ASSET_PLATFORM" ../release-assets
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: installer-${{ matrix.asset }}
+          path: release-assets
+          if-no-files-found: error
+
+  checksums:
+    # Verify the combined assets on branches too, without creating a release or tag.
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          pattern: installer-*
+          path: release-assets
+          merge-multiple: true
+      - name: Generate checksums and release notes
+        run: |
+          node app/scripts/release-assets.mjs checksums release-assets
+          node app/scripts/release-notes.mjs
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: verified-installers
+          path: release-assets
+          if-no-files-found: error
+
+  draft:
+    # All installers, their MCP contracts and checksums must pass before release upload.
+    needs: checksums
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: verified-installers
+          path: release-assets
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          VERSION=$(node -p "JSON.parse(require('fs').readFileSync('app/package.json')).version")
+          gh release create "v$VERSION" release-assets/*.dmg release-assets/*.exe release-assets/SHA256SUMS --title "Trama $VERSION" --notes-file release-assets/RELEASE_NOTES.md --target "$GITHUB_SHA" --draft --prerelease

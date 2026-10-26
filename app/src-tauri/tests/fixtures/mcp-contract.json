@@ -1,0 +1,3436 @@
+{
+  "add-check": {
+    "id": "<uuid-1>",
+    "is_complete": false,
+    "task_id": "<uuid-2>",
+    "title": "Verified"
+  },
+  "add-message": {
+    "author": "agent",
+    "body": "Progress",
+    "created_at": "<timestamp>",
+    "id": "<uuid-3>",
+    "task_id": "<uuid-2>"
+  },
+  "agent-events": {
+    "events": [
+      {
+        "actor": "agent",
+        "created_at": "<timestamp>",
+        "id": "<uuid-4>",
+        "kind": "created",
+        "task_id": "<uuid-2>",
+        "value": null
+      },
+      {
+        "actor": "agent",
+        "created_at": "<timestamp>",
+        "id": "<uuid-5>",
+        "kind": "status",
+        "task_id": "<uuid-2>",
+        "value": "inProgress"
+      },
+      {
+        "actor": "agent",
+        "created_at": "<timestamp>",
+        "id": "<uuid-6>",
+        "kind": "document",
+        "task_id": "<uuid-2>",
+        "value": "note.md"
+      },
+      {
+        "actor": "agent",
+        "created_at": "<timestamp>",
+        "id": "<uuid-7>",
+        "kind": "documentRemoved",
+        "task_id": "<uuid-2>",
+        "value": "note.md"
+      },
+      {
+        "actor": "agent",
+        "created_at": "<timestamp>",
+        "id": "<uuid-8>",
+        "kind": "summary",
+        "task_id": "<uuid-2>",
+        "value": "Delivered"
+      },
+      {
+        "actor": "agent",
+        "created_at": "<timestamp>",
+        "id": "<uuid-9>",
+        "kind": "branch",
+        "task_id": "<uuid-2>",
+        "value": "test/contract"
+      },
+      {
+        "actor": "agent",
+        "created_at": "<timestamp>",
+        "id": "<uuid-10>",
+        "kind": "commit",
+        "task_id": "<uuid-2>",
+        "value": "<commit>"
+      },
+      {
+        "actor": "agent",
+        "created_at": "<timestamp>",
+        "id": "<uuid-11>",
+        "kind": "pullRequest",
+        "task_id": "<uuid-2>",
+        "value": "1"
+      },
+      {
+        "actor": "agent",
+        "created_at": "<timestamp>",
+        "id": "<uuid-12>",
+        "kind": "status",
+        "task_id": "<uuid-2>",
+        "value": "review"
+      }
+    ],
+    "next_offset": null,
+    "total": 9
+  },
+  "attach-document": {
+    "actor": "agent",
+    "created_at": "<timestamp>",
+    "path": "note.md",
+    "task_id": "<uuid-2>"
+  },
+  "clear-delivery": {
+    "agent_summary": null,
+    "assignee": "agent",
+    "category": "Feature",
+    "checks_done": 0,
+    "checks_total": 0,
+    "commit_hash": null,
+    "created_at": "<timestamp>",
+    "details": "",
+    "document_count": 0,
+    "goal_id": "<uuid-13>",
+    "id": "<uuid-2>",
+    "message_count": 0,
+    "position": 0,
+    "project_id": "<uuid-14>",
+    "pull_request_number": null,
+    "pull_request_url": null,
+    "repository_branch": null,
+    "status": "review",
+    "title": "Lifecycle",
+    "updated_at": "<timestamp>"
+  },
+  "create-category": {
+    "name": "Synthetic",
+    "project_id": "<uuid-14>",
+    "task_count": 0
+  },
+  "create-goal": {
+    "completed_at": null,
+    "created_at": "<timestamp>",
+    "description": "Synthetic",
+    "id": "<uuid-13>",
+    "name": "Outcome",
+    "project_id": "<uuid-14>",
+    "target_date": "2026-12-01",
+    "tasks_done": 0,
+    "tasks_total": 0
+  },
+  "create-project": {
+    "created_at": "<timestamp>",
+    "id": "<uuid-15>",
+    "name": "Disposable",
+    "notes_folder": null,
+    "repository_path": null
+  },
+  "create-task": {
+    "agent_summary": null,
+    "assignee": "agent",
+    "category": "Feature",
+    "checks_done": 0,
+    "checks_total": 0,
+    "commit_hash": null,
+    "created_at": "<timestamp>",
+    "details": "",
+    "document_count": 0,
+    "goal_id": "<uuid-13>",
+    "id": "<uuid-2>",
+    "message_count": 0,
+    "position": -1,
+    "project_id": "<uuid-14>",
+    "pull_request_number": null,
+    "pull_request_url": null,
+    "repository_branch": null,
+    "status": "todo",
+    "title": "Lifecycle",
+    "updated_at": "<timestamp>"
+  },
+  "delete-category": {
+    "moved": 0
+  },
+  "delete-check": {
+    "deleted": true
+  },
+  "delete-message": {
+    "deleted": true
+  },
+  "delete-project": {
+    "deleted": true
+  },
+  "delete-task": {
+    "deleted": true
+  },
+  "deliver-task": {
+    "agent_summary": "Delivered",
+    "assignee": "agent",
+    "category": "Feature",
+    "checks_done": 0,
+    "checks_total": 0,
+    "commit_hash": "<commit>",
+    "created_at": "<timestamp>",
+    "details": "",
+    "document_count": 0,
+    "goal_id": "<uuid-13>",
+    "id": "<uuid-2>",
+    "message_count": 0,
+    "position": 0,
+    "project_id": "<uuid-14>",
+    "pull_request_number": 1,
+    "pull_request_url": "https://github.com/example/repository/pull/1",
+    "repository_branch": "test/contract",
+    "status": "inProgress",
+    "title": "Lifecycle",
+    "updated_at": "<timestamp>"
+  },
+  "detach-document": {
+    "detached": true
+  },
+  "discover": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "_meta": {
+        "io.modelcontextprotocol/serverInfo": {
+          "name": "trama-agent-bridge",
+          "version": "<app-version>"
+        }
+      },
+      "cacheScope": "private",
+      "capabilities": {
+        "tools": {
+          "listChanged": false
+        }
+      },
+      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); log progress with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Never move a task to done unless asked. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations.",
+      "resultType": "complete",
+      "supportedVersions": [
+        "2026-07-28",
+        "2025-11-25",
+        "2025-06-18",
+        "2025-03-26",
+        "2024-11-05"
+      ],
+      "ttlMs": 0
+    }
+  },
+  "first-page": {
+    "next_offset": 1,
+    "tasks": [
+      {
+        "agent_summary": null,
+        "assignee": "agent",
+        "category": "Feature",
+        "checks_done": 0,
+        "checks_total": 0,
+        "commit_hash": null,
+        "created_at": "<timestamp>",
+        "details": "Public briefing",
+        "document_count": 0,
+        "goal_id": null,
+        "id": "<uuid-16>",
+        "message_count": 0,
+        "position": 0,
+        "project_id": "<uuid-14>",
+        "pull_request_number": null,
+        "pull_request_url": null,
+        "repository_branch": null,
+        "status": "todo",
+        "title": "Public task",
+        "updated_at": "<timestamp>"
+      }
+    ],
+    "total": 2
+  },
+  "foreign-task-hidden": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "The task doesn't exist or isn't available in this project.",
+          "type": "text"
+        }
+      ],
+      "isError": true
+    }
+  },
+  "initialize": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "capabilities": {
+        "tools": {
+          "listChanged": false
+        }
+      },
+      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); log progress with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Never move a task to done unless asked. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations.",
+      "protocolVersion": "2025-11-25",
+      "serverInfo": {
+        "name": "trama-agent-bridge",
+        "version": "<app-version>"
+      }
+    }
+  },
+  "invalid-enum": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "Invalid value for status.",
+          "type": "text"
+        }
+      ],
+      "isError": true
+    }
+  },
+  "invalid-extra": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "Invalid arguments: unexpected field: extra",
+          "type": "text"
+        }
+      ],
+      "isError": true
+    }
+  },
+  "invalid-maximum": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "limit is outside the allowed range.",
+          "type": "text"
+        }
+      ],
+      "isError": true
+    }
+  },
+  "invalid-minimum": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "limit is outside the allowed range.",
+          "type": "text"
+        }
+      ],
+      "isError": true
+    }
+  },
+  "invalid-missing": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "project_id is required.",
+          "type": "text"
+        }
+      ],
+      "isError": true
+    }
+  },
+  "invalid-type": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "Invalid type for limit.",
+          "type": "text"
+        }
+      ],
+      "isError": true
+    }
+  },
+  "invalid-uuid": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "project_id must be a valid UUID.",
+          "type": "text"
+        }
+      ],
+      "isError": true
+    }
+  },
+  "last-page": {
+    "next_offset": null,
+    "tasks": [
+      {
+        "agent_summary": "Delivered",
+        "assignee": "agent",
+        "category": "Feature",
+        "checks_done": 0,
+        "checks_total": 0,
+        "commit_hash": "<commit>",
+        "created_at": "<timestamp>",
+        "details": "",
+        "document_count": 0,
+        "goal_id": "<uuid-13>",
+        "id": "<uuid-2>",
+        "message_count": 0,
+        "position": 0,
+        "project_id": "<uuid-14>",
+        "pull_request_number": 1,
+        "pull_request_url": "https://github.com/example/repository/pull/1",
+        "repository_branch": "test/contract",
+        "status": "review",
+        "title": "Lifecycle",
+        "updated_at": "<timestamp>"
+      }
+    ],
+    "total": 2
+  },
+  "legacy-initialize": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "capabilities": {
+        "tools": {
+          "listChanged": false
+        }
+      },
+      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); log progress with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Never move a task to done unless asked. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations.",
+      "protocolVersion": "2024-11-05",
+      "serverInfo": {
+        "name": "trama-agent-bridge",
+        "version": "<app-version>"
+      }
+    }
+  },
+  "list-attached-documents": {
+    "documents": [
+      {
+        "actor": "agent",
+        "created_at": "<timestamp>",
+        "path": "note.md"
+      }
+    ]
+  },
+  "ping": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {}
+  },
+  "project-argument-denied": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "Invalid arguments: unexpected field: project_id",
+          "type": "text"
+        }
+      ],
+      "isError": true
+    }
+  },
+  "project-tools": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "tools": [
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Lists the projects available on this connection. Project mode returns only its project.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {},
+            "required": [],
+            "type": "object"
+          },
+          "name": "list_projects"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads the project, connected repository, categories with counts, valid statuses and access rules. Annotations are private.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {},
+            "required": [],
+            "type": "object"
+          },
+          "name": "get_context"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Edits the project's name and Git connection. null disconnects the repository.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "repository_path": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
+          "name": "update_project"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Lists the project's categories, empty ones included, with task counts.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {},
+            "required": [],
+            "type": "object"
+          },
+          "name": "list_categories"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Creates a category in the project, with a name of up to 80 characters.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          },
+          "name": "create_category"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Renames a category and updates its tasks atomically.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "new_name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "new_name"
+            ],
+            "type": "object"
+          },
+          "name": "rename_category"
+        },
+        {
+          "annotations": {
+            "destructiveHint": true,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Deletes a category; replacement is required when it has tasks. Logs the change in the activity.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "replacement": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          },
+          "name": "delete_category"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Lists the project's tasks and drafts in board order: by column, top to bottom. Optional filters; paginated with limit/offset (at most 200).",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "assignee": {
+                "enum": [
+                  "user",
+                  "agent"
+                ],
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "goal_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "limit": {
+                "maximum": 200,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "offset": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "status": {
+                "enum": [
+                  "todo",
+                  "inProgress",
+                  "review",
+                  "done",
+                  "preparing",
+                  "reserved"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
+          "name": "list_tasks"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Lists the project's goals with their progress (done tasks over tasks on the board, drafts left out). Concluded goals have completed_at.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {},
+            "required": [],
+            "type": "object"
+          },
+          "name": "list_goals"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Creates a goal in the project: what a group of its tasks is for.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "target_date": {
+                "description": "A day, YYYY-MM-DD; null removes it.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          },
+          "name": "create_goal"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Edits only the goal fields sent. Concluding a goal is left to the person.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "goal_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "target_date": {
+                "description": "A day, YYYY-MM-DD; null removes it.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "goal_id"
+            ],
+            "type": "object"
+          },
+          "name": "update_goal"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Searches public context and messages, ignoring accents. Never searches private annotations.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "maximum": 200,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "offset": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "query": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "type": "object"
+          },
+          "name": "search_tasks"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads a task: Markdown context, category, assignee, position, counts and delivery metadata.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id"
+            ],
+            "type": "object"
+          },
+          "name": "get_task"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads the full task, public messages, checklist and event history. Leaves out private annotations.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id"
+            ],
+            "type": "object"
+          },
+          "name": "get_task_details"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Creates a task or draft with optional context and delivery; by default assignee agent, status todo, category Feature.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "agent_summary": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "assignee": {
+                "enum": [
+                  "user",
+                  "agent"
+                ],
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "commit_hash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "details": {
+                "type": "string"
+              },
+              "goal_id": {
+                "description": "A goal of the same project (list_goals); null takes the task out of its goal.",
+                "format": "uuid",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "pull_request_number": {
+                "minimum": 1,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "pull_request_url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "repository_branch": {
+                "description": "Existing local branch in the project's repository where the task is worked on. Trama doesn't create branches; null removes it.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "todo",
+                  "inProgress",
+                  "review",
+                  "done",
+                  "preparing",
+                  "reserved"
+                ],
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "type": "object"
+          },
+          "name": "create_task"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Edits only the fields sent, without overwriting concurrent edits to other fields. null clears optional metadata. Deliveries are references; they don't run Git.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "agent_summary": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "assignee": {
+                "enum": [
+                  "user",
+                  "agent"
+                ],
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "commit_hash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "details": {
+                "type": "string"
+              },
+              "goal_id": {
+                "description": "A goal of the same project (list_goals); null takes the task out of its goal.",
+                "format": "uuid",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "pull_request_number": {
+                "minimum": 1,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "pull_request_url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "repository_branch": {
+                "description": "Existing local branch in the project's repository where the task is worked on. Trama doesn't create branches; null removes it.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "todo",
+                  "inProgress",
+                  "review",
+                  "done",
+                  "preparing",
+                  "reserved"
+                ],
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id"
+            ],
+            "type": "object"
+          },
+          "name": "update_task"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Moves a task or draft to a status and position; after_id is the card before it, null puts it at the top.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "after_id": {
+                "format": "uuid",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "todo",
+                  "inProgress",
+                  "review",
+                  "done",
+                  "preparing",
+                  "reserved"
+                ],
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "status"
+            ],
+            "type": "object"
+          },
+          "name": "move_task"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Promotes a Preparing/Reserved draft to To do.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id"
+            ],
+            "type": "object"
+          },
+          "name": "promote_draft"
+        },
+        {
+          "annotations": {
+            "destructiveHint": true,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Deletes a task and its data. Use only when asked.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id"
+            ],
+            "type": "object"
+          },
+          "name": "delete_task"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads the task's public messages, paginated with limit/offset.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "maximum": 200,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "offset": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id"
+            ],
+            "type": "object"
+          },
+          "name": "read_task_messages"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Adds an agent comment to the task's activity.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "body": {
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "body"
+            ],
+            "type": "object"
+          },
+          "name": "add_task_message"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Edits a public message's body, keeping its original author and date.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "body": {
+                "type": "string"
+              },
+              "message_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "message_id",
+              "body"
+            ],
+            "type": "object"
+          },
+          "name": "update_task_message"
+        },
+        {
+          "annotations": {
+            "destructiveHint": true,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Deletes a public message from the task.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "message_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "message_id"
+            ],
+            "type": "object"
+          },
+          "name": "delete_task_message"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads the task's structured checklist. A Markdown checklist may also be in details.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id"
+            ],
+            "type": "object"
+          },
+          "name": "list_task_checks"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Adds a structured check to the task.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "title"
+            ],
+            "type": "object"
+          },
+          "name": "add_task_check"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Edits a check's title or completion.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "check_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "is_complete": {
+                "type": "boolean"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "check_id"
+            ],
+            "type": "object"
+          },
+          "name": "update_task_check"
+        },
+        {
+          "annotations": {
+            "destructiveHint": true,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Deletes a structured check from the task.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "check_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "check_id"
+            ],
+            "type": "object"
+          },
+          "name": "delete_task_check"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Attaches to the task a Markdown note (.md) that already exists in the project's notes folder (notes_folder in get_context). path is relative to that folder or absolute inside it. The task keeps only the path; the person reads and edits the note in Trama. Logs it in the activity.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "path"
+            ],
+            "type": "object"
+          },
+          "name": "attach_document"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Detaches a note from the task without deleting the file.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "path"
+            ],
+            "type": "object"
+          },
+          "name": "detach_document"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Lists the notes attached to the task, with paths relative to the project's notes folder.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id"
+            ],
+            "type": "object"
+          },
+          "name": "list_task_documents"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads the immutable history of creation, changes and deliveries, paginated with limit/offset.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "maximum": 200,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "offset": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id"
+            ],
+            "type": "object"
+          },
+          "name": "read_task_events"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads branches, commits, local changes and the relation to main/master in the connected repository.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "maximum": 200,
+                "minimum": 1,
+                "type": "integer"
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
+          "name": "git_snapshot"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads a commit's message and patch from the connected repository.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "commit_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "commit_id"
+            ],
+            "type": "object"
+          },
+          "name": "git_commit_details"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads the connected repository's local changes without changing files.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {},
+            "required": [],
+            "type": "object"
+          },
+          "name": "git_working_diff"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": true,
+            "readOnlyHint": true
+          },
+          "description": "Reads PRs, reviews and checks through the signed-in GitHub CLI. Returns unavailable when the provider can't be reached.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {},
+            "required": [],
+            "type": "object"
+          },
+          "name": "list_pull_requests"
+        }
+      ]
+    }
+  },
+  "promote-draft": {
+    "agent_summary": null,
+    "assignee": "agent",
+    "category": "Feature",
+    "checks_done": 0,
+    "checks_total": 0,
+    "commit_hash": null,
+    "created_at": "<timestamp>",
+    "details": "",
+    "document_count": 0,
+    "goal_id": null,
+    "id": "<uuid-17>",
+    "message_count": 0,
+    "position": 0,
+    "project_id": "<uuid-14>",
+    "pull_request_number": null,
+    "pull_request_url": null,
+    "repository_branch": null,
+    "status": "todo",
+    "title": "Draft",
+    "updated_at": "<timestamp>"
+  },
+  "read-get_context": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"agent_execution\":\"external\",\"assignees\":[\"user\",\"agent\"],\"briefing_field\":\"details\",\"categories\":[{\"name\":\"Documentation\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Feature\",\"project_id\":\"<uuid-14>\",\"task_count\":2},{\"name\":\"Fix\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Infrastructure\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Interface\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Investigation\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Migration\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Performance\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Refactoring\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Security\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Tests\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Validation\",\"project_id\":\"<uuid-14>\",\"task_count\":0}],\"private_notes_accessible\":false,\"project\":{\"created_at\":\"<timestamp>\",\"id\":\"<uuid-14>\",\"name\":\"Contract\",\"notes_folder\":\"<temp>/notes\",\"repository_path\":\"<temp>/repo\"},\"schema_version\":10,\"scope\":\"workspace\",\"statuses\":[\"todo\",\"inProgress\",\"review\",\"done\",\"preparing\",\"reserved\"],\"working_indicator\":\"assignee=agent and status=inProgress\"}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "agent_execution": "external",
+        "assignees": [
+          "user",
+          "agent"
+        ],
+        "briefing_field": "details",
+        "categories": [
+          {
+            "name": "Documentation",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Feature",
+            "project_id": "<uuid-14>",
+            "task_count": 2
+          },
+          {
+            "name": "Fix",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Infrastructure",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Interface",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Investigation",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Migration",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Performance",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Refactoring",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Security",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Tests",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Validation",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          }
+        ],
+        "private_notes_accessible": false,
+        "project": {
+          "created_at": "<timestamp>",
+          "id": "<uuid-14>",
+          "name": "Contract",
+          "notes_folder": "<temp>/notes",
+          "repository_path": "<temp>/repo"
+        },
+        "schema_version": 10,
+        "scope": "workspace",
+        "statuses": [
+          "todo",
+          "inProgress",
+          "review",
+          "done",
+          "preparing",
+          "reserved"
+        ],
+        "working_indicator": "assignee=agent and status=inProgress"
+      }
+    }
+  },
+  "read-get_task": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-16>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "agent_summary": null,
+        "assignee": "agent",
+        "category": "Feature",
+        "checks_done": 0,
+        "checks_total": 0,
+        "commit_hash": null,
+        "created_at": "<timestamp>",
+        "details": "Public briefing",
+        "document_count": 0,
+        "goal_id": null,
+        "id": "<uuid-16>",
+        "message_count": 0,
+        "position": 0,
+        "project_id": "<uuid-14>",
+        "pull_request_number": null,
+        "pull_request_url": null,
+        "repository_branch": null,
+        "status": "todo",
+        "title": "Public task",
+        "updated_at": "<timestamp>"
+      }
+    }
+  },
+  "read-get_task_details": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"checks\":[],\"documents\":[],\"events\":[{\"actor\":\"user\",\"created_at\":\"<timestamp>\",\"id\":\"<uuid-18>\",\"kind\":\"created\",\"task_id\":\"<uuid-16>\",\"value\":null}],\"messages\":[],\"task\":{\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-16>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"}}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "checks": [],
+        "documents": [],
+        "events": [
+          {
+            "actor": "user",
+            "created_at": "<timestamp>",
+            "id": "<uuid-18>",
+            "kind": "created",
+            "task_id": "<uuid-16>",
+            "value": null
+          }
+        ],
+        "messages": [],
+        "task": {
+          "agent_summary": null,
+          "assignee": "agent",
+          "category": "Feature",
+          "checks_done": 0,
+          "checks_total": 0,
+          "commit_hash": null,
+          "created_at": "<timestamp>",
+          "details": "Public briefing",
+          "document_count": 0,
+          "goal_id": null,
+          "id": "<uuid-16>",
+          "message_count": 0,
+          "position": 0,
+          "project_id": "<uuid-14>",
+          "pull_request_number": null,
+          "pull_request_url": null,
+          "repository_branch": null,
+          "status": "todo",
+          "title": "Public task",
+          "updated_at": "<timestamp>"
+        }
+      }
+    }
+  },
+  "read-git_commit_details": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"diff\":\"diff --git a/fixture.md b/fixture.md\\nnew file mode 100644\\nindex 0000000..bb22154\\n--- /dev/null\\n+++ b/fixture.md\\n@@ -0,0 +1 @@\\n+Synthetic Git fixture\\n\",\"fileDiffs\":[{\"additions\":1,\"change\":\"added\",\"deletions\":0,\"hunks\":[{\"lines\":[{\"kind\":\"addition\",\"missingNewline\":false,\"newNumber\":1,\"oldNumber\":null,\"text\":\"Synthetic Git fixture\"}],\"newCount\":1,\"newStart\":1,\"oldCount\":0,\"oldStart\":0,\"section\":\"\"}],\"isBinary\":false,\"oldPath\":null,\"path\":\"fixture.md\"}]}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "diff": "diff --git a/fixture.md b/fixture.md\nnew file mode 100644\nindex 0000000..bb22154\n--- /dev/null\n+++ b/fixture.md\n@@ -0,0 +1 @@\n+Synthetic Git fixture\n",
+        "fileDiffs": [
+          {
+            "additions": 1,
+            "change": "added",
+            "deletions": 0,
+            "hunks": [
+              {
+                "lines": [
+                  {
+                    "kind": "addition",
+                    "missingNewline": false,
+                    "newNumber": 1,
+                    "oldNumber": null,
+                    "text": "Synthetic Git fixture"
+                  }
+                ],
+                "newCount": 1,
+                "newStart": 1,
+                "oldCount": 0,
+                "oldStart": 0,
+                "section": ""
+              }
+            ],
+            "isBinary": false,
+            "oldPath": null,
+            "path": "fixture.md"
+          }
+        ]
+      }
+    }
+  },
+  "read-git_snapshot": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"branches\":[{\"aheadOfMain\":null,\"behindMain\":null,\"commitId\":\"<commit>\",\"name\":\"main\",\"upstream\":null},{\"aheadOfMain\":0,\"behindMain\":0,\"commitId\":\"<commit>\",\"name\":\"test/contract\",\"upstream\":null}],\"commits\":[{\"author\":\"Trama test\",\"body\":\"\",\"date\":1767225600.0,\"id\":\"<commit>\",\"parents\":[],\"refs\":[\"HEAD -> main\",\"test/contract\"],\"shortId\":\"6175fe1\",\"subject\":\"Initial fixture\"}],\"currentBranch\":\"main\",\"mainBranch\":\"main\",\"root\":\"<temp>/repo\",\"webUrl\":null,\"workingChanges\":[]}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "branches": [
+          {
+            "aheadOfMain": null,
+            "behindMain": null,
+            "commitId": "<commit>",
+            "name": "main",
+            "upstream": null
+          },
+          {
+            "aheadOfMain": 0,
+            "behindMain": 0,
+            "commitId": "<commit>",
+            "name": "test/contract",
+            "upstream": null
+          }
+        ],
+        "commits": [
+          {
+            "author": "Trama test",
+            "body": "",
+            "date": 1767225600.0,
+            "id": "<commit>",
+            "parents": [],
+            "refs": [
+              "HEAD -> main",
+              "test/contract"
+            ],
+            "shortId": "6175fe1",
+            "subject": "Initial fixture"
+          }
+        ],
+        "currentBranch": "main",
+        "mainBranch": "main",
+        "root": "<temp>/repo",
+        "webUrl": null,
+        "workingChanges": []
+      }
+    }
+  },
+  "read-git_working_diff": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"file_diffs\":[]}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "file_diffs": []
+      }
+    }
+  },
+  "read-list_categories": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"categories\":[{\"name\":\"Documentation\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Feature\",\"project_id\":\"<uuid-14>\",\"task_count\":2},{\"name\":\"Fix\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Infrastructure\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Interface\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Investigation\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Migration\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Performance\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Refactoring\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Security\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Tests\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Validation\",\"project_id\":\"<uuid-14>\",\"task_count\":0}]}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "categories": [
+          {
+            "name": "Documentation",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Feature",
+            "project_id": "<uuid-14>",
+            "task_count": 2
+          },
+          {
+            "name": "Fix",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Infrastructure",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Interface",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Investigation",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Migration",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Performance",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Refactoring",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Security",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Tests",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          },
+          {
+            "name": "Validation",
+            "project_id": "<uuid-14>",
+            "task_count": 0
+          }
+        ]
+      }
+    }
+  },
+  "read-list_goals": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"goals\":[{\"completed_at\":null,\"created_at\":\"<timestamp>\",\"description\":\"Synthetic\",\"id\":\"<uuid-13>\",\"name\":\"Renamed outcome\",\"project_id\":\"<uuid-14>\",\"target_date\":null,\"tasks_done\":0,\"tasks_total\":1}]}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "goals": [
+          {
+            "completed_at": null,
+            "created_at": "<timestamp>",
+            "description": "Synthetic",
+            "id": "<uuid-13>",
+            "name": "Renamed outcome",
+            "project_id": "<uuid-14>",
+            "target_date": null,
+            "tasks_done": 0,
+            "tasks_total": 1
+          }
+        ]
+      }
+    }
+  },
+  "read-list_projects": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"projects\":[{\"created_at\":\"<timestamp>\",\"id\":\"<uuid-14>\",\"name\":\"Contract\",\"notes_folder\":\"<temp>/notes\",\"repository_path\":\"<temp>/repo\"},{\"created_at\":\"<timestamp>\",\"id\":\"<uuid-19>\",\"name\":\"Other\",\"notes_folder\":null,\"repository_path\":null}]}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "projects": [
+          {
+            "created_at": "<timestamp>",
+            "id": "<uuid-14>",
+            "name": "Contract",
+            "notes_folder": "<temp>/notes",
+            "repository_path": "<temp>/repo"
+          },
+          {
+            "created_at": "<timestamp>",
+            "id": "<uuid-19>",
+            "name": "Other",
+            "notes_folder": null,
+            "repository_path": null
+          }
+        ]
+      }
+    }
+  },
+  "read-list_pull_requests": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"items\":[],\"unavailable\":\"<provider unavailable>\"}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "items": [],
+        "unavailable": "<provider unavailable>"
+      }
+    }
+  },
+  "read-list_task_checks": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"checks\":[]}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "checks": []
+      }
+    }
+  },
+  "read-list_task_documents": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"documents\":[]}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "documents": []
+      }
+    }
+  },
+  "read-list_tasks": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"next_offset\":null,\"tasks\":[{\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-16>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"},{\"agent_summary\":\"Delivered\",\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":\"<commit>\",\"created_at\":\"<timestamp>\",\"details\":\"\",\"document_count\":0,\"goal_id\":\"<uuid-13>\",\"id\":\"<uuid-2>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":1,\"pull_request_url\":\"https://github.com/example/repository/pull/1\",\"repository_branch\":\"test/contract\",\"status\":\"review\",\"title\":\"Lifecycle\",\"updated_at\":\"<timestamp>\"}],\"total\":2}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "next_offset": null,
+        "tasks": [
+          {
+            "agent_summary": null,
+            "assignee": "agent",
+            "category": "Feature",
+            "checks_done": 0,
+            "checks_total": 0,
+            "commit_hash": null,
+            "created_at": "<timestamp>",
+            "details": "Public briefing",
+            "document_count": 0,
+            "goal_id": null,
+            "id": "<uuid-16>",
+            "message_count": 0,
+            "position": 0,
+            "project_id": "<uuid-14>",
+            "pull_request_number": null,
+            "pull_request_url": null,
+            "repository_branch": null,
+            "status": "todo",
+            "title": "Public task",
+            "updated_at": "<timestamp>"
+          },
+          {
+            "agent_summary": "Delivered",
+            "assignee": "agent",
+            "category": "Feature",
+            "checks_done": 0,
+            "checks_total": 0,
+            "commit_hash": "<commit>",
+            "created_at": "<timestamp>",
+            "details": "",
+            "document_count": 0,
+            "goal_id": "<uuid-13>",
+            "id": "<uuid-2>",
+            "message_count": 0,
+            "position": 0,
+            "project_id": "<uuid-14>",
+            "pull_request_number": 1,
+            "pull_request_url": "https://github.com/example/repository/pull/1",
+            "repository_branch": "test/contract",
+            "status": "review",
+            "title": "Lifecycle",
+            "updated_at": "<timestamp>"
+          }
+        ],
+        "total": 2
+      }
+    }
+  },
+  "read-read_task_events": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"events\":[{\"actor\":\"user\",\"created_at\":\"<timestamp>\",\"id\":\"<uuid-18>\",\"kind\":\"created\",\"task_id\":\"<uuid-16>\",\"value\":null}],\"next_offset\":null,\"total\":1}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "events": [
+          {
+            "actor": "user",
+            "created_at": "<timestamp>",
+            "id": "<uuid-18>",
+            "kind": "created",
+            "task_id": "<uuid-16>",
+            "value": null
+          }
+        ],
+        "next_offset": null,
+        "total": 1
+      }
+    }
+  },
+  "read-read_task_messages": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"messages\":[],\"next_offset\":null,\"total\":0}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "messages": [],
+        "next_offset": null,
+        "total": 0
+      }
+    }
+  },
+  "read-search_tasks": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\"next_offset\":null,\"results\":[],\"total\":0}",
+          "type": "text"
+        }
+      ],
+      "isError": false,
+      "structuredContent": {
+        "next_offset": null,
+        "results": [],
+        "total": 0
+      }
+    }
+  },
+  "rename-category": {
+    "name": "Renamed",
+    "project_id": "<uuid-14>",
+    "task_count": 0
+  },
+  "review-task": {
+    "agent_summary": "Delivered",
+    "assignee": "agent",
+    "category": "Feature",
+    "checks_done": 0,
+    "checks_total": 0,
+    "commit_hash": "<commit>",
+    "created_at": "<timestamp>",
+    "details": "",
+    "document_count": 0,
+    "goal_id": "<uuid-13>",
+    "id": "<uuid-2>",
+    "message_count": 0,
+    "position": 0,
+    "project_id": "<uuid-14>",
+    "pull_request_number": 1,
+    "pull_request_url": "https://github.com/example/repository/pull/1",
+    "repository_branch": "test/contract",
+    "status": "review",
+    "title": "Lifecycle",
+    "updated_at": "<timestamp>"
+  },
+  "start-task": {
+    "agent_summary": null,
+    "assignee": "agent",
+    "category": "Feature",
+    "checks_done": 0,
+    "checks_total": 0,
+    "commit_hash": null,
+    "created_at": "<timestamp>",
+    "details": "",
+    "document_count": 0,
+    "goal_id": "<uuid-13>",
+    "id": "<uuid-2>",
+    "message_count": 0,
+    "position": 0,
+    "project_id": "<uuid-14>",
+    "pull_request_number": null,
+    "pull_request_url": null,
+    "repository_branch": null,
+    "status": "inProgress",
+    "title": "Lifecycle",
+    "updated_at": "<timestamp>"
+  },
+  "unknown-method": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": "<request-id>",
+    "jsonrpc": "2.0"
+  },
+  "update-check": {
+    "id": "<uuid-1>",
+    "is_complete": true,
+    "task_id": "<uuid-2>",
+    "title": "Verified"
+  },
+  "update-goal": {
+    "completed_at": null,
+    "created_at": "<timestamp>",
+    "description": "Synthetic",
+    "id": "<uuid-13>",
+    "name": "Renamed outcome",
+    "project_id": "<uuid-14>",
+    "target_date": null,
+    "tasks_done": 0,
+    "tasks_total": 0
+  },
+  "update-message": {
+    "author": "agent",
+    "body": "Updated progress",
+    "created_at": "<timestamp>",
+    "id": "<uuid-3>",
+    "task_id": "<uuid-2>"
+  },
+  "update-project": {
+    "created_at": "<timestamp>",
+    "id": "<uuid-15>",
+    "name": "Updated disposable",
+    "notes_folder": null,
+    "repository_path": null
+  },
+  "workspace-tools": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "tools": [
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Lists the projects available on this connection. Project mode returns only its project.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {},
+            "required": [],
+            "type": "object"
+          },
+          "name": "list_projects"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Creates a local project; the optional repository_path connects an existing Git repository.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "repository_path": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          },
+          "name": "create_project"
+        },
+        {
+          "annotations": {
+            "destructiveHint": true,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Deletes the project with all its tasks, messages, checks and annotations. Use only when asked.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "delete_project"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads the project, connected repository, categories with counts, valid statuses and access rules. Annotations are private.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "get_context"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Edits the project's name and Git connection. null disconnects the repository.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "repository_path": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "update_project"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Lists the project's categories, empty ones included, with task counts.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "list_categories"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Creates a category in the project, with a name of up to 80 characters.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "create_category"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Renames a category and updates its tasks atomically.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "new_name": {
+                "type": "string"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "new_name",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "rename_category"
+        },
+        {
+          "annotations": {
+            "destructiveHint": true,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Deletes a category; replacement is required when it has tasks. Logs the change in the activity.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "replacement": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "delete_category"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Lists the project's tasks and drafts in board order: by column, top to bottom. Optional filters; paginated with limit/offset (at most 200).",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "assignee": {
+                "enum": [
+                  "user",
+                  "agent"
+                ],
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "goal_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "limit": {
+                "maximum": 200,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "offset": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "todo",
+                  "inProgress",
+                  "review",
+                  "done",
+                  "preparing",
+                  "reserved"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "list_tasks"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Lists the project's goals with their progress (done tasks over tasks on the board, drafts left out). Concluded goals have completed_at.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "list_goals"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Creates a goal in the project: what a group of its tasks is for.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "target_date": {
+                "description": "A day, YYYY-MM-DD; null removes it.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "create_goal"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Edits only the goal fields sent. Concluding a goal is left to the person.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "goal_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "target_date": {
+                "description": "A day, YYYY-MM-DD; null removes it.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "goal_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "update_goal"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Searches public context and messages, ignoring accents. Never searches private annotations.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "maximum": 200,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "offset": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "query": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "query",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "search_tasks"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads a task: Markdown context, category, assignee, position, counts and delivery metadata.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "get_task"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads the full task, public messages, checklist and event history. Leaves out private annotations.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "get_task_details"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Creates a task or draft with optional context and delivery; by default assignee agent, status todo, category Feature.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "agent_summary": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "assignee": {
+                "enum": [
+                  "user",
+                  "agent"
+                ],
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "commit_hash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "details": {
+                "type": "string"
+              },
+              "goal_id": {
+                "description": "A goal of the same project (list_goals); null takes the task out of its goal.",
+                "format": "uuid",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "pull_request_number": {
+                "minimum": 1,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "pull_request_url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "repository_branch": {
+                "description": "Existing local branch in the project's repository where the task is worked on. Trama doesn't create branches; null removes it.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "todo",
+                  "inProgress",
+                  "review",
+                  "done",
+                  "preparing",
+                  "reserved"
+                ],
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "create_task"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Edits only the fields sent, without overwriting concurrent edits to other fields. null clears optional metadata. Deliveries are references; they don't run Git.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "agent_summary": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "assignee": {
+                "enum": [
+                  "user",
+                  "agent"
+                ],
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "commit_hash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "details": {
+                "type": "string"
+              },
+              "goal_id": {
+                "description": "A goal of the same project (list_goals); null takes the task out of its goal.",
+                "format": "uuid",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "pull_request_number": {
+                "minimum": 1,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "pull_request_url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "repository_branch": {
+                "description": "Existing local branch in the project's repository where the task is worked on. Trama doesn't create branches; null removes it.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "todo",
+                  "inProgress",
+                  "review",
+                  "done",
+                  "preparing",
+                  "reserved"
+                ],
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "update_task"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Moves a task or draft to a status and position; after_id is the card before it, null puts it at the top.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "after_id": {
+                "format": "uuid",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "todo",
+                  "inProgress",
+                  "review",
+                  "done",
+                  "preparing",
+                  "reserved"
+                ],
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "status",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "move_task"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Promotes a Preparing/Reserved draft to To do.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "promote_draft"
+        },
+        {
+          "annotations": {
+            "destructiveHint": true,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Deletes a task and its data. Use only when asked.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "delete_task"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads the task's public messages, paginated with limit/offset.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "maximum": 200,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "offset": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "read_task_messages"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Adds an agent comment to the task's activity.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "body": {
+                "type": "string"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "body",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "add_task_message"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Edits a public message's body, keeping its original author and date.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "body": {
+                "type": "string"
+              },
+              "message_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "message_id",
+              "body",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "update_task_message"
+        },
+        {
+          "annotations": {
+            "destructiveHint": true,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Deletes a public message from the task.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "message_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "message_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "delete_task_message"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads the task's structured checklist. A Markdown checklist may also be in details.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "list_task_checks"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Adds a structured check to the task.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "title",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "add_task_check"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Edits a check's title or completion.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "check_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "is_complete": {
+                "type": "boolean"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "check_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "update_task_check"
+        },
+        {
+          "annotations": {
+            "destructiveHint": true,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Deletes a structured check from the task.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "check_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "check_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "delete_task_check"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Attaches to the task a Markdown note (.md) that already exists in the project's notes folder (notes_folder in get_context). path is relative to that folder or absolute inside it. The task keeps only the path; the person reads and edits the note in Trama. Logs it in the activity.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "path",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "attach_document"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Detaches a note from the task without deleting the file.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "path",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "detach_document"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Lists the notes attached to the task, with paths relative to the project's notes folder.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "list_task_documents"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads the immutable history of creation, changes and deliveries, paginated with limit/offset.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "maximum": 200,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "offset": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "task_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "task_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "read_task_events"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads branches, commits, local changes and the relation to main/master in the connected repository.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "maximum": 200,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "git_snapshot"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads a commit's message and patch from the connected repository.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "commit_id": {
+                "type": "string"
+              },
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "commit_id",
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "git_commit_details"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": true
+          },
+          "description": "Reads the connected repository's local changes without changing files.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "git_working_diff"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": true,
+            "readOnlyHint": true
+          },
+          "description": "Reads PRs, reviews and checks through the signed-in GitHub CLI. Returns unavailable when the provider can't be reached.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "project_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "project_id"
+            ],
+            "type": "object"
+          },
+          "name": "list_pull_requests"
+        }
+      ]
+    }
+  }
+}

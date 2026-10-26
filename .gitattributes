@@ -1,0 +1,2 @@
+# Unified patch fixtures model Git's LF-delimited protocol, including on Windows.
+app/src-tauri/tests/fixtures/*.diff text eol=lf

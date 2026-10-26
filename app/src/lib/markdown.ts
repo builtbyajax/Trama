@@ -450,8 +450,14 @@ export const folderOf = (path: string) =>
 
 /** Joins a link relative to a note's folder, resolving `.` and `..`; null when it leaves. */
 export function joinPath(folder: string, link: string): string | null {
+  let decoded: string;
+  try {
+    decoded = decodeURI(link);
+  } catch {
+    return null;
+  }
   const parts = folder ? folder.split("/") : [];
-  for (const part of decodeURI(link).split("/")) {
+  for (const part of decoded.split("/")) {
     if (!part || part === ".") continue;
     if (part === "..") {
       if (!parts.length) return null;

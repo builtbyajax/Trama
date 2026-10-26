@@ -16,6 +16,8 @@ use std::{
 use unicode_normalization::{char::is_combining_mark, UnicodeNormalization};
 
 pub type Result<T> = std::result::Result<T, String>;
+/// Latest database schema supported by this build, also advertised through MCP.
+pub const SCHEMA_VERSION: i64 = 10;
 pub const STATUSES: [&str; 6] = [
     "todo",
     "inProgress",
@@ -125,10 +127,15 @@ pub struct TaskInput {
 #[serde(rename_all = "camelCase")]
 pub struct TaskPatch {
     pub project_id: String,
+    #[serde(default, deserialize_with = "nonnullable_patch")]
     pub title: Option<String>,
+    #[serde(default, deserialize_with = "nonnullable_patch")]
     pub details: Option<String>,
+    #[serde(default, deserialize_with = "nonnullable_patch")]
     pub category: Option<String>,
+    #[serde(default, deserialize_with = "nonnullable_patch")]
     pub assignee: Option<String>,
+    #[serde(default, deserialize_with = "nonnullable_patch")]
     pub status: Option<String>,
     #[serde(default, deserialize_with = "nullable_patch")]
     pub agent_summary: Option<Option<String>>,
@@ -277,13 +284,43 @@ impl Store {
             }
         }
         let mut db = sql(Connection::open(path))?;
-        sql(db.busy_timeout(std::time::Duration::from_secs(5)))?;
-        sql(db.execute_batch("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;"))?;
+        // Closing even a rejected connection can checkpoint a newer database's WAL.
+        sql(db.set_db_config(
+            rusqlite::config::DbConfig::SQLITE_DBCONFIG_NO_CKPT_ON_CLOSE,
+            true,
+        ))?;
+        let timeout = std::time::Duration::from_secs(5);
+        sql(db.busy_timeout(timeout))?;
+        // Refuse a newer file before even changing its journal mode.
+        migrations::check_version(&db)?;
+        sql(db.execute_batch("PRAGMA foreign_keys=ON;"))?;
+        // Journal-mode lock upgrades can return BUSY without invoking SQLite's busy handler.
+        let deadline = std::time::Instant::now() + timeout;
+        loop {
+            sql(db.busy_timeout(deadline.saturating_duration_since(std::time::Instant::now())))?;
+            match db.execute_batch("PRAGMA journal_mode=WAL;") {
+                Err(rusqlite::Error::SqliteFailure(error, _))
+                    if error.code == rusqlite::ErrorCode::DatabaseBusy
+                        && std::time::Instant::now() < deadline =>
+                {
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+                }
+                result => {
+                    sql(result)?;
+                    break;
+                }
+            }
+        }
+        sql(db.busy_timeout(timeout))?;
         // One immediate transaction for every step: a window and an agent opening an old
         // database together must not both migrate it.
         let tx = sql(db.transaction_with_behavior(TransactionBehavior::Immediate))?;
         migrations::migrate(&tx)?;
         sql(tx.commit())?;
+        sql(db.set_db_config(
+            rusqlite::config::DbConfig::SQLITE_DBCONFIG_NO_CKPT_ON_CLOSE,
+            false,
+        ))?;
         Ok(Self {
             db,
             path: path.into(),
@@ -510,4 +547,12 @@ where
     T: Deserialize<'de>,
 {
     Option::<T>::deserialize(deserializer).map(Some)
+}
+
+fn nonnullable_patch<'de, D, T>(deserializer: D) -> std::result::Result<Option<T>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    T::deserialize(deserializer).map(Some)
 }

@@ -13,3 +13,6 @@
 # Machine-local agent configuration
 .codex/
 .claude/
+
+# Generated release assets
+/release-assets/

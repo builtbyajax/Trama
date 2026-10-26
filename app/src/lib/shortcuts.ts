@@ -1,6 +1,7 @@
 import { t } from "./i18n";
-export const isMac = navigator.platform.includes("Mac");
-export const isWindows = navigator.platform.startsWith("Win");
+const platform = typeof navigator === "undefined" ? "" : navigator.platform;
+export const isMac = platform.includes("Mac");
+export const isWindows = platform.startsWith("Win");
 /** The key that reveals shortcut hints while held: ⌘ on macOS, Ctrl elsewhere. */
 export const hintKey = isMac ? "Meta" : "Control";
 

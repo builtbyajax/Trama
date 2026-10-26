@@ -478,7 +478,10 @@ export function NotesView({
             onDual={setDual}
             onFollow={setFollow}
             onChange={change}
-            onFlush={() => void flush()}
+            onFlush={() => {
+              // Blurring to a conflict action must not hide it before its click.
+              if (save !== "conflict" && save !== "error") void flush();
+            }}
             onDone={() => setEditing(false)}
             onScroll={() => requestAnimationFrame(followEditor)}
           >

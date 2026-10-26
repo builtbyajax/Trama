@@ -15,7 +15,8 @@
   <a href="https://trama.ajaxdev.com.br">Website</a> &nbsp;·&nbsp;
   <a href="#get-started">Get started</a> &nbsp;·&nbsp;
   <a href="docs/installation.md">Installation & MCP setup</a> &nbsp;·&nbsp;
-  <a href="#development">Run from source</a>
+  <a href="#development">Run from source</a> &nbsp;·&nbsp;
+  <a href="CHANGELOG.md">Changelog</a>
 </p>
 
 ![Trama's task board with work assigned to a person or an agent across four columns](docs/images/en/board.png)
@@ -28,7 +29,7 @@ Write the briefing, attach the context, and put the task in your agent's queue. 
 
 ## Get started
 
-Trama is in early development. Desktop installers have not been published yet; you can [run it from source](#development) today. The planned download channel is GitHub Releases, with a `.dmg` for macOS and an `.exe` for Windows.
+Trama is in early development. Download test installers from [GitHub Releases](https://github.com/builtbyajax/Trama/releases), with a `.dmg` for macOS and an `.exe` for Windows, or [run it from source](#development). Read the [installation guide](docs/installation.md) before opening the app.
 
 The interface is available in English and Brazilian Portuguese. Choose your language in **Preferences → Language**. The screenshots show the real interface with demonstration data.
 
@@ -100,6 +101,8 @@ npm run tauri dev
 
 For the browser development view, run `npm run dev` instead. It uses the same Rust core through a local development bridge at `http://127.0.0.1:1420`.
 
+Development commands use `.trama-local/development` for their data by default, so schema changes do not migrate the installed app's databases. An explicit `TRAMA_HOME` or `TRAMA_DB` selects another location. Set `TRAMA_DEV_PERSONAL=1` only when you intend to use and potentially migrate your personal data.
+
 To build a desktop package on your platform:
 
 ```sh
@@ -113,10 +116,14 @@ Before sending changes, run these checks from `app/`:
 ```sh
 npm run typecheck
 npm run format:check
+npm test
+cargo test --locked --manifest-path src-tauri/Cargo.toml --features agent-cli,dev-bridge
 cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --features agent-cli,dev-bridge -- -D warnings
 ```
 
 Use `TRAMA_DB` to point a development session at a separate database.
+
+[Testing and CI](docs/testing.md)
 
 <details>
 <summary>Keyboard shortcuts</summary>

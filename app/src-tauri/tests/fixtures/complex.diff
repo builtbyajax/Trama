@@ -1,0 +1,28 @@
+diff --git a/old.txt b/new.txt
+similarity index 100%
+rename from old.txt
+rename to new.txt
+diff --git a/image.png b/image.png
+index 123..456 100644
+Binary files a/image.png and b/image.png differ
+diff --git a/added.txt b/added.txt
+new file mode 100644
+--- /dev/null
++++ b/added.txt
+@@ -0,0 +1 @@
++new text
+\ No newline at end of file
+diff --git a/deleted.txt b/deleted.txt
+deleted file mode 100644
+--- a/deleted.txt
++++ /dev/null
+@@ -1 +0,0 @@
+-old text
+diff --git "a/caf\303\251 space.md" "b/caf\303\251 space.md"
+--- "a/caf\303\251 space.md"
++++ "b/caf\303\251 space.md"
+@@ -7,2 +9,2 @@ section
+-before
+-old
++after
++new
