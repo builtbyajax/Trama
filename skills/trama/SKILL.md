@@ -50,10 +50,22 @@ The board's columns, left to right, then the Archive:
 
 `preparing` and `reserved` (the old Drafts and Reserved) no longer exist: older databases moved them to `backlog`, and tools refuse them with a message that says so. `promote_draft` was removed; an idea reaches the queue when it moves from `backlog` to `todo`.
 
+## Your profile
+
+Each connection is its own agent profile. The person sees it on the tasks it holds, in the activity and in the sidebar: its name, its character (a shape in its color, with eyes) and whether it's working, stopped or not connected.
+
+- **Introduce yourself at the start.** Call `set_profile` before any other work. The name says the role you play in this session, such as "Reviewer" or "Site"; keep it short, as the app cuts long names. If the role isn't clear from the request, ask the person.
+- **Choose your look.** Pick `color` (0 to 5), `shape` and `eyes` as fits the work; the choice is yours. If you already have a look of your own, choose the same or the closest one.
+- **Keep the `profile_id`.** It comes in `get_context` and in `set_profile`'s reply. When a session is resumed in a new process, call `set_profile` with it to go on as the same profile and get your tasks back. It's refused while another connected session uses it. Don't save it to files or memory: it belongs to this conversation.
+- **What becomes yours.** A task with `assignee=agent` and no `agent_profile_id` is for any agent: moving it to `inProgress` makes it yours. A task with another profile's `agent_profile_id` belongs to that agent, even when it's stopped: leave it unless the person asks. To list yours, use `list_tasks` with your `agent_profile_id`.
+- **When the session ends**, the tasks you had in progress go back to To do, still yours.
+- **The person's edit wins.** If the person changed your profile in Trama, `set_profile` is refused. Don't insist: tell them if you'd like it changed.
+- **A deleted profile.** If the person deletes your profile, its tasks are released and your next call gets a new one, named after the client. When `get_context` shows a `profile_id` different from yours, call `set_profile` again with your name and look.
+
 ## Workflow
 
 1. **Context.** In workspace mode, start with `list_projects`. Then call `get_context` to see the project, repository, categories and rules. If the expected project isn't listed, check whether the app is on the right workspace before going on.
-2. **Find work.** Call `list_tasks` with `assignee: "agent"` and `status: "todo"`. If the person names a task, use `search_tasks`; it also finds tasks in the Archive, so check `status`.
+2. **Find work.** Call `list_tasks` with `assignee: "agent"` and `status: "todo"`. A task with another profile's `agent_profile_id` was given to that agent; leave it unless the person asks. If the person names a task, use `search_tasks`; it also finds tasks in the Archive, so check `status`.
 3. **Read before acting.** `get_task_details` returns the briefing (`details`, in Markdown), the messages and the history. If the task came back from review, read the last message or event first: it says what to change.
 4. **Start.** Use `move_task` with `status: "inProgress"` when you actually begin. If the task was with the person and they asked you to take it, first use `update_task` with `assignee: "agent"`.
    - If the task has a `repository_branch`, work on that branch. Several tasks can share a branch.
