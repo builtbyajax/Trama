@@ -4,24 +4,31 @@ use std::{
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
-use trama_lib::{agent::Agent, store::Store};
+use trama_lib::{agent::Agent, awake::KeepAwake, store::Store};
 
-/// What the background thread needs to keep the session's presence up to date.
+/// What the background thread needs to keep the session's presence and the computer awake.
 struct Session {
     path: PathBuf,
     profile: Option<String>,
+    last_call: Option<Instant>,
 }
 
-/// While the agent thinks between calls, says every minute that the process is alive.
+/// While the agent thinks between calls, says every minute that the process is alive, and holds
+/// the keep-awake assertion while the last call was less than 15 minutes ago.
 fn watch(session: Arc<Mutex<Session>>) {
     std::thread::spawn(move || {
+        let mut awake = KeepAwake::default();
         let mut beat = Instant::now();
         loop {
             std::thread::sleep(Duration::from_secs(5));
-            let (path, profile) = {
+            let (path, profile, active) = {
                 let s = session.lock().unwrap_or_else(|e| e.into_inner());
-                (s.path.clone(), s.profile.clone())
+                let active = s.last_call.is_some_and(|at| {
+                    at.elapsed().as_secs_f64() < trama_lib::store::ACTIVE_SECONDS
+                });
+                (s.path.clone(), s.profile.clone(), active)
             };
+            awake.update(&trama_lib::workspaces::keep_awake(), active);
             if beat.elapsed() >= Duration::from_secs(60) {
                 beat = Instant::now();
                 if let Some(profile) = profile {
@@ -86,6 +93,7 @@ fn run() -> Result<(), String> {
     let session = Arc::new(Mutex::new(Session {
         path: path.clone().unwrap_or_default(),
         profile: None,
+        last_call: None,
     }));
     watch(session.clone());
     let stdin = io::stdin();
@@ -112,6 +120,7 @@ fn run() -> Result<(), String> {
         };
         let response = match serde_json::from_str::<serde_json::Value>(&line) {
             Ok(request) => {
+                let call = request["method"] == "tools/call";
                 let response = agent.handle(request);
                 client = agent.client();
                 if fixed.is_none() && path.is_some() {
@@ -124,6 +133,9 @@ fn run() -> Result<(), String> {
                 } else {
                     profile.clone()
                 };
+                if call {
+                    s.last_call = Some(Instant::now());
+                }
                 response
             }
             Err(_) => Some(

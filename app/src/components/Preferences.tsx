@@ -13,6 +13,7 @@ import type {
   Workspace,
   Workspaces,
 } from "../lib/types";
+import { KeepAwakeRow } from "./AgentProfiles";
 import { CopyIcon, Icon, type IconName } from "./Icon";
 import { ContextMenu, NavItem, type MenuItem } from "./Sidebar";
 import { workspaceName } from "./Workspaces";
@@ -250,7 +251,10 @@ export function Preferences({
             </div>
           </section>
         ) : section === "agent" ? (
-          <AgentSection projects={data.projects} copyButton={copyButton} />
+          <>
+            <KeepAwakeRow fail={fail} />
+            <AgentSection projects={data.projects} copyButton={copyButton} />
+          </>
         ) : (
           <UpdatesSection updater={updater} fail={fail} />
         )}

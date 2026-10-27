@@ -28,6 +28,11 @@ struct SavedRegistry {
     /// `organize` moved workspaces and the app hasn't told the person to reconnect the agents yet.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     organized: bool,
+    /// Whether an active agent keeps the computer awake: `always` or `power` (only on AC power).
+    /// Kept here, beside the list, because it's about this computer and every workspace, and the
+    /// MCP reads it with the app closed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    keep_awake: Option<String>,
 }
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -182,6 +187,18 @@ impl Registry {
         let partial = path.with_extension("json.partial");
         std::fs::write(&partial, bytes).map_err(|e| e.to_string())?;
         std::fs::rename(&partial, &path).map_err(|e| e.to_string())
+    }
+    pub fn keep_awake(&self) -> String {
+        self.load().keep_awake.unwrap_or_else(|| "off".into())
+    }
+    pub fn set_keep_awake(&self, mode: &str) -> Result<String> {
+        if !["off", "always", "power"].contains(&mode) {
+            return Err("Unknown keep-awake option.".into());
+        }
+        let mut registry = self.load();
+        registry.keep_awake = (mode != "off").then(|| mode.into());
+        self.save(&registry)?;
+        Ok(mode.into())
     }
     /// The database the app and the MCP open: `TRAMA_DB` when set, otherwise the open workspace. One
     /// whose file went missing falls back to the first one in the list that exists, instead of
@@ -441,6 +458,13 @@ pub fn organize() -> Result<bool> {
 }
 pub fn dismiss_organized() -> Result<Workspaces> {
     Registry::from_env().dismiss_organized()
+}
+/// `off`, `always` or `power`.
+pub fn keep_awake() -> String {
+    Registry::from_env().keep_awake()
+}
+pub fn set_keep_awake(mode: &str) -> Result<String> {
+    Registry::from_env().set_keep_awake(mode)
 }
 pub fn list() -> Workspaces {
     Registry::from_env().list()

@@ -19,6 +19,8 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
     match command {
         "list_workspaces" => return encoded(Ok(workspaces::list())),
         "dismiss_organized" => return encoded(workspaces::dismiss_organized()),
+        "keep_awake" => return encoded(Ok(workspaces::keep_awake())),
+        "set_keep_awake" => return encoded(workspaces::set_keep_awake(text(&args, "mode")?)),
         // The MCP server ships next to the app's executable, so Preferences can show the command.
         "agent_path" => {
             let name = if cfg!(windows) {
