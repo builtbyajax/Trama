@@ -6,7 +6,7 @@
 
 Mudanças entregues em cada versão do Trama. A seção **Em desenvolvimento** reúne alterações implementadas que ainda não foram lançadas; ao publicar uma versão, substitua esse título pelo número e pela data da release.
 
-## Em desenvolvimento
+## [0.4.0](https://github.com/builtbyajax/Trama/releases/tag/v0.4.0) — 2026-10-27
 
 ### Adicionado
 

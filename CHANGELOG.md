@@ -6,7 +6,7 @@
 
 Changes delivered in each Trama version. **Unreleased** lists implemented changes that have not shipped yet; when publishing a version, replace that heading with the release number and date.
 
-## Unreleased
+## [0.4.0](https://github.com/builtbyajax/Trama/releases/tag/v0.4.0) — 2026-10-27
 
 ### Added
 
