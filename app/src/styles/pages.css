@@ -1398,25 +1398,29 @@ button.holder:hover {
     animation: none;
   }
 }
+/* The name reads as a title; hovering shows it can be edited, and the focus ring frames the field. */
 .agent-sheet .agent-name {
   width: 100%;
   height: auto;
   box-shadow: none;
-  padding: 2px 6px;
-  border: 0;
-  border-bottom: 1px dashed transparent;
-  border-radius: 0;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 18px;
-  font-weight: 650;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   text-align: center;
   text-overflow: ellipsis;
 }
-.agent-sheet .agent-name:hover,
+.agent-sheet .agent-name:hover {
+  border-color: var(--line);
+}
 .agent-sheet .agent-name:focus {
-  border-bottom-color: var(--line-strong);
+  border-color: var(--accent);
+  box-shadow: none;
   outline: none;
 }
 .agent-traits h3 {
