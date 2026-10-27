@@ -113,6 +113,12 @@ export function Sidebar({
   const faces = connected.length > 14 ? connected.slice(0, 13) : connected;
   const hidden = connected.slice(faces.length);
   const active = connected.filter((p) => p.presence === "active").length;
+  // The rail has room for one face: a working agent before a stopped one, the latest first.
+  const lead = [...connected].sort(
+    (a, b) =>
+      Number(b.presence === "active") - Number(a.presence === "active") ||
+      b.activeAt - a.activeAt,
+  )[0];
   const agentLine =
     workingCount === 1
       ? t("The agent is on 1 task")
@@ -222,26 +228,46 @@ export function Sidebar({
 
       {connected.length > 0 ? (
         <div
-          className={`agent-status ${rail ? "" : "sessions"}`}
+          className={`agent-status ${rail ? "rail-faces" : "sessions"}`}
           role="status"
           aria-label={t("Connected agents")}
-          data-tooltip={
-            rail
-              ? connected
-                  .map(
-                    (p) =>
-                      `${shortName(p.displayName)}: ${presenceTitle[p.presence]}`,
-                  )
-                  .join("\n")
-              : undefined
-          }
-          data-tooltip-side="right"
         >
-          {rail ? (
-            <span
-              className={`agent-pulse ${connected.some((p) => p.presence === "active") ? "" : "still"}`}
-              aria-hidden="true"
-            />
+          {rail && lead ? (
+            <>
+              <button
+                type="button"
+                className={`agent-face ${lead.presence}`}
+                aria-label={`${lead.displayName} · ${presenceTitle[lead.presence]}`}
+                data-tooltip={`${shortName(lead.displayName)} · ${presenceTitle[lead.presence]}`}
+                data-tooltip-side="right"
+                style={hopTiming(lead.id)}
+                onClick={() => onNavigate({ kind: "agents", id: lead.id })}
+              >
+                <AgentBot
+                  shape={lead.shape}
+                  eyes={lead.presence === "idle" ? "sleepy" : lead.eyes}
+                  color={agentColor(lead)}
+                  size={20}
+                />
+                {lead.presence === "idle" && (
+                  <span className="face-z" aria-hidden="true">
+                    z
+                  </span>
+                )}
+              </button>
+              {connected.length > 1 && (
+                <button
+                  type="button"
+                  className="agent-face more"
+                  onClick={() => onNavigate({ kind: "agents" })}
+                  aria-label={t("{0} more agents", [connected.length - 1])}
+                  data-tooltip={t("{0} more agents", [connected.length - 1])}
+                  data-tooltip-side="right"
+                >
+                  +{connected.length - 1}
+                </button>
+              )}
+            </>
           ) : (
             <>
               <button
@@ -328,19 +354,13 @@ export function Sidebar({
           aria-label={t("No agent connected")}
           onClick={() => onNavigate({ kind: "agents" })}
         >
-          {rail ? (
-            <span className="agent-pulse still" aria-hidden="true" />
-          ) : (
-            <>
-              <AgentBot
-                shape="blob"
-                eyes="sleepy"
-                color="var(--ink-off)"
-                size={16}
-              />
-              <span>{t("No agent connected")}</span>
-            </>
-          )}
+          <AgentBot
+            shape="blob"
+            eyes="sleepy"
+            color="var(--ink-off)"
+            size={16}
+          />
+          {!rail && <span>{t("No agent connected")}</span>}
         </button>
       )}
       {menu && (

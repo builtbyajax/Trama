@@ -1414,6 +1414,13 @@ button.crumb:hover {
 .sidebar.rail .agent-status.none {
   padding: 0;
 }
+/* In the rail, the face of the agent working most recently and, below it, how many more. */
+.sidebar.rail .agent-status.rail-faces {
+  flex-direction: column;
+  gap: 2px;
+  height: auto;
+  background: none;
+}
 .agent-count {
   font-weight: 400;
   padding-right: 8px;
@@ -1510,8 +1517,4 @@ button.crumb:hover {
 .agent-face.more {
   font-size: var(--fs-xs, 11px);
   color: var(--ink-3);
-}
-.agent-pulse.still {
-  animation: none;
-  background: var(--ink-3);
 }
