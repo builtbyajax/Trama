@@ -212,6 +212,9 @@ code.archive-ref {
 .list-row.working .row-button {
   background: var(--agent-soft);
 }
+.list-row.working .row-button:hover {
+  background: color-mix(in srgb, var(--agent) 14%, transparent);
+}
 .list-row.selected .row-button {
   background: var(--accent-soft);
 }

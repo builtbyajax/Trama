@@ -22,13 +22,18 @@ import {
 import {
   ago,
   byPosition,
-  isAgentWorking,
   statusTitle,
   type Goal,
   type Task,
   type TaskStatus,
 } from "../lib/types";
 import { Glyph } from "./BoardFilters";
+import {
+  agentName,
+  agentTint,
+  useAgentProfile,
+  useWorkState,
+} from "../lib/agents";
 import { Icon, StatusIcon } from "./Icon";
 import { menuRequest, type MenuRequest } from "./TaskMenu";
 import { t } from "../lib/i18n";
@@ -412,13 +417,14 @@ function ListRow({
     id: task.id,
     disabled: overlay,
   });
-  const working = isAgentWorking(task);
+  const work = useWorkState(task);
+  const profile = useAgentProfile(task.agentProfileId);
   const state = [
     overlay && "drag-overlay",
     !overlay && origin && "drag-origin",
     landed && "landed",
     selected && "selected",
-    working && "working",
+    work && "working",
   ]
     .filter(Boolean)
     .join(" ");
@@ -430,13 +436,13 @@ function ListRow({
         {goal ?? t("No goal")}
       </span>
       <span className="list-cell list-who">
-        <Glyph who={task.assignee} />
+        <Glyph who={task.assignee} profileId={task.agentProfileId} />
         <span className="truncate">
-          {working
-            ? t("Working now")
-            : task.assignee === "agent"
-              ? t("Agent")
-              : t("You")}
+          {task.assignee === "user"
+            ? t("You")
+            : work === "stopped"
+              ? `${agentName(profile)}, ${t("Stopped").toLowerCase()}`
+              : agentName(profile)}
         </span>
       </span>
       <span className="list-cell list-when">{ago(task.updatedAt)}</span>
@@ -444,12 +450,19 @@ function ListRow({
   );
   if (overlay)
     return (
-      <div className={`list-row ${state}`}>
+      <div
+        className={`list-row ${state}`}
+        style={work ? agentTint(profile) : undefined}
+      >
         <div className="row-button">{content}</div>
       </div>
     );
   return (
-    <li className={`list-row ${state}`} data-task-id={task.id}>
+    <li
+      className={`list-row ${state}`}
+      style={work ? agentTint(profile) : undefined}
+      data-task-id={task.id}
+    >
       <div
         ref={setNodeRef}
         {...listeners}

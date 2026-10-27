@@ -51,16 +51,15 @@ export const ptBR = {
     "Pressione Espaço para mover a tarefa. Use as setas esquerda e direita para trocar de coluna, para cima e para baixo para escolher a posição, Espaço para soltar e Esc para cancelar. Pressione Enter para abrir os detalhes.",
   "Project notes  {0}": "Notas do projeto  {0}",
   "Project view": "Visualização do projeto",
-  "Working now": "Trabalhando agora",
   Working: "Trabalhando",
   Backlog: "Pendências",
 
   // categories
   "“{0}” was created.": "“{0}” foi criada.",
-  "“{0}” was deleted; {1} tasks moved to “{2}”.":
-    "“{0}” foi apagada; {1} tarefas foram para “{2}”.",
-  "“{0}” was deleted; 1 task moved to “{1}”.":
-    "“{0}” foi apagada; 1 tarefa foi para “{1}”.",
+  "“{0}” was deleted. {1} tasks moved to “{2}”.":
+    "“{0}” foi apagada. {1} tarefas foram para “{2}”.",
+  "“{0}” was deleted. 1 task moved to “{1}”.":
+    "“{0}” foi apagada. 1 tarefa foi para “{1}”.",
   "“{0}” was deleted.": "“{0}” foi excluída.",
   "{0} tasks use this category. They change category and keep everything else.":
     "{0} tarefas usam esta categoria. Elas mudam de categoria e mantêm todo o resto.",
@@ -149,10 +148,10 @@ export const ptBR = {
   Updates: "Atualizações",
   "Version {0} is available.": "A versão {0} está disponível.",
   "View release notes": "Ver novidades",
-  "Couldn't move “{0}”; it stays in {1}. {2}":
-    "Não foi possível mover “{0}”; ela continua em {1}. {2}",
-  "Couldn't reorder “{0}”; it went back to its place. {1}":
-    "Não foi possível reordenar “{0}”; ela voltou ao lugar. {1}",
+  "Couldn't move “{0}”, so it stays in {1}. {2}":
+    "Não foi possível mover “{0}”, então ela continua em {1}. {2}",
+  "Couldn't reorder “{0}”, so it went back to its place. {1}":
+    "Não foi possível reordenar “{0}”, então ela voltou ao lugar. {1}",
   "Couldn't save": "Não foi possível salvar",
   "Couldn't save: {0}": "Não foi possível salvar: {0}",
   "Delete project…": "Excluir projeto…",
@@ -716,8 +715,8 @@ export const ptBR = {
   Star: "Estrela",
   "The project's vault, with its .md notes. They show up in the Notes tab.":
     "O cofre do projeto, com as notas .md. Elas aparecem na aba Notas.",
-  "Without a repository, the board works normally; the Git history is unavailable.":
-    "Sem repositório, o quadro funciona normalmente; o histórico Git fica indisponível.",
+  "Without a repository, the board works normally, but the Git history is unavailable.":
+    "Sem repositório, o quadro funciona normalmente, mas o histórico Git fica indisponível.",
   Work: "Trabalho",
 
   // workspaces
@@ -888,8 +887,8 @@ export const ptBR = {
   "Open note “{0}”": "Abrir nota “{0}”",
   "Open PR #{0} on GitHub": "Abrir PR #{0} no GitHub",
   "Open pull request on GitHub": "Abrir pull request no GitHub",
-  "Optional. Only the repository's local branches; create the branch in Git and it shows up here.":
-    "Opcional. Só branches locais do repositório; crie a branch no Git e ela aparece aqui.",
+  "Optional. Only the repository's local branches. Create the branch in Git and it shows up here.":
+    "Opcional. Só branches locais do repositório. Crie a branch no Git e ela aparece aqui.",
   "Previous task": "Tarefa anterior",
   "Previous task  ↑": "Tarefa anterior  ↑",
   Project: "Projeto",
@@ -952,6 +951,20 @@ export const ptBR = {
   "Edit goal…": "Editar objetivo…",
   "Reopen goal": "Reabrir objetivo",
   "Conclude goal…": "Concluir objetivo…",
+  "Delete agent…": "Excluir agente…",
+  "Delete agent?": "Excluir agente?",
+  "Delete agent": "Excluir agente",
+  "Agent deleted.": "Agente excluído.",
+  Look: "Aparência",
+  Shuffle: "Sortear",
+  "“{0}” leaves the Agents page, but the history still shows it. This can't be undone.":
+    "“{0}” sai da página de Agentes, mas o histórico continua mostrando ele. Isso não pode ser desfeito.",
+  "“{0}” leaves the Agents page and its task goes to any agent. The history still shows it. This can't be undone.":
+    "“{0}” sai da página de Agentes e a tarefa dele fica para qualquer agente. O histórico continua mostrando ele. Isso não pode ser desfeito.",
+  "“{0}” leaves the Agents page and its {1} tasks go to any agent. The history still shows it. This can't be undone.":
+    "“{0}” sai da página de Agentes e as {1} tarefas dele ficam para qualquer agente. O histórico continua mostrando ele. Isso não pode ser desfeito.",
+  "Its session goes on as a new agent on its next call.":
+    "A sessão dele continua como um novo agente na próxima chamada.",
   "Delete goal…": "Excluir objetivo…",
   "Delete goal {0}…": "Excluir objetivo {0}…",
   "See all {0}…": "Ver todos os {0}…",
@@ -990,10 +1003,10 @@ export const ptBR = {
   "Delete goal?": "Excluir objetivo?",
   "“{0}” is deleted. This can't be undone.":
     "“{0}” será excluído. Isso não pode ser desfeito.",
-  "“{0}” is deleted; its task stays on the board, without a goal. This can't be undone.":
-    "“{0}” será excluído; sua tarefa continua no quadro, sem objetivo. Isso não pode ser desfeito.",
-  "“{0}” is deleted; its {1} tasks stay on the board, without a goal. This can't be undone.":
-    "“{0}” será excluído; suas {1} tarefas continuam no quadro, sem objetivo. Isso não pode ser desfeito.",
+  "“{0}” is deleted. Its task stays on the board, without a goal. This can't be undone.":
+    "“{0}” será excluído. Sua tarefa continua no quadro, sem objetivo. Isso não pode ser desfeito.",
+  "“{0}” is deleted. Its {1} tasks stay on the board, without a goal. This can't be undone.":
+    "“{0}” será excluído. Suas {1} tarefas continuam no quadro, sem objetivo. Isso não pode ser desfeito.",
   "Delete goal": "Excluir objetivo",
   Goal: "Objetivo",
   "Move to goal…": "Mover para objetivo…",
@@ -1093,8 +1106,8 @@ export const ptBR = {
   "One row per task, grouped by stage, with category, goal and who has it.":
     "Uma linha por tarefa, agrupada por etapa, com categoria, objetivo e com quem está.",
   "Connect every project": "Conectar todos os projetos",
-  "The agent sees every project of the open workspace and picks one by its ID. This is the command for Claude Code; other agents take the same program and arguments.":
-    "O agente vê todos os projetos do espaço aberto e escolhe um pelo ID. Este é o comando do Claude Code; outros agentes usam o mesmo programa e argumentos.",
+  "The agent sees every project of the open workspace and picks one by its ID. This is the command for Claude Code. Other agents take the same program and arguments.":
+    "O agente vê todos os projetos do espaço aberto e escolhe um pelo ID. Este é o comando do Claude Code. Outros agentes usam o mesmo programa e argumentos.",
   "Copy command": "Copiar comando",
   "Command copied.": "Comando copiado.",
   "Project IDs": "IDs dos projetos",
@@ -1103,6 +1116,65 @@ export const ptBR = {
   "Trama restarts to finish installing.":
     "O Trama reinicia para terminar a instalação.",
   "Switch between kanban and list": "Alternar entre kanban e lista",
+  Teal: "Verde-azulado",
+  Orange: "Laranja",
+  Slate: "Ardósia",
+  Active: "Ativo",
+  Stopped: "Parado",
+  Offline: "Offline",
+  "All agents": "Todos os agentes",
+  "Any agent": "Qualquer agente",
+  "No agent set": "Sem agente definido",
+  "Filter by…": "Filtrar por…",
+  "Not connected": "Desconectado",
+  "{0} stopped on this task": "{0} parou nesta tarefa",
+  "{0} is on this task": "{0} está nesta tarefa",
+  "Took the task as {0}": "Assumiu a tarefa como {0}",
+  "Handed to {0}": "Entregue a {0}",
+  "Connected agents": "Agentes conectados",
+  Agents: "Agentes",
+  "{0} working": "{0} trabalhando",
+  "All stopped": "Todos parados",
+  "Stopped agents": "Parados",
+  Disconnected: "Desconectados",
+  "The agent sessions connected to this workspace and the tasks each one holds.":
+    "As sessões de agente conectadas a este espaço e as tarefas que cada uma segura.",
+  "This agent holds no task right now.":
+    "Este agente não está com nenhuma tarefa agora.",
+  "No agent connected": "Nenhum agente conectado",
+  "{0} more agents": "Mais {0} agentes",
+  "Connect Claude Code or another agent through MCP and it shows up here, with the tasks it picks up.":
+    "Conecte o Claude Code ou outro agente pelo MCP e ele aparece aqui, com as tarefas que pegar.",
+  "Open setup": "Abrir configuração",
+  Tasks: "Tarefas",
+  "+{0} tasks": "+{0} tarefas",
+  "What you change here the agent can no longer change.":
+    "O que você mudar aqui o agente não muda mais.",
+  "Keep the Mac awake": "Manter o Mac acordado",
+  "While an agent called a tool in the last 15 minutes. The screen can still turn off.":
+    "Enquanto um agente chamou uma ferramenta nos últimos 15 minutos. A tela ainda pode apagar.",
+  Off: "Desligado",
+  Always: "Sempre",
+  "Only on power": "Só na tomada",
+  "Session via {0}": "Sessão via {0}",
+  Connected: "Conectados",
+  Shape: "Forma",
+  Eyes: "Olhos",
+  Blob: "Bolinha",
+  Square: "Quadrado",
+  Ghost: "Fantasminha",
+  Drop: "Gota",
+  Triangle: "Triângulo",
+  Cat: "Gato",
+  Slime: "Geleca",
+  Dots: "Pontinhos",
+  Tall: "Compridos",
+  Happy: "Felizes",
+  Wink: "Piscando",
+  Focused: "Focados",
+  Visor: "Visor",
+  Angry: "Bravos",
+  Suspicious: "Desconfiados",
 };
 
 /** The interface's text, in English; `t()` only takes text that has its Portuguese above. */
@@ -1246,4 +1318,8 @@ export const errors: Record<string, string> = {
   "The target date must be a day, as YYYY-MM-DD.":
     "A data-alvo deve ser um dia, no formato AAAA-MM-DD.",
   "The task is already in this project.": "A tarefa já está neste projeto.",
+  "The profile name can be up to 40 characters.":
+    "O nome do perfil pode ter até 40 caracteres.",
+  "The agent profile doesn't exist.": "O perfil do agente não existe.",
+  "Unknown keep-awake option.": "Opção de manter acordado desconhecida.",
 };

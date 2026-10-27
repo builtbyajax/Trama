@@ -297,7 +297,10 @@ export function HistoryNav({
               >
                 <span className="history-lead">
                   {front.task ? (
-                    <Glyph who={front.task.assignee} />
+                    <Glyph
+                      who={front.task.assignee}
+                      profileId={front.task.agentProfileId}
+                    />
                   ) : (
                     <Icon
                       name={
@@ -403,7 +406,10 @@ export function HistoryNav({
                           />
                           {task ? (
                             <span className="history-task" title={task.title}>
-                              <Glyph who={task.assignee} />
+                              <Glyph
+                                who={task.assignee}
+                                profileId={task.agentProfileId}
+                              />
                               <span className="truncate">{task.title}</span>
                             </span>
                           ) : (

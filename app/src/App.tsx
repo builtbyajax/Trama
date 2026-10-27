@@ -1,4 +1,5 @@
-import { useRef, useState, type CSSProperties } from "react";
+import { useMemo, useRef, useState, type CSSProperties } from "react";
+import { AgentProfilesContext } from "./lib/agents";
 import { Board } from "./components/Board";
 import { BrandMark } from "./components/BrandMark";
 import { Icon, StatusIcon } from "./components/Icon";
@@ -31,6 +32,7 @@ import {
   defaultArchiveView,
   type ArchiveView,
 } from "./components/ArchivePage";
+import { AgentsPage } from "./components/AgentsPage";
 import { BoardList, listOrder } from "./components/BoardList";
 import { ProjectPage } from "./components/ProjectPage";
 import { useStoredState } from "./hooks/useStoredState";
@@ -122,6 +124,10 @@ export function App() {
     snapshot,
     refresh,
     notify,
+  );
+  const profiles = useMemo(
+    () => new Map((snapshot?.agentProfiles ?? []).map((p) => [p.id, p])),
+    [snapshot?.agentProfiles],
   );
   const [filters, setFilters] = useState<Record<string, BoardFilter>>({});
   const [selected, setSelected] = useState<{ id: string } | null>(null);
@@ -466,10 +472,21 @@ export function App() {
         ? storedFilter.goal
         : "*",
   };
+  // A profile no task has anymore no longer filters anything.
+  if (
+    filter.agent !== "*" &&
+    filter.agent !== "" &&
+    !projectTasks.some((t) => t.agentProfileId === filter.agent)
+  )
+    filter.agent = "*";
   const activeGoal = projectGoals.find((g) => g.id === filter.goal);
   const visibleTasks = projectTasks.filter(
     (t) =>
       (filter.assignee === "all" || t.assignee === filter.assignee) &&
+      (filter.assignee !== "agent" ||
+        filter.agent === "*" ||
+        (t.assignee === "agent" &&
+          (t.agentProfileId ?? "") === filter.agent)) &&
       (filter.category === "*" || t.category === filter.category) &&
       (filter.branch === "*" || (t.repositoryBranch ?? "") === filter.branch) &&
       (filter.goal === "*" || (t.goalId ?? "") === filter.goal),
@@ -533,7 +550,9 @@ export function App() {
                 ? t("Preferences")
                 : destination.kind === "notes"
                   ? t("Vaults")
-                  : t("Overview"),
+                  : destination.kind === "agents"
+                    ? t("Agents")
+                    : t("Overview"),
           onClick: () => closeDetails(),
         },
       ];
@@ -541,784 +560,816 @@ export function App() {
   if (selectedTask && sheetMode === "page")
     crumbs.push({ label: selectedTask.title });
   return (
-    <div className="window">
-      <Topbar
-        sidebarHidden={
-          rail
-            ? notesTreeHidden
-            : reading
-              ? diffFilesHidden
-              : panel
-                ? historyHidden
-                : navHidden
-        }
-        sidebarFixed={sidebarFixed}
-        sidebarName={
-          rail
-            ? t("notes list")
-            : reading
-              ? t("file list")
-              : panel
-                ? t("history list")
-                : t("sidebar")
-        }
-        canBack={Boolean(selectedTask) || reading || canBack}
-        canForward={canForward}
-        crumbs={crumbs}
-        menu={[
-          {
-            label: t("New project…"),
-            keys: shortcuts.newProject,
-            onSelect: () => setProjectComposer({}),
-          },
-          {
-            label: t("Refresh"),
-            keys: shortcuts.reload,
-            onSelect: () => void refresh(),
-          },
-          {
-            label: t("Keyboard shortcuts"),
-            keys: shortcuts.help,
-            onSelect: () => setShortcutsOpen(true),
-          },
-          {
-            label: t("Preferences"),
-            keys: shortcuts.preferences,
-            onSelect: () => navigate({ kind: "preferences" }),
-          },
-        ]}
-        onToggleSidebar={toggleNav}
-        onSidebarHover={sidebarFixed ? () => {} : showPeek}
-        onSidebarLeave={hidePeek}
-        onBack={back}
-        onForward={nav.forward}
-        onSearch={() => setSearch(true)}
-        onNewTask={() => newTask()}
-      />
-      <div className={`window-body ${navHidden ? "sidebar-hidden" : ""}`}>
-        <SidebarSlot
-          hidden={navHidden}
-          peek={peek}
-          onShow={showPeek}
-          onHide={hidePeek}
-          onClose={closePeek}
-          onEnd={endPeek}
-        >
-          {destination.kind === "preferences" ? (
-            <PreferencesNav
-              section={destination.section ?? "general"}
-              updateAvailable={Boolean(updater.availableUpdate)}
-              // Sections replace each other in place, so Back leaves Preferences.
-              onSection={(section) =>
-                setPlace({
-                  ...place,
-                  destination: { kind: "preferences", section },
-                })
-              }
-              onBack={() =>
-                canBack ? nav.back() : navigate({ kind: "overview" })
-              }
-            />
-          ) : (
-            <Sidebar
-              projects={data.projects}
-              openCounts={openCounts}
-              workingCount={data.tasks.filter(isAgentWorking).length}
-              updateAvailable={updater.updateNoticeDismissed}
-              destination={destination}
-              onNavigate={navigate}
-              onAddProject={() => setProjectComposer({})}
-              onEditProject={(project) => setProjectComposer({ project })}
-              onDeleteProject={setProjectDelete}
-              onMoveProject={setProjectMove}
-              projectExtra={
-                project && (
-                  <SidebarGoals
-                    key={project.id}
-                    goals={projectGoals}
-                    tasks={data.tasks}
-                    activeId={activeGoal?.id ?? null}
-                    onSelect={(goalId) => {
-                      if (mode !== "board") setProjectMode("board");
-                      changeFilter({ goal: goalId ?? "*" });
-                    }}
-                    onNew={() => setGoalComposer({ projectId: project.id })}
-                    onEdit={(goal) =>
-                      setGoalComposer({ projectId: project.id, goal })
-                    }
-                    onComplete={setGoalComplete}
-                    onReopen={reopenGoal}
-                    onDelete={setGoalDelete}
-                    onShowConcluded={() => setConcludedOpen(true)}
-                  />
-                )
-              }
-              workspace={
-                workspaces.list && (
-                  <WorkspaceButton
-                    list={workspaces.list}
-                    rail={Boolean(panel)}
-                    onSwitch={workspaces.switchTo}
-                    onEdit={(workspace) =>
-                      workspaces.setComposer({ workspace })
-                    }
-                    onCreate={() => workspaces.setComposer({})}
-                    onOpen={workspaces.open}
-                    onManage={() => navigate({ kind: "preferences" })}
-                  />
-                )
-              }
-              onShortcuts={() => setShortcutsOpen(true)}
-              rail={Boolean(panel)}
-              onPeek={rail && notesTreeHidden ? showPeekSoon : undefined}
-              onPeekLeave={rail && notesTreeHidden ? hidePeek : undefined}
-            />
-          )}
-        </SidebarSlot>
-        <main className="island">
-          <UpdateNotices
-            availableVersion={
-              updater.updateNoticeDismissed
-                ? null
-                : (updater.availableUpdate?.version ?? null)
-            }
-            installing={updater.installing}
-            restartNotice={
-              updater.restartNotice || Boolean(workspaces.list?.organized)
-            }
-            onDismissRestart={() => {
-              updater.dismissRestartNotice();
-              // Moving the workspaces into folders also asks agents to reconnect, once.
-              if (workspaces.list?.organized)
-                void dismissOrganized().then(workspaces.setList, () => {});
-            }}
-            onDismissUpdate={updater.dismissUpdate}
-            onInstall={() =>
-              void updater.install().catch((e) => notify(errorMessage(e), true))
-            }
-            onReleaseNotes={() =>
-              void openUrl(
-                "https://github.com/builtbyajax/Trama/releases/latest",
-              ).catch((e) => notify(errorMessage(e), true))
-            }
-          />
-          {error && (
-            <div className="error-banner" role="alert">
-              {error}
-              <button className="button small" onClick={() => void refresh()}>
-                {t("Refresh")}
-              </button>
-            </div>
-          )}
-          {project && !reading && (
-            <ProjectHeader
-              project={project}
-              color={projectColor(project)}
-              tasks={projectTasks}
-              goals={projectGoals}
-              goal={
-                mode === "board" && activeGoal
-                  ? {
-                      id: activeGoal.id,
-                      name: activeGoal.name,
-                      description: activeGoal.description,
-                      onEdit: () =>
-                        setGoalComposer({
-                          projectId: project.id,
-                          goal: activeGoal,
-                        }),
-                      onDelete: () => setGoalDelete(activeGoal),
-                      onClear: () => changeFilter({ goal: "*" }),
-                      summary: (
-                        <GoalSummary goal={activeGoal} tasks={data.tasks} />
-                      ),
-                      actions: (
-                        <GoalActions
-                          goal={activeGoal}
-                          tasks={data.tasks}
-                          onComplete={() => setGoalComplete(activeGoal)}
-                          onReopen={() => reopenGoal(activeGoal)}
-                        />
-                      ),
-                    }
-                  : undefined
-              }
-              mode={mode}
-              filter={filter}
-              onMode={setProjectMode}
-              onFilter={changeFilter}
-              onShowConcluded={() => setConcludedOpen(true)}
-              onNewGoal={() => setGoalComposer({ projectId: project.id })}
-              onManageCategories={() => setCategoriesOpen(true)}
-              onReveal={(path) =>
-                void revealPath(path).catch((e) =>
-                  notify(errorMessage(e), true),
-                )
-              }
-            />
-          )}
-          <div className="content">
-            {project && mode === "notes" ? (
-              project.documentsFolder ? (
-                <NotesView
-                  key={`${project.id}:${project.documentsFolder}`}
-                  projectId={project.id}
-                  root={project.documentsFolder}
-                  documents={data.documents.filter((d) =>
-                    data.tasks.some(
-                      (t) => t.id === d.taskId && t.projectId === project.id,
-                    ),
-                  )}
-                  tasks={data.tasks}
-                  revision={revision}
-                  openRequest={noteRequest}
-                  treeHidden={notesTreeHidden}
-                  onTreeHidden={hideNotesTree}
-                  treePeek={peek}
-                  onTreeHover={showPeek}
-                  onTreeLeave={hidePeek}
-                  onTreePeekEnd={endPeek}
-                  onOpenTask={openTask}
-                  onChanged={() => void refresh()}
-                  notify={notify}
-                />
-              ) : (
-                <ProjectNotesSetup
-                  project={project}
-                  onSaved={() => void refresh()}
-                />
-              )
-            ) : project ? (
-              mode === "project" ? (
-                <ProjectPage
-                  key={project.id}
-                  tasks={boardTasks}
-                  goals={projectGoals}
-                  onOpenTask={openTask}
-                  onOpenGoal={(goalId) => {
-                    setProjectMode("board");
-                    changeFilter({ goal: goalId });
-                  }}
-                  onShowConcluded={() => setConcludedOpen(true)}
-                />
-              ) : mode === "git" ? (
-                <GitProject
-                  key={project.id}
-                  project={project}
-                  tasks={data.tasks}
-                  revision={revision}
-                  focus={gitFocus}
-                  listHidden={historyHidden}
-                  diffOpen={diffTitle !== null}
-                  diffFilesHidden={diffFilesHidden}
-                  onDiff={setDiffTitle}
-                  notify={notify}
-                  onEditProject={() => setProjectComposer({ project })}
-                  onOpenTask={openTask}
-                  onRefresh={() => void refresh()}
-                />
-              ) : boardView === "list" ? (
-                <BoardList
-                  tasks={visibleTasks}
-                  goals={projectGoals}
-                  landedId={landedId}
-                  onMove={(id, status, afterId) =>
-                    void move(id, status, afterId)
-                  }
-                  selectedId={selectedTask?.id}
-                  menuId={taskMenu?.task.id}
-                  onMenu={setTaskMenu}
-                  onOpen={openTask}
-                />
-              ) : (
-                <Board
-                  tasks={visibleTasks}
-                  branches={branches}
-                  goals={activeGoal ? [] : projectGoals}
-                  landedId={landedId}
-                  selectedId={selectedTask?.id}
-                  menuId={taskMenu?.task.id}
-                  onMenu={setTaskMenu}
-                  onMove={(id, status, afterId) =>
-                    void move(id, status, afterId)
-                  }
-                  onOpen={openTask}
-                />
-              )
-            ) : destination.kind === "archive" ? (
-              <ArchivePage
-                tasks={data.tasks}
-                goals={data.goals}
-                projects={data.projects}
-                view={archiveView}
-                onView={(patch) => setArchiveView((v) => ({ ...v, ...patch }))}
-                selectedId={selectedTask?.id}
-                menuId={taskMenu?.task.id}
-                onMenu={setTaskMenu}
-                onOpen={openTask}
-              />
-            ) : destination.kind === "notes" ? (
-              <Vaults
-                projects={data.projects}
-                tasks={data.tasks}
-                documents={data.documents}
-                revision={revision}
-                onOpen={openNote}
-              />
-            ) : destination.kind === "preferences" ? (
-              <Preferences
+    <AgentProfilesContext.Provider value={profiles}>
+      <div className="window">
+        <Topbar
+          sidebarHidden={
+            rail
+              ? notesTreeHidden
+              : reading
+                ? diffFilesHidden
+                : panel
+                  ? historyHidden
+                  : navHidden
+          }
+          sidebarFixed={sidebarFixed}
+          sidebarName={
+            rail
+              ? t("notes list")
+              : reading
+                ? t("file list")
+                : panel
+                  ? t("history list")
+                  : t("sidebar")
+          }
+          canBack={Boolean(selectedTask) || reading || canBack}
+          canForward={canForward}
+          crumbs={crumbs}
+          menu={[
+            {
+              label: t("New project…"),
+              keys: shortcuts.newProject,
+              onSelect: () => setProjectComposer({}),
+            },
+            {
+              label: t("Refresh"),
+              keys: shortcuts.reload,
+              onSelect: () => void refresh(),
+            },
+            {
+              label: t("Keyboard shortcuts"),
+              keys: shortcuts.help,
+              onSelect: () => setShortcutsOpen(true),
+            },
+            {
+              label: t("Preferences"),
+              keys: shortcuts.preferences,
+              onSelect: () => navigate({ kind: "preferences" }),
+            },
+          ]}
+          onToggleSidebar={toggleNav}
+          onSidebarHover={sidebarFixed ? () => {} : showPeek}
+          onSidebarLeave={hidePeek}
+          onBack={back}
+          onForward={nav.forward}
+          onSearch={() => setSearch(true)}
+          onNewTask={() => newTask()}
+        />
+        <div className={`window-body ${navHidden ? "sidebar-hidden" : ""}`}>
+          <SidebarSlot
+            hidden={navHidden}
+            peek={peek}
+            onShow={showPeek}
+            onHide={hidePeek}
+            onClose={closePeek}
+            onEnd={endPeek}
+          >
+            {destination.kind === "preferences" ? (
+              <PreferencesNav
                 section={destination.section ?? "general"}
-                data={data}
-                workspaces={workspaces.list}
-                onEditWorkspace={(workspace) =>
-                  workspaces.setComposer({ workspace })
+                updateAvailable={Boolean(updater.availableUpdate)}
+                // Sections replace each other in place, so the topbar's Back leaves Preferences.
+                onSection={(section) =>
+                  setPlace({
+                    ...place,
+                    destination: { kind: "preferences", section },
+                  })
                 }
-                onLeaveWorkspace={(workspace, mode) =>
-                  setWorkspaceLeave({ workspace, mode })
-                }
-                notify={notify}
-                boardView={boardView}
-                onBoardView={setBoardView}
-                onEdit={(project) => setProjectComposer({ project })}
-                onAddProject={() => setProjectComposer({})}
-                updater={updater}
               />
-            ) : data.projects.length === 0 ? (
-              <div className="empty-state">
-                <BrandMark size={44} />
-                <strong>{t("No projects yet")}</strong>
-                <p>
-                  {t(
-                    "Each project has its own task queue and, if you want, a Git repository to look into.",
-                  )}
-                </p>
-                <button
-                  className="button primary"
-                  onClick={() => setProjectComposer({})}
-                >
-                  {t("Add project")}
+            ) : (
+              <Sidebar
+                projects={data.projects}
+                openCounts={openCounts}
+                workingCount={data.tasks.filter(isAgentWorking).length}
+                updateAvailable={updater.updateNoticeDismissed}
+                destination={destination}
+                onNavigate={navigate}
+                onAddProject={() => setProjectComposer({})}
+                onEditProject={(project) => setProjectComposer({ project })}
+                onDeleteProject={setProjectDelete}
+                onMoveProject={setProjectMove}
+                projectExtra={
+                  project && (
+                    <SidebarGoals
+                      key={project.id}
+                      goals={projectGoals}
+                      tasks={data.tasks}
+                      activeId={activeGoal?.id ?? null}
+                      onSelect={(goalId) => {
+                        if (mode !== "board") setProjectMode("board");
+                        changeFilter({ goal: goalId ?? "*" });
+                      }}
+                      onNew={() => setGoalComposer({ projectId: project.id })}
+                      onEdit={(goal) =>
+                        setGoalComposer({ projectId: project.id, goal })
+                      }
+                      onComplete={setGoalComplete}
+                      onReopen={reopenGoal}
+                      onDelete={setGoalDelete}
+                      onShowConcluded={() => setConcludedOpen(true)}
+                    />
+                  )
+                }
+                workspace={
+                  workspaces.list && (
+                    <WorkspaceButton
+                      list={workspaces.list}
+                      rail={Boolean(panel)}
+                      onSwitch={workspaces.switchTo}
+                      onEdit={(workspace) =>
+                        workspaces.setComposer({ workspace })
+                      }
+                      onCreate={() => workspaces.setComposer({})}
+                      onOpen={workspaces.open}
+                      onManage={() => navigate({ kind: "preferences" })}
+                    />
+                  )
+                }
+                onShortcuts={() => setShortcutsOpen(true)}
+                rail={Boolean(panel)}
+                onPeek={rail && notesTreeHidden ? showPeekSoon : undefined}
+                onPeekLeave={rail && notesTreeHidden ? hidePeek : undefined}
+              />
+            )}
+          </SidebarSlot>
+          <main className="island">
+            <UpdateNotices
+              availableVersion={
+                updater.updateNoticeDismissed
+                  ? null
+                  : (updater.availableUpdate?.version ?? null)
+              }
+              installing={updater.installing}
+              restartNotice={
+                updater.restartNotice || Boolean(workspaces.list?.organized)
+              }
+              onDismissRestart={() => {
+                updater.dismissRestartNotice();
+                // Moving the workspaces into folders also asks agents to reconnect, once.
+                if (workspaces.list?.organized)
+                  void dismissOrganized().then(workspaces.setList, () => {});
+              }}
+              onDismissUpdate={updater.dismissUpdate}
+              onInstall={() =>
+                void updater
+                  .install()
+                  .catch((e) => notify(errorMessage(e), true))
+              }
+              onReleaseNotes={() =>
+                void openUrl(
+                  "https://github.com/builtbyajax/Trama/releases/latest",
+                ).catch((e) => notify(errorMessage(e), true))
+              }
+            />
+            {error && (
+              <div className="error-banner" role="alert">
+                {error}
+                <button className="button small" onClick={() => void refresh()}>
+                  {t("Refresh")}
                 </button>
               </div>
-            ) : (
-              <Overview
-                projects={data.projects}
-                tasks={data.tasks}
-                onOpenProject={(id) => navigate({ kind: "project", id })}
-                onOpenTask={openTask}
+            )}
+            {project && !reading && (
+              <ProjectHeader
+                project={project}
+                color={projectColor(project)}
+                tasks={projectTasks}
+                goals={projectGoals}
+                goal={
+                  mode === "board" && activeGoal
+                    ? {
+                        id: activeGoal.id,
+                        name: activeGoal.name,
+                        description: activeGoal.description,
+                        onEdit: () =>
+                          setGoalComposer({
+                            projectId: project.id,
+                            goal: activeGoal,
+                          }),
+                        onDelete: () => setGoalDelete(activeGoal),
+                        onClear: () => changeFilter({ goal: "*" }),
+                        summary: (
+                          <GoalSummary goal={activeGoal} tasks={data.tasks} />
+                        ),
+                        actions: (
+                          <GoalActions
+                            goal={activeGoal}
+                            tasks={data.tasks}
+                            onComplete={() => setGoalComplete(activeGoal)}
+                            onReopen={() => reopenGoal(activeGoal)}
+                          />
+                        ),
+                      }
+                    : undefined
+                }
+                mode={mode}
+                filter={filter}
+                onMode={setProjectMode}
+                onFilter={changeFilter}
+                onShowConcluded={() => setConcludedOpen(true)}
+                onNewGoal={() => setGoalComposer({ projectId: project.id })}
+                onManageCategories={() => setCategoriesOpen(true)}
+                onReveal={(path) =>
+                  void revealPath(path).catch((e) =>
+                    notify(errorMessage(e), true),
+                  )
+                }
+              />
+            )}
+            <div className="content">
+              {project && mode === "notes" ? (
+                project.documentsFolder ? (
+                  <NotesView
+                    key={`${project.id}:${project.documentsFolder}`}
+                    projectId={project.id}
+                    root={project.documentsFolder}
+                    documents={data.documents.filter((d) =>
+                      data.tasks.some(
+                        (t) => t.id === d.taskId && t.projectId === project.id,
+                      ),
+                    )}
+                    tasks={data.tasks}
+                    revision={revision}
+                    openRequest={noteRequest}
+                    treeHidden={notesTreeHidden}
+                    onTreeHidden={hideNotesTree}
+                    treePeek={peek}
+                    onTreeHover={showPeek}
+                    onTreeLeave={hidePeek}
+                    onTreePeekEnd={endPeek}
+                    onOpenTask={openTask}
+                    onChanged={() => void refresh()}
+                    notify={notify}
+                  />
+                ) : (
+                  <ProjectNotesSetup
+                    project={project}
+                    onSaved={() => void refresh()}
+                  />
+                )
+              ) : project ? (
+                mode === "project" ? (
+                  <ProjectPage
+                    key={project.id}
+                    tasks={boardTasks}
+                    goals={projectGoals}
+                    onOpenTask={openTask}
+                    onOpenGoal={(goalId) => {
+                      setProjectMode("board");
+                      changeFilter({ goal: goalId });
+                    }}
+                    onShowConcluded={() => setConcludedOpen(true)}
+                  />
+                ) : mode === "git" ? (
+                  <GitProject
+                    key={project.id}
+                    project={project}
+                    tasks={data.tasks}
+                    revision={revision}
+                    focus={gitFocus}
+                    listHidden={historyHidden}
+                    diffOpen={diffTitle !== null}
+                    diffFilesHidden={diffFilesHidden}
+                    onDiff={setDiffTitle}
+                    notify={notify}
+                    onEditProject={() => setProjectComposer({ project })}
+                    onOpenTask={openTask}
+                    onRefresh={() => void refresh()}
+                  />
+                ) : boardView === "list" ? (
+                  <BoardList
+                    tasks={visibleTasks}
+                    goals={projectGoals}
+                    landedId={landedId}
+                    onMove={(id, status, afterId) =>
+                      void move(id, status, afterId)
+                    }
+                    selectedId={selectedTask?.id}
+                    menuId={taskMenu?.task.id}
+                    onMenu={setTaskMenu}
+                    onOpen={openTask}
+                  />
+                ) : (
+                  <Board
+                    tasks={visibleTasks}
+                    branches={branches}
+                    goals={activeGoal ? [] : projectGoals}
+                    landedId={landedId}
+                    selectedId={selectedTask?.id}
+                    menuId={taskMenu?.task.id}
+                    onMenu={setTaskMenu}
+                    onMove={(id, status, afterId) =>
+                      void move(id, status, afterId)
+                    }
+                    onOpen={openTask}
+                  />
+                )
+              ) : destination.kind === "archive" ? (
+                <ArchivePage
+                  tasks={data.tasks}
+                  goals={data.goals}
+                  projects={data.projects}
+                  view={archiveView}
+                  onView={(patch) =>
+                    setArchiveView((v) => ({ ...v, ...patch }))
+                  }
+                  selectedId={selectedTask?.id}
+                  menuId={taskMenu?.task.id}
+                  onMenu={setTaskMenu}
+                  onOpen={openTask}
+                />
+              ) : destination.kind === "agents" ? (
+                <AgentsPage
+                  profiles={data.agentProfiles}
+                  tasks={data.tasks}
+                  projects={data.projects}
+                  highlight={destination.id}
+                  onOpen={openTask}
+                  onChanged={() => void refresh()}
+                  onSetup={() =>
+                    navigate({ kind: "preferences", section: "agent" })
+                  }
+                  onPick={(id) =>
+                    setPlace({ destination: { kind: "agents", id }, mode })
+                  }
+                  notify={notify}
+                />
+              ) : destination.kind === "notes" ? (
+                <Vaults
+                  projects={data.projects}
+                  tasks={data.tasks}
+                  documents={data.documents}
+                  revision={revision}
+                  onOpen={openNote}
+                />
+              ) : destination.kind === "preferences" ? (
+                <Preferences
+                  section={destination.section ?? "general"}
+                  data={data}
+                  workspaces={workspaces.list}
+                  onEditWorkspace={(workspace) =>
+                    workspaces.setComposer({ workspace })
+                  }
+                  onLeaveWorkspace={(workspace, mode) =>
+                    setWorkspaceLeave({ workspace, mode })
+                  }
+                  notify={notify}
+                  boardView={boardView}
+                  onBoardView={setBoardView}
+                  onEdit={(project) => setProjectComposer({ project })}
+                  onAddProject={() => setProjectComposer({})}
+                  updater={updater}
+                />
+              ) : data.projects.length === 0 ? (
+                <div className="empty-state">
+                  <BrandMark size={44} />
+                  <strong>{t("No projects yet")}</strong>
+                  <p>
+                    {t(
+                      "Each project has its own task queue and, if you want, a Git repository to look into.",
+                    )}
+                  </p>
+                  <button
+                    className="button primary"
+                    onClick={() => setProjectComposer({})}
+                  >
+                    {t("Add project")}
+                  </button>
+                </div>
+              ) : (
+                <Overview
+                  projects={data.projects}
+                  tasks={data.tasks}
+                  onOpenProject={(id) => navigate({ kind: "project", id })}
+                  onOpenTask={openTask}
+                />
+              )}
+            </div>
+            {selectedTask && (
+              <TaskSheet
+                key={selectedTask.id}
+                task={selectedTask}
+                project={data.projects.find(
+                  (p) => p.id === selectedTask.projectId,
+                )}
+                categories={categoryNames(
+                  data.categories,
+                  selectedTask.projectId,
+                )}
+                branches={sheetBranches}
+                goals={data.goals.filter(
+                  (g) => g.projectId === selectedTask.projectId,
+                )}
+                onOpenNote={(path) => {
+                  if (closeDetails()) openNote(selectedTask.projectId, path);
+                }}
+                mode={sheetMode}
+                backLabel={
+                  !project && destination.kind === "archive"
+                    ? t("Archive")
+                    : t("Board")
+                }
+                position={
+                  selectedIndex >= 0
+                    ? { index: selectedIndex, total: sequence.length }
+                    : undefined
+                }
+                closeGuard={closeGuard}
+                onPrevious={step(-1)}
+                onNext={step(1)}
+                onMode={setSheetMode}
+                onClose={closeDetails}
+                onChanged={() => void refresh()}
+                onDeleted={(task) => {
+                  closeGuard.current = null;
+                  setSelected(null);
+                  setSheetMode("sheet");
+                  notify(t("“{0}” was deleted.", [task.title]));
+                }}
+                onGit={(focus) => {
+                  if (!closeDetails()) return;
+                  go({
+                    destination: {
+                      kind: "project",
+                      id: selectedTask.projectId,
+                    },
+                    mode: "git",
+                  });
+                  setGitFocus(focus);
+                }}
+              />
+            )}
+          </main>
+        </div>
+        <Tooltips />
+        <div className="hint-pill" aria-hidden="true">
+          <kbd>{isMac ? "⌘" : "Ctrl"}</kbd>
+          {t("Release to hide.")} {shortcutLabel(shortcuts.help)}{" "}
+          {t("shows all shortcuts.")}
+        </div>
+        {toast && (
+          <div
+            key={toast.id}
+            className={[
+              "toast",
+              toast.error && "error",
+              toast.leaving && "leaving",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            role={toast.error ? "alert" : "status"}
+            onMouseEnter={hold}
+            onMouseLeave={release}
+            onFocus={hold}
+            onBlur={release}
+          >
+            {toast.error && <Icon name="warning" size={14} />}
+            {toast.text}
+            {toast.action && (
+              <button
+                type="button"
+                className="toast-action"
+                onClick={() => {
+                  dismiss();
+                  toast.action!.run();
+                }}
+              >
+                {toast.action.label}
+              </button>
+            )}
+            {toast.action && (
+              // Fills up while the action can still be used.
+              <span
+                className="toast-time"
+                style={
+                  { "--toast-time": `${toast.duration}ms` } as CSSProperties
+                }
+                aria-hidden="true"
               />
             )}
           </div>
-          {selectedTask && (
-            <TaskSheet
-              key={selectedTask.id}
-              task={selectedTask}
-              project={data.projects.find(
-                (p) => p.id === selectedTask.projectId,
-              )}
-              categories={categoryNames(
-                data.categories,
-                selectedTask.projectId,
-              )}
-              branches={sheetBranches}
-              goals={data.goals.filter(
-                (g) => g.projectId === selectedTask.projectId,
-              )}
-              onOpenNote={(path) => {
-                if (closeDetails()) openNote(selectedTask.projectId, path);
-              }}
-              mode={sheetMode}
-              backLabel={
-                !project && destination.kind === "archive"
-                  ? t("Archive")
-                  : t("Board")
-              }
-              position={
-                selectedIndex >= 0
-                  ? { index: selectedIndex, total: sequence.length }
-                  : undefined
-              }
-              closeGuard={closeGuard}
-              onPrevious={step(-1)}
-              onNext={step(1)}
-              onMode={setSheetMode}
-              onClose={closeDetails}
-              onChanged={() => void refresh()}
-              onDeleted={(task) => {
+        )}
+        {composer && (
+          <TaskComposer
+            {...composer}
+            branch={
+              project?.id === composer.projectId && filter.branch !== "*"
+                ? filter.branch || null
+                : null
+            }
+            goalId={
+              project?.id === composer.projectId && activeGoal
+                ? activeGoal.id
+                : null
+            }
+            projects={snapshot!.projects}
+            categories={snapshot!.categories}
+            goals={snapshot!.goals.filter((g) => g.completedAt === null)}
+            onClose={() => setComposer(null)}
+            onSaved={(task) => {
+              setComposer(null);
+              go({
+                destination: { kind: "project", id: task.projectId },
+                mode: "board",
+              });
+              setLandedId(task.id);
+              void refresh();
+            }}
+          />
+        )}
+        {projectComposer && (
+          <ProjectComposer
+            {...projectComposer}
+            defaultColor={nextColor}
+            onClose={() => setProjectComposer(null)}
+            onDelete={(p) => {
+              setProjectComposer(null);
+              setProjectDelete(p);
+            }}
+            onSaved={(p) => {
+              setProjectComposer(null);
+              if (!projectComposer.project)
+                go({
+                  destination: { kind: "project", id: p.id },
+                  mode: "board",
+                });
+              void refresh();
+            }}
+          />
+        )}
+        {taskMenu && (
+          <ContextMenu
+            x={taskMenu.x}
+            y={taskMenu.y}
+            label={taskMenuLabel(taskMenu.task)}
+            items={menuItems(
+              data.tasks.find((t) => t.id === taskMenu.task.id) ??
+                taskMenu.task,
+            )}
+            onClose={(restoreFocus) => {
+              if (restoreFocus) taskMenu.trigger.focus();
+              setTaskMenu(null);
+            }}
+          />
+        )}
+        {taskDelete && (
+          <TaskDelete
+            task={taskDelete}
+            projectName={
+              data.projects.find((p) => p.id === taskDelete.projectId)?.name
+            }
+            onBefore={() => {
+              // The open sheet would try to save the task it no longer has.
+              if (selectedTask?.id === taskDelete.id) {
                 closeGuard.current = null;
                 setSelected(null);
                 setSheetMode("sheet");
-                notify(t("“{0}” was deleted.", [task.title]));
-              }}
-              onGit={(focus) => {
-                if (!closeDetails()) return;
-                go({
-                  destination: { kind: "project", id: selectedTask.projectId },
-                  mode: "git",
-                });
-                setGitFocus(focus);
-              }}
-            />
-          )}
-        </main>
-      </div>
-      <Tooltips />
-      <div className="hint-pill" aria-hidden="true">
-        <kbd>{isMac ? "⌘" : "Ctrl"}</kbd>
-        {t("Release to hide.")} {shortcutLabel(shortcuts.help)}{" "}
-        {t("shows all shortcuts.")}
-      </div>
-      {toast && (
-        <div
-          key={toast.id}
-          className={[
-            "toast",
-            toast.error && "error",
-            toast.leaving && "leaving",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          role={toast.error ? "alert" : "status"}
-          onMouseEnter={hold}
-          onMouseLeave={release}
-          onFocus={hold}
-          onBlur={release}
-        >
-          {toast.error && <Icon name="warning" size={14} />}
-          {toast.text}
-          {toast.action && (
-            <button
-              type="button"
-              className="toast-action"
-              onClick={() => {
-                dismiss();
-                toast.action!.run();
-              }}
-            >
-              {toast.action.label}
-            </button>
-          )}
-          {toast.action && (
-            // Fills up while the action can still be used.
-            <span
-              className="toast-time"
-              style={{ "--toast-time": `${toast.duration}ms` } as CSSProperties}
-              aria-hidden="true"
-            />
-          )}
-        </div>
-      )}
-      {composer && (
-        <TaskComposer
-          {...composer}
-          branch={
-            project?.id === composer.projectId && filter.branch !== "*"
-              ? filter.branch || null
-              : null
-          }
-          goalId={
-            project?.id === composer.projectId && activeGoal
-              ? activeGoal.id
-              : null
-          }
-          projects={snapshot!.projects}
-          categories={snapshot!.categories}
-          goals={snapshot!.goals.filter((g) => g.completedAt === null)}
-          onClose={() => setComposer(null)}
-          onSaved={(task) => {
-            setComposer(null);
-            go({
-              destination: { kind: "project", id: task.projectId },
-              mode: "board",
-            });
-            setLandedId(task.id);
-            void refresh();
-          }}
-        />
-      )}
-      {projectComposer && (
-        <ProjectComposer
-          {...projectComposer}
-          defaultColor={nextColor}
-          onClose={() => setProjectComposer(null)}
-          onDelete={(p) => {
-            setProjectComposer(null);
-            setProjectDelete(p);
-          }}
-          onSaved={(p) => {
-            setProjectComposer(null);
-            if (!projectComposer.project)
-              go({ destination: { kind: "project", id: p.id }, mode: "board" });
-            void refresh();
-          }}
-        />
-      )}
-      {taskMenu && (
-        <ContextMenu
-          x={taskMenu.x}
-          y={taskMenu.y}
-          label={taskMenuLabel(taskMenu.task)}
-          items={menuItems(
-            data.tasks.find((t) => t.id === taskMenu.task.id) ?? taskMenu.task,
-          )}
-          onClose={(restoreFocus) => {
-            if (restoreFocus) taskMenu.trigger.focus();
-            setTaskMenu(null);
-          }}
-        />
-      )}
-      {taskDelete && (
-        <TaskDelete
-          task={taskDelete}
-          projectName={
-            data.projects.find((p) => p.id === taskDelete.projectId)?.name
-          }
-          onBefore={() => {
-            // The open sheet would try to save the task it no longer has.
-            if (selectedTask?.id === taskDelete.id) {
-              closeGuard.current = null;
-              setSelected(null);
-              setSheetMode("sheet");
+              }
+            }}
+            onClose={() => setTaskDelete(null)}
+            onDeleted={(deleted) => {
+              setTaskDelete(null);
+              notify(t("“{0}” was deleted.", [deleted.title]));
+              void refresh();
+            }}
+          />
+        )}
+        {taskStatusMenu && (
+          <ContextMenu
+            x={taskStatusMenu.x}
+            y={taskStatusMenu.y}
+            // From the Archive a task only goes back to a stage of the board.
+            label={
+              taskStatusMenu.task.status === "done"
+                ? t("Reopen in stage")
+                : t("Move to stage")
             }
-          }}
-          onClose={() => setTaskDelete(null)}
-          onDeleted={(deleted) => {
-            setTaskDelete(null);
-            notify(t("“{0}” was deleted.", [deleted.title]));
-            void refresh();
-          }}
-        />
-      )}
-      {taskStatusMenu && (
-        <ContextMenu
-          x={taskStatusMenu.x}
-          y={taskStatusMenu.y}
-          // From the Archive a task only goes back to a stage of the board.
-          label={
-            taskStatusMenu.task.status === "done"
-              ? t("Reopen in stage")
-              : t("Move to stage")
-          }
-          heading={
-            taskStatusMenu.task.status === "done"
-              ? t("Reopen in stage")
-              : t("Move to stage")
-          }
-          items={(taskStatusMenu.task.status === "done"
-            ? boardStatuses
-            : [...boardStatuses, "done" as const]
-          ).map((status) => {
-            const task =
-              data.tasks.find((t) => t.id === taskStatusMenu.task.id) ??
-              taskStatusMenu.task;
-            return {
-              label: statusTitle[status],
-              leading:
-                status === "done" ? undefined : <StatusIcon status={status} />,
-              icon: status === "done" ? ("check" as const) : undefined,
-              checked: task.status === status,
-              separated: status === "done",
-              onSelect: () =>
-                task.status !== status && void move(task.id, status, null),
-            };
-          })}
-          onClose={(restoreFocus) => {
-            if (restoreFocus) taskStatusMenu.trigger.focus();
-            setTaskStatusMenu(null);
-          }}
-        />
-      )}
-      {taskGoalMenu && (
-        <ContextMenu
-          x={taskGoalMenu.x}
-          y={taskGoalMenu.y}
-          label={t("Move to goal")}
-          heading={t("Move to goal")}
-          items={goalMenuItems(
-            data.tasks.find((t) => t.id === taskGoalMenu.task.id) ??
-              taskGoalMenu.task,
-          )}
-          onClose={(restoreFocus) => {
-            if (restoreFocus) taskGoalMenu.trigger.focus();
-            setTaskGoalMenu(null);
-          }}
-        />
-      )}
-      {goalComposer && (
-        <GoalComposer
-          {...goalComposer}
-          onClose={() => setGoalComposer(null)}
-          onSaved={(goal) => {
-            const created = !goalComposer.goal;
-            setGoalComposer(null);
-            notify(
-              created
-                ? t("Goal “{0}” created.", [goal.name])
-                : t("Goal saved."),
-            );
-            void refresh();
-          }}
-        />
-      )}
-      {goalComplete && (
-        <GoalComplete
-          goal={goalComplete}
-          onClose={() => setGoalComplete(null)}
-          onDone={(goal) => {
-            setGoalComplete(null);
-            // It leaves the list, so the board shows every task again.
-            if (filter.goal === goal.id) changeFilter({ goal: "*" });
-            notify(t("Goal “{0}” concluded.", [goal.name]));
-            void refresh();
-          }}
-        />
-      )}
-      {concludedOpen && project && (
-        <ConcludedGoals
-          goals={projectGoals}
-          tasks={data.tasks}
-          onOpen={(goal) => {
-            setConcludedOpen(false);
-            if (mode !== "board") setProjectMode("board");
-            changeFilter({ goal: goal.id });
-          }}
-          onReopen={reopenGoal}
-          onDelete={setGoalDelete}
-          onClose={() => setConcludedOpen(false)}
-        />
-      )}
-      {goalDelete && (
-        <GoalDelete
-          goal={goalDelete}
-          taskCount={
-            data.tasks.filter((t) => t.goalId === goalDelete.id).length
-          }
-          onClose={() => setGoalDelete(null)}
-          onDeleted={(goal) => {
-            setGoalDelete(null);
-            notify(t("Goal “{0}” deleted.", [goal.name]));
-            void refresh();
-          }}
-        />
-      )}
-      {projectDelete && (
-        <ProjectDelete
-          project={projectDelete}
-          taskCount={
-            data.tasks.filter((t) => t.projectId === projectDelete.id).length
-          }
-          onClose={() => setProjectDelete(null)}
-          onDeleted={(deleted) => {
-            setProjectDelete(null);
-            if (selectedTask?.projectId === deleted.id) setSelected(null);
-            forget(deleted.id);
-            notify(t("Project “{0}” deleted.", [deleted.name]));
-            void refresh();
-          }}
-        />
-      )}
-      {projectMove && (
-        <ProjectMove
-          project={projectMove}
-          taskCount={
-            data.tasks.filter((t) => t.projectId === projectMove.id).length
-          }
-          targets={otherWorkspaces(workspaces.list)}
-          onClose={() => setProjectMove(null)}
-          onMoved={(moved, target) => {
-            setProjectMove(null);
-            if (selectedTask?.projectId === moved.id) setSelected(null);
-            forget(moved.id);
-            notify(
-              t("“{0}” moved to {1}.", [moved.name, workspaceName(target)]),
-            );
-            void refresh();
-          }}
-        />
-      )}
-      {workspaceLeave && workspaces.list && (
-        <WorkspaceLeave
-          {...workspaceLeave}
-          fallback={leaveFallback}
-          last={
-            workspaceLeave.workspace.path === workspaces.list.active &&
-            !leaveFallback
-          }
-          onClose={() => setWorkspaceLeave(null)}
-          onDone={(list) => {
-            // Leaving the open one switched workspaces, or left none, so the window reloads.
-            if (workspaceLeave.workspace.path === workspaces.list?.active)
-              return workspaces.enter(list);
-            workspaces.setList(list);
-            setWorkspaceLeave(null);
-            const name = workspaceName(workspaceLeave.workspace);
-            notify(
-              workspaceLeave.mode === "remove"
-                ? t("“{0}” left the list. The file wasn't touched.", [name])
-                : t("Workspace “{0}” deleted.", [name]),
-            );
-          }}
-        />
-      )}
-      {workspaces.naming && (
-        <WorkspaceNaming
-          onClose={() => workspaces.setNaming(null)}
-          onSubmit={async (name) =>
-            workspaces.enter(await openWorkspace(workspaces.naming ?? "", name))
-          }
-        />
-      )}
-      {workspaces.composer && workspaces.list && (
-        <WorkspaceComposer
-          workspace={edited}
-          workspaces={workspaces.list.workspaces}
-          onClose={() => workspaces.setComposer(null)}
-          onSubmit={async (name, color, icon) => {
-            const editing = workspaces.composer?.workspace;
-            if (editing) {
-              workspaces.setList(
-                await editWorkspace(editing.path, name, color, icon),
+            heading={
+              taskStatusMenu.task.status === "done"
+                ? t("Reopen in stage")
+                : t("Move to stage")
+            }
+            items={(taskStatusMenu.task.status === "done"
+              ? boardStatuses
+              : [...boardStatuses, "done" as const]
+            ).map((status) => {
+              const task =
+                data.tasks.find((t) => t.id === taskStatusMenu.task.id) ??
+                taskStatusMenu.task;
+              return {
+                label: statusTitle[status],
+                leading:
+                  status === "done" ? undefined : (
+                    <StatusIcon status={status} />
+                  ),
+                icon: status === "done" ? ("check" as const) : undefined,
+                checked: task.status === status,
+                separated: status === "done",
+                onSelect: () =>
+                  task.status !== status && void move(task.id, status, null),
+              };
+            })}
+            onClose={(restoreFocus) => {
+              if (restoreFocus) taskStatusMenu.trigger.focus();
+              setTaskStatusMenu(null);
+            }}
+          />
+        )}
+        {taskGoalMenu && (
+          <ContextMenu
+            x={taskGoalMenu.x}
+            y={taskGoalMenu.y}
+            label={t("Move to goal")}
+            heading={t("Move to goal")}
+            items={goalMenuItems(
+              data.tasks.find((t) => t.id === taskGoalMenu.task.id) ??
+                taskGoalMenu.task,
+            )}
+            onClose={(restoreFocus) => {
+              if (restoreFocus) taskGoalMenu.trigger.focus();
+              setTaskGoalMenu(null);
+            }}
+          />
+        )}
+        {goalComposer && (
+          <GoalComposer
+            {...goalComposer}
+            onClose={() => setGoalComposer(null)}
+            onSaved={(goal) => {
+              const created = !goalComposer.goal;
+              setGoalComposer(null);
+              notify(
+                created
+                  ? t("Goal “{0}” created.", [goal.name])
+                  : t("Goal saved."),
               );
-              workspaces.setComposer(null);
-            } else workspaces.enter(await createWorkspace(name, color, icon));
-          }}
-        />
-      )}
-      {categoriesOpen && project && (
-        <CategoryManager
-          project={project}
-          categories={data.categories}
-          onClose={() => setCategoriesOpen(false)}
-          onChanged={(message) => {
-            notify(message);
-            void refresh();
-          }}
-        />
-      )}
-      {shortcutsOpen && (
-        <ShortcutsSheet onClose={() => setShortcutsOpen(false)} />
-      )}
-      {switcher && (
-        <ProjectSwitcher
-          projects={data.projects}
-          openCounts={openCounts}
-          currentId={project?.id}
-          onClose={() => setSwitcher(false)}
-          onOpen={(target) => {
-            setSwitcher(false);
-            navigate({ kind: "project", id: target.id });
-          }}
-        />
-      )}
-      {search && (
-        <SearchPanel
-          onClose={() => setSearch(false)}
-          onOpen={(result) => {
-            const task = snapshot?.tasks.find((t) => t.id === result.taskId);
-            setSearch(false);
-            if (task && closeDetails()) openTask(task);
-          }}
-        />
-      )}
-    </div>
+              void refresh();
+            }}
+          />
+        )}
+        {goalComplete && (
+          <GoalComplete
+            goal={goalComplete}
+            onClose={() => setGoalComplete(null)}
+            onDone={(goal) => {
+              setGoalComplete(null);
+              // It leaves the list, so the board shows every task again.
+              if (filter.goal === goal.id) changeFilter({ goal: "*" });
+              notify(t("Goal “{0}” concluded.", [goal.name]));
+              void refresh();
+            }}
+          />
+        )}
+        {concludedOpen && project && (
+          <ConcludedGoals
+            goals={projectGoals}
+            tasks={data.tasks}
+            onOpen={(goal) => {
+              setConcludedOpen(false);
+              if (mode !== "board") setProjectMode("board");
+              changeFilter({ goal: goal.id });
+            }}
+            onReopen={reopenGoal}
+            onDelete={setGoalDelete}
+            onClose={() => setConcludedOpen(false)}
+          />
+        )}
+        {goalDelete && (
+          <GoalDelete
+            goal={goalDelete}
+            taskCount={
+              data.tasks.filter((t) => t.goalId === goalDelete.id).length
+            }
+            onClose={() => setGoalDelete(null)}
+            onDeleted={(goal) => {
+              setGoalDelete(null);
+              notify(t("Goal “{0}” deleted.", [goal.name]));
+              void refresh();
+            }}
+          />
+        )}
+        {projectDelete && (
+          <ProjectDelete
+            project={projectDelete}
+            taskCount={
+              data.tasks.filter((t) => t.projectId === projectDelete.id).length
+            }
+            onClose={() => setProjectDelete(null)}
+            onDeleted={(deleted) => {
+              setProjectDelete(null);
+              if (selectedTask?.projectId === deleted.id) setSelected(null);
+              forget(deleted.id);
+              notify(t("Project “{0}” deleted.", [deleted.name]));
+              void refresh();
+            }}
+          />
+        )}
+        {projectMove && (
+          <ProjectMove
+            project={projectMove}
+            taskCount={
+              data.tasks.filter((t) => t.projectId === projectMove.id).length
+            }
+            targets={otherWorkspaces(workspaces.list)}
+            onClose={() => setProjectMove(null)}
+            onMoved={(moved, target) => {
+              setProjectMove(null);
+              if (selectedTask?.projectId === moved.id) setSelected(null);
+              forget(moved.id);
+              notify(
+                t("“{0}” moved to {1}.", [moved.name, workspaceName(target)]),
+              );
+              void refresh();
+            }}
+          />
+        )}
+        {workspaceLeave && workspaces.list && (
+          <WorkspaceLeave
+            {...workspaceLeave}
+            fallback={leaveFallback}
+            last={
+              workspaceLeave.workspace.path === workspaces.list.active &&
+              !leaveFallback
+            }
+            onClose={() => setWorkspaceLeave(null)}
+            onDone={(list) => {
+              // Leaving the open one switched workspaces, or left none, so the window reloads.
+              if (workspaceLeave.workspace.path === workspaces.list?.active)
+                return workspaces.enter(list);
+              workspaces.setList(list);
+              setWorkspaceLeave(null);
+              const name = workspaceName(workspaceLeave.workspace);
+              notify(
+                workspaceLeave.mode === "remove"
+                  ? t("“{0}” left the list. The file wasn't touched.", [name])
+                  : t("Workspace “{0}” deleted.", [name]),
+              );
+            }}
+          />
+        )}
+        {workspaces.naming && (
+          <WorkspaceNaming
+            onClose={() => workspaces.setNaming(null)}
+            onSubmit={async (name) =>
+              workspaces.enter(
+                await openWorkspace(workspaces.naming ?? "", name),
+              )
+            }
+          />
+        )}
+        {workspaces.composer && workspaces.list && (
+          <WorkspaceComposer
+            workspace={edited}
+            workspaces={workspaces.list.workspaces}
+            onClose={() => workspaces.setComposer(null)}
+            onSubmit={async (name, color, icon) => {
+              const editing = workspaces.composer?.workspace;
+              if (editing) {
+                workspaces.setList(
+                  await editWorkspace(editing.path, name, color, icon),
+                );
+                workspaces.setComposer(null);
+              } else workspaces.enter(await createWorkspace(name, color, icon));
+            }}
+          />
+        )}
+        {categoriesOpen && project && (
+          <CategoryManager
+            project={project}
+            categories={data.categories}
+            onClose={() => setCategoriesOpen(false)}
+            onChanged={(message) => {
+              notify(message);
+              void refresh();
+            }}
+          />
+        )}
+        {shortcutsOpen && (
+          <ShortcutsSheet onClose={() => setShortcutsOpen(false)} />
+        )}
+        {switcher && (
+          <ProjectSwitcher
+            projects={data.projects}
+            openCounts={openCounts}
+            currentId={project?.id}
+            onClose={() => setSwitcher(false)}
+            onOpen={(target) => {
+              setSwitcher(false);
+              navigate({ kind: "project", id: target.id });
+            }}
+          />
+        )}
+        {search && (
+          <SearchPanel
+            onClose={() => setSearch(false)}
+            onOpen={(result) => {
+              const task = snapshot?.tasks.find((t) => t.id === result.taskId);
+              setSearch(false);
+              if (task && closeDetails()) openTask(task);
+            }}
+          />
+        )}
+      </div>
+    </AgentProfilesContext.Provider>
   );
 }

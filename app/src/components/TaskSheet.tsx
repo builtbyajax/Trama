@@ -14,12 +14,20 @@ import { addNote, deleteNote, errorMessage, openUrl } from "../lib/api";
 import { briefingPreview, parseBriefing } from "../lib/briefing";
 import { ariaKeys, shortcutLabel, shortcuts } from "../lib/shortcuts";
 import {
-  isAgentWorking,
+  agentName,
+  useAgentProfile,
+  useAgentProfiles,
+  workState,
+  shortName,
+} from "../lib/agents";
+import {
   statusTitle,
+  type AgentProfile,
   type GitFocus,
   type Goal,
   type Project,
   type Task,
+  type TaskAssignee,
   type TaskStatus,
 } from "../lib/types";
 import { Activity } from "./Activity";
@@ -32,7 +40,7 @@ import { CategoryMenu } from "./CategoryMenu";
 import { Field } from "./Field";
 import { Icon } from "./Icon";
 import { KeyHint } from "./KeyHint";
-import { Select } from "./Select";
+import { Select, type SelectOption } from "./Select";
 import { TaskDelete } from "./TaskDelete";
 import { goalOptions, statusOptions } from "./TaskFields";
 import { TaskDocuments } from "./notes/TaskDocuments";
@@ -47,18 +55,26 @@ const typing = (target: EventTarget | null) =>
 
 export type SheetMode = "sheet" | "page";
 
-const assignees = [
-  {
-    value: "user" as const,
-    label: t("You"),
-    icon: <Glyph who="user" />,
-  },
-  {
-    value: "agent" as const,
-    label: t("Agent"),
-    icon: <Glyph who="agent" />,
-  },
-];
+/**
+ * You, any agent, then the agent profiles still connected and the one the task has: a profile is
+ * "agent:<id>".
+ */
+function assigneeOptions(
+  profiles: Map<string, AgentProfile>,
+  current: string | null | undefined,
+): SelectOption<string>[] {
+  return [
+    { value: "user", label: t("You"), icon: <Glyph who="user" /> },
+    { value: "agent", label: t("Any agent"), icon: <Glyph who="agent" /> },
+    ...[...profiles.values()]
+      .filter((p) => p.presence !== "offline" || p.id === current)
+      .map((p) => ({
+        value: `agent:${p.id}`,
+        label: shortName(p.displayName),
+        icon: <Glyph who="agent" profileId={p.id} />,
+      })),
+  ];
+}
 const saveText: Record<SaveState, string> = {
   idle: t("Saved automatically"),
   pending: t("Saving…"),
@@ -124,7 +140,11 @@ export function TaskSheet({
   const [editBriefing, setEditBriefing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const failed = save.state === "error" || save.state === "invalid";
-  const working = isAgentWorking({ ...task, ...value });
+  const profiles = useAgentProfiles();
+  const work = workState({ ...task, ...value }, profiles);
+  const holder = useAgentProfile(
+    value.assignee === "agent" ? value.agentProfileId : null,
+  );
   useEffect(() => {
     closeGuard.current = () => {
       if (failed && save.pending()) {
@@ -315,9 +335,20 @@ export function TaskSheet({
                   label={t("Assignee")}
                   size="sm"
                   className="prop-chip"
-                  value={value.assignee}
-                  options={assignees}
-                  onChange={(assignee) => save.change({ assignee }, 0)}
+                  value={
+                    holder ? `agent:${holder.id}` : (value.assignee ?? "agent")
+                  }
+                  options={assigneeOptions(profiles, value.agentProfileId)}
+                  onChange={(choice) => {
+                    const [assignee, profile] = choice.split(":");
+                    save.change(
+                      {
+                        assignee: assignee as TaskAssignee,
+                        agentProfileId: profile ?? null,
+                      },
+                      0,
+                    );
+                  }}
                 />
                 <CategoryMenu
                   value={value.category}
@@ -402,11 +433,15 @@ export function TaskSheet({
                   </button>
                 )}
               </div>
-              {working && (
-                <p className="agent-working">
-                  <AgentTrail />
-                  <Glyph who="agent" />
-                  {t("The agent is on this task")}
+              {work && (
+                <p className={`agent-working ${work}`}>
+                  {work === "live" && <AgentTrail />}
+                  <Glyph who="agent" profileId={holder?.id} />
+                  {work === "stopped"
+                    ? t("{0} stopped on this task", [agentName(holder)])
+                    : holder
+                      ? t("{0} is on this task", [agentName(holder)])
+                      : t("The agent is on this task")}
                 </p>
               )}
               {page ? (

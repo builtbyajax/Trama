@@ -249,12 +249,18 @@ export function ColorPicker({
   labelId,
   value,
   onChange,
+  palette = projectHues.map((hue, index) => ({
+    value: hue,
+    name: hueNames[index],
+  })),
 }: {
   id: string;
   labelId: string;
   /** None chosen yet: the first color takes the focus. */
   value: number | null;
   onChange: (value: number) => void;
+  /** The colors to choose from; the projects' by default. */
+  palette?: { value: string; name: string }[];
 }) {
   const focused = value ?? 0;
   function keyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -266,7 +272,7 @@ export function ColorPicker({
           : 0;
     if (!step) return;
     event.preventDefault();
-    const next = (focused + step + projectHues.length) % projectHues.length;
+    const next = (focused + step + palette.length) % palette.length;
     onChange(next);
     event.currentTarget
       .querySelector<HTMLElement>(`[data-hue="${next}"]`)
@@ -279,15 +285,15 @@ export function ColorPicker({
       aria-labelledby={labelId}
       onKeyDown={keyDown}
     >
-      {projectHues.map((hue, index) => (
+      {palette.map(({ value: hue, name }, index) => (
         <button
           key={hue}
           id={index === focused ? id : undefined}
           type="button"
           role="radio"
           aria-checked={index === value}
-          aria-label={hueNames[index]}
-          data-tooltip={hueNames[index]}
+          aria-label={name}
+          data-tooltip={name}
           data-hue={index}
           tabIndex={index === focused ? 0 : -1}
           className="color-option"

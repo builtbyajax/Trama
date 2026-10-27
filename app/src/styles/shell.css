@@ -294,9 +294,10 @@ button.crumb:hover {
   min-height: 0;
   overflow-y: scroll;
   overscroll-behavior: contain;
-  /* The bar sits in the sidebar's own padding, so the items keep their width. */
-  margin: 0 calc(-1 * var(--bar)) 0 -4px;
-  padding: 0 0 8px 4px;
+  /* The bar sits in the sidebar's own padding, so the items keep their width. The space below is
+     margin, so the bar ends where the last item does, as it starts where the first one does. */
+  margin: 0 calc(-1 * var(--bar)) 8px -4px;
+  padding: 0 0 0 4px;
 }
 .sidebar-section {
   display: flex;
@@ -1380,4 +1381,137 @@ button.crumb:hover {
   padding: 24px 8px;
   color: var(--ink-3);
   text-align: center;
+}
+
+/* The agent sessions connected now, under their own heading, one character each: working, it hops
+   now and then; stopped, it dims and dozes. The name and state are in the tooltip. */
+.agent-status.sessions {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  /* Centered between the projects and the divider: the heading's own space above, a little
+     tightened, matches the margin below. */
+  margin: -4px 0 19px;
+  padding: 0;
+  background: none;
+}
+/* Nothing connected: a dashed slot where the faces would be. */
+.agent-status.none {
+  gap: 8px;
+  margin: 0 0 6px;
+  padding: 7px 9px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--ink-3);
+  font-family: inherit;
+  text-align: left;
+  transition: background-color 0.12s;
+}
+.agent-status.none:hover {
+  background: var(--hover);
+}
+.sidebar.rail .agent-status.none {
+  padding: 0;
+}
+.agent-count {
+  font-weight: 400;
+  padding-right: 8px;
+}
+/* Seven columns across the sidebar's width, so a short row starts at the left and a full one
+   reaches the right edge. */
+.agent-faces {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  justify-items: center;
+  row-gap: 4px;
+  width: 100%;
+  margin: 0;
+  padding: 0 4px;
+  list-style: none;
+}
+.agent-face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+}
+.agent-face:hover {
+  background: var(--hover);
+}
+.agent-heading {
+  width: 100%;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+}
+.agent-heading:hover {
+  color: var(--ink-2);
+}
+.agent-face.idle .agent-bot {
+  opacity: 0.55;
+}
+.agent-face.active .agent-bot {
+  animation: face-hop 4s infinite;
+  animation-duration: inherit;
+  animation-delay: inherit;
+}
+/* Up easing out, down easing in, then a long rest: a soft hop rather than a twitch. */
+@keyframes face-hop {
+  0%,
+  24%,
+  100% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.33, 0, 0.2, 1);
+  }
+  12% {
+    transform: translateY(-4px);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.67, 1);
+  }
+}
+.face-z {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  animation: face-z 2.8s ease-out infinite;
+}
+@keyframes face-z {
+  0% {
+    opacity: 0;
+    transform: translate(0, 2px) scale(0.7);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(4px, -6px) scale(1.1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .agent-face.active .agent-bot,
+  .face-z {
+    animation: none;
+  }
+}
+.agent-face.more {
+  font-size: var(--fs-xs, 11px);
+  color: var(--ink-3);
+}
+.agent-pulse.still {
+  animation: none;
+  background: var(--ink-3);
 }

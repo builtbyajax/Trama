@@ -18,6 +18,8 @@ import type {
   TaskDocument,
   Workspaces,
   Goal,
+  AgentProfile,
+  KeepAwake,
 } from "./types";
 import { known, t } from "./i18n";
 import { isMac, isWindows } from "./shortcuts";
@@ -181,6 +183,27 @@ export async function chooseDatabase(
 export const listWorkspaces = () => call<Workspaces>("list_workspaces");
 /** Where the MCP server is, next to the app. */
 export const agentPath = () => call<string>("agent_path");
+/** Deletes an agent: its tasks go to any agent, and the history keeps its name. */
+export const deleteAgentProfile = (profileId: string) =>
+  call<void>("delete_agent_profile", { profileId });
+/** The person renames, recolors or redraws an agent profile; the agent can't anymore. */
+export const editAgentProfile = (
+  profileId: string,
+  name: string,
+  color: number,
+  shape: string,
+  eyes: string,
+) =>
+  call<AgentProfile>("edit_agent_profile", {
+    profileId,
+    name,
+    color,
+    shape,
+    eyes,
+  });
+export const keepAwake = () => call<KeepAwake>("keep_awake");
+export const setKeepAwake = (mode: KeepAwake) =>
+  call<KeepAwake>("set_keep_awake", { mode });
 /** Creates the workspace in a folder of its own inside Trama's and opens it. */
 export const createWorkspace = (
   name: string,

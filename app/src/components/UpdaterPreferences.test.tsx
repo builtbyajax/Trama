@@ -32,6 +32,7 @@ const data: Snapshot = {
   categories: [],
   documents: [],
   goals: [],
+  agentProfiles: [],
 };
 function UpdaterPreferences() {
   const updater = useAppUpdater();

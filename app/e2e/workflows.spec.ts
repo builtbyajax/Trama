@@ -491,7 +491,7 @@ test("concluding from the board and the list, and reopening from the Archive", a
   await preferences.getByRole("button", { name: "Board", exact: true }).click();
   await page.getByRole("radio", { name: /^List/ }).click();
   await expect(page.getByRole("radio", { name: /^List/ })).toBeChecked();
-  await preferences.getByRole("button", { name: "Back", exact: true }).click();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
   const review = page.locator(".list-group").filter({
     has: page.getByRole("heading", { name: /^In review/ }),
   });

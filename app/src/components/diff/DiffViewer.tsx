@@ -308,7 +308,7 @@ export function DiffViewer({
                 title={t("Open task")}
                 onClick={() => onOpenTask(task)}
               >
-                <Glyph who={task.assignee} />
+                <Glyph who={task.assignee} profileId={task.agentProfileId} />
                 <span className="truncate">{task.title}</span>
               </button>
             )}

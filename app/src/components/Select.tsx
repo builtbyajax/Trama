@@ -10,6 +10,7 @@ import {
 import { createPortal } from "react-dom";
 import { searchKey, usePopover } from "../hooks/usePopover";
 import { Icon } from "./Icon";
+import { t } from "../lib/i18n";
 
 export interface SelectOption<T extends string> {
   value: T;
@@ -18,12 +19,22 @@ export interface SelectOption<T extends string> {
   dot?: string;
   /** Optional mark before the label, such as the assignee glyph. */
   icon?: ReactNode;
+  /** Short muted text after the label, such as a status. */
+  hint?: string;
+  /** Heading shown before the first option of a run with the same group. */
+  group?: string;
+  /** Shown quieter, as a choice that matters less now. */
+  muted?: boolean;
 }
+
+/** From this many options, a `search` list opens with its field. */
+const searchFrom = 8;
 
 /**
  * Select-only combobox (WAI-ARIA APG pattern). Focus stays on the trigger; the list is announced
  * through `aria-activedescendant`. Arrows, Home/End and type-ahead move the active option,
- * Enter/Space/Tab choose it and Escape closes without leaking to the surrounding dialog.
+ * Enter/Space/Tab choose it and Escape closes without leaking to the surrounding dialog. With
+ * `search` and a long list, a field on top of it takes the focus and narrows it as you type.
  */
 export function Select<T extends string>({
   value,
@@ -36,6 +47,9 @@ export function Select<T extends string>({
   size = "md",
   className = "",
   disabled = false,
+  search,
+  align,
+  mark,
 }: {
   value: T;
   options: SelectOption<T>[];
@@ -48,6 +62,12 @@ export function Select<T extends string>({
   size?: "sm" | "md";
   className?: string;
   disabled?: boolean;
+  /** The search field's placeholder; a long list opens with it. */
+  search?: string;
+  /** "end" opens the list from the trigger's right edge, towards the left. */
+  align?: "start" | "end";
+  /** Shown in the trigger instead of the chosen option's icon. */
+  mark?: ReactNode;
 }) {
   const listId = useId();
   const optionId = (index: number) => `${listId}-o${index}`;
@@ -55,15 +75,25 @@ export function Select<T extends string>({
   const list = useRef<HTMLDivElement>(null);
   const typed = useRef({ text: "", at: 0 });
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const searching = Boolean(search) && options.length >= searchFrom;
+  const key = searchKey(query);
+  const shown = key
+    ? options.filter((option) => searchKey(option.label).includes(key))
+    : options;
   const selectedIndex = Math.max(
     0,
     options.findIndex((option) => option.value === value),
   );
   const [active, setActive] = useState(selectedIndex);
   const close = useCallback(() => setOpen(false), []);
-  // A form field's list matches the field; a small chip's list needs room beyond the chip.
+  // A form field's list matches the field; a small chip's list needs room beyond the chip. Lists
+  // with group headings run longer, so they get the room to show whole. A searchable list holds
+  // names, which need more room still.
   const { style, container } = usePopover(open, trigger, list, close, {
-    minWidth: size === "sm" ? 180 : 0,
+    minWidth: searching ? 230 : size === "sm" ? 180 : 0,
+    maxHeight: options.some((option) => option.group) ? 440 : undefined,
+    align,
   });
   const selected = options.find((option) => option.value === value);
   useEffect(() => {
@@ -73,13 +103,30 @@ export function Select<T extends string>({
         ?.scrollIntoView({ block: "nearest" });
   }, [open, active]);
   function show(index = selectedIndex) {
+    setQuery("");
     setActive(index);
     setOpen(true);
   }
   function choose(index: number) {
-    const option = options[index];
+    const option = shown[index];
     setOpen(false);
     if (option && option.value !== value) onChange(option.value);
+  }
+  function searchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      const step = event.key === "ArrowDown" ? 1 : -1;
+      setActive((i) => Math.max(0, Math.min(shown.length - 1, i + step)));
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      choose(active);
+      trigger.current?.focus();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(false);
+      trigger.current?.focus();
+    } else if (event.key === "Tab") setOpen(false);
   }
   function typeAhead(key: string) {
     const now = performance.now();
@@ -172,7 +219,7 @@ export function Select<T extends string>({
         {selected?.dot && (
           <span className="status-dot" style={{ background: selected.dot }} />
         )}
-        {selected?.icon}
+        {mark ?? selected?.icon}
         <span className="select-value">{selected?.label ?? ""}</span>
         <Icon name="chevronDown" size={12} />
       </button>
@@ -181,40 +228,80 @@ export function Select<T extends string>({
         createPortal(
           <div
             ref={list}
-            id={listId}
-            role="listbox"
-            tabIndex={-1}
-            aria-label={label}
-            aria-labelledby={labelledBy}
-            className="popover-list scroll"
+            className={`popover-list ${searching ? "category-menu" : "scroll"}`}
             style={style}
-            onMouseDown={(event) => event.preventDefault()}
           >
-            {options.map((option, index) => (
-              <div
-                key={option.value}
-                id={optionId(index)}
-                data-index={index}
-                role="option"
-                aria-selected={option.value === value}
-                className={`popover-option ${index === active ? "active" : ""}`}
-                onMouseMove={() => setActive(index)}
-                onClick={() => {
-                  choose(index);
-                  trigger.current?.focus();
+            {searching && (
+              <input
+                autoFocus
+                role="combobox"
+                aria-label={search}
+                aria-expanded
+                aria-controls={listId}
+                aria-activedescendant={
+                  active < shown.length ? optionId(active) : undefined
+                }
+                autoComplete="off"
+                spellCheck={false}
+                placeholder={search}
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setActive(0);
                 }}
-              >
-                {option.dot && (
-                  <span
-                    className="status-dot"
-                    style={{ background: option.dot }}
-                  />
-                )}
-                {option.icon}
-                <span className="popover-label">{option.label}</span>
-                {option.value === value && <Icon name="check" size={13} />}
-              </div>
-            ))}
+                onKeyDown={searchKeyDown}
+              />
+            )}
+            <div
+              id={listId}
+              role="listbox"
+              tabIndex={-1}
+              aria-label={label}
+              aria-labelledby={labelledBy}
+              className={searching ? "scroll" : undefined}
+              onMouseDown={(event) => event.preventDefault()}
+            >
+              {shown.map((option, index) => [
+                option.group && option.group !== shown[index - 1]?.group && (
+                  <div
+                    key={`group-${option.group}`}
+                    role="presentation"
+                    className="menu-heading"
+                  >
+                    {option.group}
+                  </div>
+                ),
+                <div
+                  key={option.value}
+                  id={optionId(index)}
+                  data-index={index}
+                  role="option"
+                  aria-selected={option.value === value}
+                  className={`popover-option ${index === active ? "active" : ""} ${option.muted ? "muted" : ""}`}
+                  onMouseMove={() => setActive(index)}
+                  onClick={() => {
+                    choose(index);
+                    trigger.current?.focus();
+                  }}
+                >
+                  {option.dot && (
+                    <span
+                      className="status-dot"
+                      style={{ background: option.dot }}
+                    />
+                  )}
+                  {option.icon}
+                  <span className="popover-label">{option.label}</span>
+                  {option.hint && (
+                    <span className="popover-note">{option.hint}</span>
+                  )}
+                  {option.value === value && <Icon name="check" size={13} />}
+                </div>,
+              ])}
+              {key && shown.length === 0 && (
+                <p className="popover-empty">{t("No results.")}</p>
+              )}
+            </div>
           </div>,
           container,
         )}

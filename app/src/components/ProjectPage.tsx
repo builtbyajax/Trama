@@ -81,7 +81,7 @@ export function ProjectPage({
         className="project-task"
         onClick={() => onOpenTask(task)}
       >
-        <Glyph who={task.assignee} />
+        <Glyph who={task.assignee} profileId={task.agentProfileId} />
         <span className="truncate">
           {label ? `${label}: ${task.title}` : task.title}
         </span>

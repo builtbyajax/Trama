@@ -49,18 +49,13 @@ export function PreferencesNav({
   section,
   updateAvailable,
   onSection,
-  onBack,
 }: {
   section: PreferencesSection;
   updateAvailable: boolean;
   onSection: (section: PreferencesSection) => void;
-  onBack: () => void;
 }) {
   return (
     <nav className="sidebar preferences-nav" aria-label={t("Preferences")}>
-      <div className="sidebar-group">
-        <NavItem icon="chevronLeft" label={t("Back")} onClick={onBack} />
-      </div>
       <div className="sidebar-section">
         <span>{t("Preferences")}</span>
       </div>
