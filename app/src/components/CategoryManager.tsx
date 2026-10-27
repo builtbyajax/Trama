@@ -77,11 +77,11 @@ export function CategoryManager({
       onChanged(
         moved > 0
           ? moved === 1
-            ? t("“{0}” was deleted; 1 task moved to “{1}”.", [
+            ? t("“{0}” was deleted. 1 task moved to “{1}”.", [
                 removing.name,
                 target,
               ])
-            : t("“{0}” was deleted; {1} tasks moved to “{2}”.", [
+            : t("“{0}” was deleted. {1} tasks moved to “{2}”.", [
                 removing.name,
                 moved,
                 target,

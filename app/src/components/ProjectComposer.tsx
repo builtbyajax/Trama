@@ -140,7 +140,7 @@ export function ProjectComposer({
                     "If the repository moved, point to the new folder. The tasks and activity stay in the project.",
                   )
                 : t(
-                    "Without a repository, the board works normally; the Git history is unavailable.",
+                    "Without a repository, the board works normally, but the Git history is unavailable.",
                   )
             }
           >

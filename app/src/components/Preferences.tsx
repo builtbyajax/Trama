@@ -517,7 +517,7 @@ function AgentSection({
         <h2>{t("Connect every project")}</h2>
         <p className="muted">
           {t(
-            "The agent sees every project of the open workspace and picks one by its ID. This is the command for Claude Code; other agents take the same program and arguments.",
+            "The agent sees every project of the open workspace and picks one by its ID. This is the command for Claude Code. Other agents take the same program and arguments.",
           )}
         </p>
         <div className="settings-row">

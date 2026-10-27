@@ -724,11 +724,11 @@ export function GoalDelete({
             ? t("“{0}” is deleted. This can't be undone.", [goal.name])
             : taskCount === 1
               ? t(
-                  "“{0}” is deleted; its task stays on the board, without a goal. This can't be undone.",
+                  "“{0}” is deleted. Its task stays on the board, without a goal. This can't be undone.",
                   [goal.name],
                 )
               : t(
-                  "“{0}” is deleted; its {1} tasks stay on the board, without a goal. This can't be undone.",
+                  "“{0}” is deleted. Its {1} tasks stay on the board, without a goal. This can't be undone.",
                   [goal.name, taskCount],
                 )}
         </p>

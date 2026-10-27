@@ -133,7 +133,7 @@ export function TaskFields({
         <Field
           label={t("Branch")}
           hint={t(
-            "Optional. Only the repository's local branches; create the branch in Git and it shows up here.",
+            "Optional. Only the repository's local branches. Create the branch in Git and it shows up here.",
           )}
           className="span-all"
         >

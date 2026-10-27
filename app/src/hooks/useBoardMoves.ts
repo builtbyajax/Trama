@@ -106,11 +106,11 @@ export function useBoardMoves(
         setLandedId(null);
         notify(
           status === task.status
-            ? t("Couldn't reorder “{0}”; it went back to its place. {1}", [
+            ? t("Couldn't reorder “{0}”, so it went back to its place. {1}", [
                 task.title,
                 errorMessage(e),
               ])
-            : t("Couldn't move “{0}”; it stays in {1}. {2}", [
+            : t("Couldn't move “{0}”, so it stays in {1}. {2}", [
                 task.title,
                 statusTitle[task.status],
                 errorMessage(e),
