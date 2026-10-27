@@ -1268,13 +1268,22 @@ button.holder:hover {
     animation: none;
   }
 }
-.agent-sheet-actions {
+.agent-sheet-close {
   position: absolute;
   top: 10px;
   right: 10px;
   z-index: 1;
+}
+.agent-sheet-foot {
+  flex: none;
   display: flex;
-  gap: 2px;
+  justify-content: flex-end;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line-subtle);
+}
+.agent-delete:hover:not(:disabled) {
+  color: var(--danger);
+  background: var(--danger-soft);
 }
 /* The character, name and tabs stay put; only what the tab shows scrolls, under them. */
 .agent-sheet-body {

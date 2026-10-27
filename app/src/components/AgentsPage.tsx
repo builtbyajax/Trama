@@ -212,7 +212,14 @@ export function AgentsPage({
             if (closing && event.target === event.currentTarget) gone();
           }}
         >
-          <SheetActions onDelete={() => setDeleting(current)} onClose={close} />
+          <button
+            type="button"
+            className="icon-button agent-sheet-close"
+            aria-label={t("Close")}
+            onClick={close}
+          >
+            <Icon name="close" size={14} />
+          </button>
           <AgentSheet
             key={current.id}
             profile={current}
@@ -222,6 +229,18 @@ export function AgentsPage({
             onChanged={onChanged}
             notify={notify}
           />
+          {/* Deleting sits in the bottom corner, away from Close and the look it edits, so it
+              isn't hit by mistake. It still asks first. */}
+          <footer className="agent-sheet-foot">
+            <button
+              type="button"
+              className="button small ghost agent-delete"
+              onClick={() => setDeleting(current)}
+            >
+              <Icon name="trash" size={13} />
+              {t("Delete agent…")}
+            </button>
+          </footer>
         </aside>
       )}
       {deleting && (
@@ -238,37 +257,6 @@ export function AgentsPage({
         />
       )}
     </>
-  );
-}
-
-/** The sheet's corner: deleting, which asks first, then closing. */
-function SheetActions({
-  onDelete,
-  onClose,
-}: {
-  onDelete: () => void;
-  onClose: () => void;
-}) {
-  return (
-    <div className="agent-sheet-actions">
-      <button
-        type="button"
-        className="icon-button"
-        aria-label={t("Delete agent…")}
-        data-tooltip={t("Delete agent…")}
-        onClick={onDelete}
-      >
-        <Icon name="trash" size={14} />
-      </button>
-      <button
-        type="button"
-        className="icon-button"
-        aria-label={t("Close")}
-        onClick={onClose}
-      >
-        <Icon name="close" size={14} />
-      </button>
-    </div>
   );
 }
 
