@@ -100,7 +100,7 @@ fn run() -> Result<(), String> {
     let mut stdout = io::stdout().lock();
     for line in stdin.lock().lines() {
         let line = line.map_err(|e| e.to_string())?;
-        let opened;
+        let mut opened = None;
         let agent = match &fixed {
             Some((_, agent)) => agent,
             None => {
@@ -111,11 +111,10 @@ fn run() -> Result<(), String> {
                     end_session(path.as_deref(), profile.take());
                     path = active.as_ref().ok().cloned();
                 }
-                opened = match active.and_then(|path| Store::open(&path)) {
+                opened.insert(match active.and_then(|path| Store::open(&path)) {
                     Ok(store) => Agent::workspace(store).with_session(&client, profile.clone()),
                     Err(reason) => Agent::without_workspace(&reason)?,
-                };
-                &opened
+                })
             }
         };
         let response = match serde_json::from_str::<serde_json::Value>(&line) {
@@ -142,6 +141,9 @@ fn run() -> Result<(), String> {
                 serde_json::json!({"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"Parse error"}}),
             ),
         };
+        // The file closes before the reply goes out: on Windows, the person may then remove the
+        // workspace, which an open file would block.
+        drop(opened);
         if let Some(response) = response {
             writeln!(stdout, "{response}").map_err(|e| e.to_string())?;
             stdout.flush().map_err(|e| e.to_string())?;
