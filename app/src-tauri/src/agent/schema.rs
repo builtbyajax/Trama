@@ -44,6 +44,7 @@ pub fn tools(workspace: bool) -> Vec<Value> {
         );
         add("delete_project","Deletes the project with all its tasks, messages, checks and annotations. Use only when asked.",json!({"project_id":uuid}),vec!["project_id"],false,false,true);
     }
+    add("set_profile","Names this session's agent profile, shown on its tasks, messages and events. Call it once at the start, choosing a short name, a color index and the character's shape and eyes. profile_id resumes the profile of an earlier session of this same conversation (keep the id from get_context or this reply); fields not sent are kept. Changes the person made in Trama are kept.",json!({"name":{"type":"string","description":"Up to 40 characters."},"color":{"type":"integer","minimum":0,"maximum":5,"description":"Index into Trama's agent palette: 0 teal, 1 green, 2 amber, 3 orange, 4 pink, 5 slate."},"shape":{"type":"string","enum":crate::store::PROFILE_SHAPES,"description":"The character's shape, filled in the profile's color."},"eyes":{"type":"string","enum":crate::store::PROFILE_EYES,"description":"The character's eyes."},"profile_id":{"type":"string","format":"uuid","description":"An earlier profile of this conversation, to take back after resuming."}}),vec![],false,false,false);
     add("get_context","Reads the project, connected repository, categories with counts, valid statuses and access rules. Annotations are private.",json!({}),vec![],true,true,false);
     add(
         "update_project",
@@ -82,7 +83,7 @@ pub fn tools(workspace: bool) -> Vec<Value> {
         false,
     );
     add("delete_category","Deletes a category; replacement is required when it has tasks. Logs the change in the activity.",json!({"name":text,"replacement":nullable}),vec!["name"],true,false,true);
-    add("list_tasks","Lists the project's tasks in board order: Pendências (backlog), To do, Working, In review, then the Archive (done), each column top to bottom. Filter by status to leave the Archive out. Paginated with limit/offset (at most 200).",json!({"status":status,"category":text,"assignee":assignee,"goal_id":{"type":"string","format":"uuid"},"limit":limit,"offset":offset}),vec![],true,true,false);
+    add("list_tasks","Lists the project's tasks in board order: Pendências (backlog), To do, Working, In review, then the Archive (done), each column top to bottom. Filter by status to leave the Archive out. Paginated with limit/offset (at most 200).",json!({"status":status,"category":text,"assignee":assignee,"agent_profile_id":{"type":"string","format":"uuid","description":"Only tasks with that agent profile; your own is in get_context."},"goal_id":{"type":"string","format":"uuid"},"limit":limit,"offset":offset}),vec![],true,true,false);
     add("list_goals","Lists the project's goals with their progress (done tasks over all its tasks). Concluded goals have completed_at.",json!({}),vec![],true,true,false);
     let date =
         json!({"type":["string","null"],"description":"A day, YYYY-MM-DD; null removes it."});

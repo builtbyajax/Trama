@@ -56,6 +56,15 @@ impl Store {
             if taken {
                 return Err("The other workspace already has this project.".into());
             }
+            // The agent profiles its tasks, messages and events name go along, so the history
+            // keeps their names; a profile already there is the same session.
+            sql(self.db.execute(
+                "INSERT OR IGNORE INTO target.agent_profiles SELECT * FROM main.agent_profiles WHERE id IN(\
+                 SELECT agent_profile_id FROM main.tasks WHERE project_id=?1 UNION \
+                 SELECT m.agent_profile_id FROM main.task_messages m JOIN main.tasks t ON t.id=m.task_id WHERE t.project_id=?1 UNION \
+                 SELECT e.agent_profile_id FROM main.task_events e JOIN main.tasks t ON t.id=e.task_id WHERE t.project_id=?1)",
+                [&project.id],
+            ))?;
             for (table, rows) in PROJECT_TABLES {
                 let columns = {
                     let mut stmt = sql(self

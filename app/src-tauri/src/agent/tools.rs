@@ -2,7 +2,10 @@
 use super::Agent;
 use crate::{
     git,
-    store::{Category, Goal, Message, Project, Result, Task, TaskInput, TaskPatch, STATUSES},
+    store::{
+        AgentProfile, Category, Goal, Message, Project, Result, Task, TaskInput, TaskPatch,
+        STATUSES,
+    },
 };
 use serde::Serialize;
 use serde_json::{json, Map, Value};
@@ -59,13 +62,32 @@ impl Agent {
                 self.store.delete_project(required(args, "project_id")?)?;
                 return Ok(json!({"deleted":true}));
             }
+            "set_profile" => {
+                if let Some(id) = text(args, "profile_id") {
+                    self.store.resume_session(id)?;
+                }
+                let profile = if ["name", "color", "shape", "eyes"]
+                    .iter()
+                    .any(|k| args.contains_key(*k))
+                {
+                    self.store.set_session_profile(
+                        text(args, "name"),
+                        args.get("color").and_then(Value::as_i64),
+                        text(args, "shape"),
+                        text(args, "eyes"),
+                    )?
+                } else {
+                    self.session_profile()?
+                };
+                return Ok(profile_value(&profile));
+            }
             _ => {}
         }
         let project = self.scope(args)?;
         let task = || required(args, "task_id");
         match name {
             "get_context" => Ok(
-                json!({"project":project_value(&self.store.project(&project)?),"categories":self.categories(&project)?,"statuses":STATUSES,"assignees":["user","agent"],"private_notes_accessible":false,"schema_version":crate::store::SCHEMA_VERSION,"scope":if self.project_id.is_some(){"project"}else{"workspace"},"briefing_field":"details","agent_execution":"external","working_indicator":"assignee=agent and status=inProgress"}),
+                json!({"project":project_value(&self.store.project(&project)?),"categories":self.categories(&project)?,"statuses":STATUSES,"assignees":["user","agent"],"session_profile":profile_value(&self.session_profile()?),"private_notes_accessible":false,"schema_version":crate::store::SCHEMA_VERSION,"scope":if self.project_id.is_some(){"project"}else{"workspace"},"briefing_field":"details","agent_execution":"external","working_indicator":"assignee=agent and status=inProgress","agent_profiles":"assignee=agent with agent_profile_id null is for any agent; starting it (inProgress) gives it to your profile"}),
             ),
             "update_project" => {
                 require_changes(args, &["project_id"])?;
@@ -107,6 +129,11 @@ impl Agent {
                             && text(args, "category")
                                 .is_none_or(|v| t.category.eq_ignore_ascii_case(v))
                             && text(args, "assignee").is_none_or(|v| t.assignee == v)
+                            && text(args, "agent_profile_id").is_none_or(|v| {
+                                t.agent_profile_id
+                                    .as_deref()
+                                    .is_some_and(|p| p.eq_ignore_ascii_case(v))
+                            })
                             && text(args, "goal_id").is_none_or(|v| {
                                 t.goal_id
                                     .as_deref()
@@ -156,8 +183,10 @@ impl Agent {
                     pull_request_url: nullable_text(args, "pull_request_url").flatten(),
                     pull_request_number: args.get("pull_request_number").and_then(Value::as_i64),
                     goal_id: nullable_text(args, "goal_id").flatten(),
+                    agent_profile_id: None,
                 };
-                Ok(task_value(&self.store.save_task_as(None, input, "agent")?))
+                let task = self.store.save_task_as(None, input, "agent")?;
+                Ok(task_value(&self.claim(task)?))
             }
             "update_task" => {
                 require_changes(args, &["task_id", "project_id"])?;
@@ -176,12 +205,10 @@ impl Agent {
                     pull_request_url: nullable_text(args, "pull_request_url"),
                     pull_request_number: args.get("pull_request_number").map(Value::as_i64),
                     goal_id: nullable_text(args, "goal_id"),
+                    agent_profile_id: None,
                 };
-                Ok(task_value(&self.store.edit_task_as(
-                    task()?,
-                    patch,
-                    "agent",
-                )?))
+                let task = self.store.edit_task_as(task()?, patch, "agent")?;
+                Ok(task_value(&self.claim(task)?))
             }
             "move_task" => {
                 if let Some(after) = text(args, "after_id") {
@@ -192,13 +219,14 @@ impl Agent {
                         return Err("after_id must be another task in the target column.".into());
                     }
                 }
-                Ok(task_value(&self.store.move_task_as(
+                let task = self.store.move_task_as(
                     task()?,
                     &project,
                     required(args, "status")?,
                     text(args, "after_id"),
                     "agent",
-                )?))
+                )?;
+                Ok(task_value(&self.claim(task)?))
             }
             "list_goals" => {
                 let tasks = self.store.tasks(Some(&project))?;
@@ -321,6 +349,31 @@ impl Agent {
             _ => Err("Unknown tool.".into()),
         }
     }
+    fn session_profile(&self) -> Result<AgentProfile> {
+        let id = self
+            .store
+            .session_profile()
+            .ok_or("This connection has no session yet.")?;
+        self.store.agent_profile(&id)
+    }
+    /// A task for any agent that this session starts becomes its own.
+    fn claim(&self, task: Task) -> Result<Task> {
+        let Some(profile) = self.store.session_profile() else {
+            return Ok(task);
+        };
+        if task.status != "inProgress"
+            || task.assignee != "agent"
+            || task.agent_profile_id.is_some()
+        {
+            return Ok(task);
+        }
+        let patch = TaskPatch {
+            project_id: task.project_id.clone(),
+            agent_profile_id: Some(Some(profile)),
+            ..Default::default()
+        };
+        self.store.edit_task_as(&task.id, patch, "agent")
+    }
     fn categories(&self, project: &str) -> Result<Vec<Value>> {
         Ok(self
             .store
@@ -342,7 +395,7 @@ impl Agent {
             .collect())
     }
     fn events(&self, task: &str, project: &str) -> Result<Vec<Value>> {
-        Ok(self.store.events(task,project)?.iter().map(|e|json!({"id":e.id,"task_id":e.task_id,"actor":e.actor,"kind":e.kind,"value":e.value,"created_at":timestamp(e.created_at)})).collect())
+        Ok(self.store.events(task,project)?.iter().map(|e|json!({"id":e.id,"task_id":e.task_id,"actor":e.actor,"kind":e.kind,"value":e.value,"agent_profile_id":e.agent_profile_id,"created_at":timestamp(e.created_at)})).collect())
     }
 }
 fn text<'a>(args: &'a Map<String, Value>, key: &str) -> Option<&'a str> {
@@ -394,7 +447,7 @@ fn project_value(p: &Project) -> Value {
     json!({"id":p.id,"name":p.name,"repository_path":p.repository_path,"notes_folder":p.documents_folder,"created_at":timestamp(p.created_at)})
 }
 fn task_value(t: &Task) -> Value {
-    json!({"id":t.id,"project_id":t.project_id,"title":t.title,"details":t.details,"category":t.category,"assignee":t.assignee,"status":t.status,"position":t.position,"agent_summary":t.agent_summary,"repository_branch":t.repository_branch,"commit_hash":t.commit_hash,"pull_request_url":t.pull_request_url,"pull_request_number":t.pull_request_number,"goal_id":t.goal_id,"checks_total":t.checks_total,"checks_done":t.checks_done,"message_count":t.message_count,"document_count":t.document_count,"created_at":timestamp(t.created_at),"updated_at":timestamp(t.updated_at)})
+    json!({"id":t.id,"project_id":t.project_id,"title":t.title,"details":t.details,"category":t.category,"assignee":t.assignee,"status":t.status,"position":t.position,"agent_summary":t.agent_summary,"repository_branch":t.repository_branch,"commit_hash":t.commit_hash,"pull_request_url":t.pull_request_url,"pull_request_number":t.pull_request_number,"goal_id":t.goal_id,"agent_profile_id":t.agent_profile_id,"checks_total":t.checks_total,"checks_done":t.checks_done,"message_count":t.message_count,"document_count":t.document_count,"created_at":timestamp(t.created_at),"updated_at":timestamp(t.updated_at)})
 }
 /// A goal with its progress among `tasks`.
 fn goal_value(g: &Goal, tasks: &[Task]) -> Value {
@@ -406,7 +459,10 @@ fn goal_value(g: &Goal, tasks: &[Task]) -> Value {
     json!({"id":g.id,"project_id":g.project_id,"name":g.name,"description":g.description,"target_date":g.target_date,"completed_at":g.completed_at.map(timestamp),"tasks_total":counted.len(),"tasks_done":done,"created_at":timestamp(g.created_at)})
 }
 fn message_value(m: &Message) -> Value {
-    json!({"id":m.id,"task_id":m.task_id,"author":m.author,"body":m.body,"created_at":timestamp(m.created_at)})
+    json!({"id":m.id,"task_id":m.task_id,"author":m.author,"agent_profile_id":m.agent_profile_id,"body":m.body,"created_at":timestamp(m.created_at)})
+}
+fn profile_value(p: &AgentProfile) -> Value {
+    json!({"profile_id":p.id,"name":p.display_name,"color":p.color,"shape":p.shape,"eyes":p.eyes,"client":p.client,"presence":p.presence,"edited_by_person":p.edited_by_user})
 }
 fn validate_repository(path: Option<&str>) -> Result<()> {
     if let Some(path) = path {

@@ -331,6 +331,16 @@ fn every_tool_has_a_blackbox_contract_and_private_notes_never_leave_the_process(
     let tools = inventory["result"]["tools"].as_array().unwrap().clone();
     assert!(tools.iter().all(|t| t["inputSchema"].is_object()));
     replies.insert("workspace-tools".into(), inventory);
+    replies.insert(
+        "set-profile".into(),
+        m.ok(
+            "set_profile",
+            json!({"name":"Contract agent","color":3,"shape":"blob","eyes":"dots"}),
+        ),
+    );
+    let color = m.call("set_profile", json!({"color":6}));
+    assert_eq!(color["result"]["isError"], true);
+    replies.insert("set-profile-invalid-color".into(), color);
     m.send(json!({"jsonrpc":"2.0","method":"tools/call","params":{"name":"create_task","arguments":{"project_id":p.id,"title":"Must not be created"}}}));
     assert_eq!(m.ok("list_tasks", json!({"project_id":p.id}))["total"], 1);
     for (label, args) in [

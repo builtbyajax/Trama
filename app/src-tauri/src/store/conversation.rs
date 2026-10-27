@@ -5,7 +5,7 @@ use super::*;
 impl Store {
     pub fn messages(&self, task_id: &str, project_id: &str) -> Result<Vec<Message>> {
         let task = self.task(task_id, project_id)?;
-        let mut stmt=sql(self.db.prepare("SELECT id,task_id,author,body,created_at FROM task_messages WHERE task_id=? ORDER BY created_at,rowid"))?;
+        let mut stmt=sql(self.db.prepare("SELECT id,task_id,author,body,created_at,agent_profile_id FROM task_messages WHERE task_id=? ORDER BY created_at,rowid"))?;
         let result = sql(stmt
             .query_map([task.id], |r| {
                 Ok(Message {
@@ -14,6 +14,7 @@ impl Store {
                     author: r.get(2)?,
                     body: r.get(3)?,
                     created_at: r.get(4)?,
+                    agent_profile_id: r.get(5)?,
                 })
             })
             .map_err(|e| e.to_string())?
@@ -42,15 +43,19 @@ impl Store {
                 author: author.into(),
                 body: body.into(),
                 created_at: now(),
+                agent_profile_id: (author == "agent")
+                    .then(|| self.profile.borrow().clone())
+                    .flatten(),
             };
             sql(self.db.execute(
-                "INSERT INTO task_messages(id,task_id,author,body,created_at) VALUES(?,?,?,?,?)",
+                "INSERT INTO task_messages(id,task_id,author,body,created_at,agent_profile_id) VALUES(?,?,?,?,?,?)",
                 params![
                     message.id,
                     message.task_id,
                     message.author,
                     message.body,
-                    message.created_at
+                    message.created_at,
+                    message.agent_profile_id
                 ],
             ))?;
             self.touch_task(&task.id)?;
