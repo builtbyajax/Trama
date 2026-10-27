@@ -288,8 +288,25 @@ function AgentSheet({
   });
   const saved = useRef(look);
   const [tab, setTab] = useState<"look" | "tasks">("look");
+  // Each change of the look replays the character's hop. The class is restarted rather than the
+  // character remounted, so its bob and blink keep their clock.
+  const hop = useRef<HTMLSpanElement>(null);
+  const [hops, setHops] = useState(0);
+  useEffect(() => {
+    const element = hop.current;
+    if (!hops || !element) return;
+    element.classList.remove("go");
+    void element.offsetWidth;
+    element.classList.add("go");
+  }, [hops]);
   function save(patch: Partial<typeof look>) {
     const next = { ...look, ...patch };
+    if (
+      next.color !== look.color ||
+      next.shape !== look.shape ||
+      next.eyes !== look.eyes
+    )
+      setHops((n) => n + 1);
     setLook(next);
     const before = saved.current;
     if (
@@ -334,7 +351,14 @@ function AgentSheet({
   return (
     <>
       <div className={`agent-stage ${profile.presence}`}>
-        <AgentBot shape={look.shape} eyes={look.eyes} color={color} size={76} />
+        <span ref={hop} className="agent-hop">
+          <AgentBot
+            shape={look.shape}
+            eyes={look.eyes}
+            color={color}
+            size={76}
+          />
+        </span>
         <input
           className="agent-name"
           aria-label={t("Name")}

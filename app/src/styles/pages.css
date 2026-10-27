@@ -1301,8 +1301,21 @@ button.holder:hover {
   padding: 24px 20px 0;
   text-align: center;
 }
-.agent-stage > .agent-bot {
+.agent-stage > .agent-hop {
+  display: flex;
   margin-bottom: 6px;
+}
+/* A new color, shape or eyes: the character gives a little hop. */
+.agent-hop.go {
+  animation: agent-hop 0.42s cubic-bezier(0.3, 0.7, 0.4, 1.4);
+}
+@keyframes agent-hop {
+  40% {
+    transform: translateY(-10px) scale(1.04, 0.97);
+  }
+  100% {
+    transform: none;
+  }
 }
 .agent-tabs {
   margin-top: 12px;
@@ -1378,6 +1391,7 @@ button.holder:hover {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .agent-hop.go,
   .agent-stage.active .agent-bot,
   .agent-stage.active .bot-eyes,
   .agent-stage.active .bot-eyes * {
