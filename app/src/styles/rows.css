@@ -209,11 +209,25 @@ code.archive-ref {
 .list-when {
   text-align: right;
 }
-.list-row.working .row-button {
-  background: var(--agent-soft);
+/* An agent at work hops like its face in the sidebar, and dozes once it stops. */
+.list-bot {
+  position: relative;
+  display: inline-flex;
 }
-.list-row.working .row-button:hover {
-  background: color-mix(in srgb, var(--agent) 14%, transparent);
+.list-bot.live {
+  animation: face-hop 3.6s infinite;
+}
+.list-bot.stopped .agent-bot {
+  opacity: 0.55;
+}
+@media (prefers-reduced-motion: reduce) {
+  .list-bot.live {
+    animation: none;
+  }
+}
+/* While a row is dragged the bar to conclude rises over the end of the list: room to reach it. */
+.board-list.dragging {
+  padding-bottom: 96px;
 }
 .list-row.selected .row-button {
   background: var(--accent-soft);

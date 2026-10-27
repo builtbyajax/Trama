@@ -381,11 +381,13 @@ export function Board({
         {flight && (
           <ArchiveFlight
             key={flight.task.id}
-            {...flight}
+            rect={flight.rect}
             box={box}
             reduceMotion={reduceMotion}
             onDone={() => setFlight(null)}
-          />
+          >
+            <TaskCardContent task={flight.task} />
+          </ArchiveFlight>
         )}
       </GoalNamesContext.Provider>
     </BranchesContext.Provider>
@@ -533,7 +535,7 @@ function Column({
  * card dropped there is concluded and goes into the box, whose lid opens while the card is over
  * it. It stays up until the card is inside.
  */
-function ConcludeZone({
+export function ConcludeZone({
   zoneRef,
   boxRef,
   active,
@@ -578,17 +580,20 @@ function ConcludeZone({
 }
 
 /**
- * The concluded card shrinks and drops into the box, whose lid then closes with a small bounce,
- * and Archive in the sidebar lights up once. With reduced motion the card is simply gone.
+ * The concluded card (or list row) shrinks and drops into the box, whose lid then closes with a
+ * small bounce, and Archive in the sidebar lights up once. With reduced motion it is simply gone.
  */
-function ArchiveFlight({
-  task,
+export function ArchiveFlight({
+  className = "card",
+  children,
   rect,
   box,
   reduceMotion,
   onDone,
 }: {
-  task: Task;
+  /** The dragged copy's own classes, so the flying one looks the same. */
+  className?: string;
+  children: ReactNode;
   rect: DOMRect;
   box: RefObject<SVGSVGElement | null>;
   reduceMotion: boolean;
@@ -640,7 +645,7 @@ function ArchiveFlight({
   return (
     <div
       ref={node}
-      className="card drag-overlay archive-flight"
+      className={`${className} drag-overlay archive-flight`}
       style={{
         left: rect.left,
         top: rect.top,
@@ -649,7 +654,7 @@ function ArchiveFlight({
       }}
       aria-hidden="true"
     >
-      <TaskCardContent task={task} />
+      {children}
     </div>
   );
 }

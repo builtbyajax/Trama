@@ -87,7 +87,7 @@
     transform: translateY(2px) scale(1.08, 0.92);
   }
 }
-.card.archive-flight {
+:is(.card, .list-row).archive-flight {
   position: fixed;
   z-index: 400;
   margin: 0;
@@ -406,8 +406,9 @@
 .agent-bot.glyph {
   margin: -2px -1px;
 }
-/* On the card a little bigger, without pushing the line: the negative margins absorb the extra. */
-.card-meta .agent-bot.glyph {
+/* On the card and in the list a little bigger, without pushing the line: the negative margins
+   absorb the extra. */
+:is(.card-meta, .list-who) .agent-bot.glyph {
   --size: 18px;
   --margin-y: -4px;
   --margin-x: -2px;
@@ -422,7 +423,8 @@
     .agent-working,
     .history-lead,
     .history-task,
-    .detail-mark
+    .detail-mark,
+    .list-who
   )
   .agent-bot.glyph {
   --grown: calc(var(--size, 14px) * 2.4);
@@ -441,7 +443,8 @@
     .agent-working,
     .history-lead,
     .history-task,
-    .detail-mark
+    .detail-mark,
+    .list-who
   )
   .agent-bot.glyph:hover {
   z-index: 2;
