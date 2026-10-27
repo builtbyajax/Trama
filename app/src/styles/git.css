@@ -527,20 +527,12 @@
 .detail-task:hover {
   color: var(--ink);
 }
+/* The task's column, with its icon from the board. */
 .front-status {
-  font-weight: 600;
-}
-.front-status.s-todo {
-  color: var(--s-todo);
-}
-.front-status.s-inProgress {
-  color: var(--s-inProgress);
-}
-.front-status.s-review {
-  color: var(--s-review);
-}
-.front-status.s-done {
-  color: var(--s-done);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
 }
 
 /* Where the work is between this computer and main: one stop per column, centred, joined by a line

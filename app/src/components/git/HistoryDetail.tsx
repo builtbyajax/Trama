@@ -16,7 +16,7 @@ import {
   type Task,
 } from "../../lib/types";
 import { Glyph } from "../BoardFilters";
-import { Icon } from "../Icon";
+import { Icon, StatusIcon } from "../Icon";
 import {
   CommitPeek,
   FileRows,
@@ -339,7 +339,8 @@ export function HistoryDetail({
     meta = (
       <>
         {task && (
-          <span className={`front-status s-${task.status}`}>
+          <span className="front-status">
+            <StatusIcon status={task.status} size={13} />
             {statusTitle[task.status]}
           </span>
         )}
