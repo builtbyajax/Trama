@@ -167,6 +167,12 @@
   place-items: center;
   color: var(--ink-3);
 }
+/* An agent's character, bigger than the ring and diamond, like on the card. */
+.history-lead .agent-bot.glyph {
+  --size: 18px;
+  --margin-y: 0px;
+  --margin-x: -2px;
+}
 .history-main {
   flex: 1;
   min-width: 0;
@@ -470,6 +476,11 @@
   display: grid;
   place-items: center;
   color: var(--ink-3);
+}
+.detail-mark .agent-bot.glyph {
+  --size: 24px;
+  --margin-y: 0px;
+  --margin-x: -3px;
 }
 .commit-mark i {
   width: 10px;

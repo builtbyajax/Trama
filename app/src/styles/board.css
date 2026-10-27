@@ -408,19 +408,44 @@
 }
 /* On the card a little bigger, without pushing the line: the negative margins absorb the extra. */
 .card-meta .agent-bot.glyph {
-  width: 18px;
-  height: 18px;
-  margin: -4px -2px;
+  --size: 18px;
+  --margin-y: -4px;
+  --margin-x: -2px;
 }
 /* Where an agent's character marks who did something (the card, the task's activity and its
-   banner), hovering it grows it over what's around it, to be seen up close. */
-:is(.card-meta, .entry-node, .agent-working) .agent-bot.glyph {
+   banner, the history), hovering it grows it over what's around it, to be seen up close. It is
+   drawn at the grown size and shrunk at rest, so it stays sharp: scaling a small one up blurs it.
+   The margins take back what the bigger box would add to the line. */
+:is(
+    .card-meta,
+    .entry-node,
+    .agent-working,
+    .history-lead,
+    .history-task,
+    .detail-mark
+  )
+  .agent-bot.glyph {
+  --grown: calc(var(--size, 14px) * 2.4);
+  --extra: calc(var(--size, 14px) * -0.7);
   position: relative;
+  width: var(--grown);
+  height: var(--grown);
+  margin: calc(var(--margin-y, -2px) + var(--extra))
+    calc(var(--margin-x, -1px) + var(--extra));
+  transform: scale(calc(1 / 2.4));
   transition: transform 160ms ease;
 }
-:is(.card-meta, .entry-node, .agent-working) .agent-bot.glyph:hover {
+:is(
+    .card-meta,
+    .entry-node,
+    .agent-working,
+    .history-lead,
+    .history-task,
+    .detail-mark
+  )
+  .agent-bot.glyph:hover {
   z-index: 2;
-  transform: scale(2.4);
+  transform: none;
 }
 .bot-body {
   fill: var(--bot, var(--agent));
