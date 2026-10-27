@@ -1,11 +1,45 @@
 import type { CSSProperties } from "react";
+import { useReducedMotion } from "../hooks/useReducedMotion";
 import { t } from "../lib/i18n";
+
+/** The ghost with its hem as a wave, at `phase` (0 to 1) of the wave passing under it. */
+function ghostAt(phase: number) {
+  const left = 3.9;
+  const right = 12.9;
+  const steps = 14;
+  const n = (v: number) => +v.toFixed(2);
+  // The wave fades out at both corners, so they stay round.
+  const y = (x: number) =>
+    13.95 +
+    0.55 *
+      Math.min(1, (13.6 - x) / 1.6, (x - left) / 1.6) *
+      Math.sin((2 * Math.PI * (x - left)) / 4.6 - 2 * Math.PI * phase);
+  const hem = Array.from({ length: steps + 1 }, (_, i) => {
+    const x = right - ((right - left) * i) / steps;
+    return [x, y(x)];
+  });
+  let d = `M8 1.6C11.4 1.6 13.6 4 13.6 7.4V13.2C13.6 13.8 13.3 ${n(hem[0][1])} ${right} ${n(hem[0][1])}`;
+  // Smooth curves through the points (Catmull-Rom).
+  for (let i = 0; i < steps; i++) {
+    const [a, b, c, e] = [
+      hem[Math.max(0, i - 1)],
+      hem[i],
+      hem[i + 1],
+      hem[Math.min(steps, i + 2)],
+    ];
+    d += `C${n(b[0] + (c[0] - a[0]) / 6)} ${n(b[1] + (c[1] - a[1]) / 6)} ${n(c[0] - (e[0] - b[0]) / 6)} ${n(c[1] - (e[1] - b[1]) / 6)} ${n(c[0])} ${n(c[1])}`;
+  }
+  const [end, before] = [hem[steps], hem[steps - 1]];
+  const slope = (end[1] - before[1]) / (end[0] - before[0]);
+  return `${d}C${n(end[0] - 0.9)} ${n(end[1] - slope * 0.9)} 2.4 10.8 2.4 7.4C2.4 4 4.6 1.6 8 1.6Z`;
+}
+/** One wave, as frames for the hem's animation. */
+const ghostWave = Array.from({ length: 9 }, (_, i) => ghostAt(i / 8)).join(";");
 
 // An agent profile's character: a shape filled in its color, with eyes. Drawn on a 16 pt grid.
 const shapes = {
   blob: "M8 1.6C11.9 1.6 14.4 4.3 14.4 8.2 14.4 12 11.7 14.4 8 14.4S1.6 12 1.6 8.2C1.6 4.3 4.1 1.6 8 1.6Z",
-  ghost:
-    "M8 1.6C11.4 1.6 13.6 4 13.6 7.4V13.6C13.6 14.4 12.9 14.6 12.4 14.1L11.3 13.1 9.9 14.3C9.4 14.7 8.6 14.7 8.1 14.3L6.7 13.1 5.3 14.3C4.8 14.7 4.2 14.6 3.9 14.1 2.9 12.7 2.4 10.6 2.4 7.4 2.4 4 4.6 1.6 8 1.6Z",
+  ghost: ghostAt(0),
   cat: "M2.4 6.4 2.9 1.9C3 1.4 3.5 1.2 3.9 1.5L6.4 3.7H9.6L12.1 1.5C12.5 1.2 13 1.4 13.1 1.9L13.6 6.4C14 7.2 14.3 8.2 14.3 9.4 14.3 12.6 11.6 14.4 8 14.4S1.7 12.6 1.7 9.4C1.7 8.2 2 7.2 2.4 6.4Z",
   square:
     "M5.2 1.8H10.8C13 1.8 14.2 3 14.2 5.2V10.8C14.2 13 13 14.2 10.8 14.2H5.2C3 14.2 1.8 13 1.8 10.8V5.2C1.8 3 3 1.8 5.2 1.8Z",
@@ -133,6 +167,7 @@ export function AgentBot({
   size?: number;
   className?: string;
 }) {
+  const reduceMotion = useReducedMotion();
   return (
     <svg
       className={`agent-bot ${className}`}
@@ -142,7 +177,17 @@ export function AgentBot({
       style={{ "--bot": color } as CSSProperties}
       aria-hidden="true"
     >
-      <path className="bot-body" d={shapes[shape] ?? shapes.blob} />
+      <path className="bot-body" d={shapes[shape] ?? shapes.blob}>
+        {/* The ghost's hem ripples like cloth. Asleep, it hangs still. */}
+        {shape === "ghost" && look !== "sleepy" && !reduceMotion && (
+          <animate
+            attributeName="d"
+            values={ghostWave}
+            dur="2s"
+            repeatCount="indefinite"
+          />
+        )}
+      </path>
       <g className={`bot-eyes ${look}`}>
         {(eyes[look] ?? eyes.dots)(eyeLine[shape] ?? 7.6)}
       </g>
