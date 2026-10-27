@@ -1,4 +1,5 @@
 import { t } from "../lib/i18n";
+import { Icon } from "./Icon";
 
 export function UpdateNotices({
   availableVersion,
@@ -32,7 +33,7 @@ export function UpdateNotices({
             aria-label={t("Dismiss restart notice")}
             onClick={onDismissRestart}
           >
-            ×
+            <Icon name="close" size={14} />
           </button>
         </div>
       )}
@@ -66,7 +67,7 @@ export function UpdateNotices({
             disabled={installing}
             onClick={onDismissUpdate}
           >
-            ×
+            <Icon name="close" size={14} />
           </button>
         </div>
       )}

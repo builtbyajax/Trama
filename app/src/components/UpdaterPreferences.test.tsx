@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("../lib/updater", () => mocks);
 vi.mock("../hooks/useScrollbarRoom", () => ({ useScrollbarRoom: vi.fn() }));
+vi.mock("../hooks/useReducedMotion", () => ({ useReducedMotion: () => false }));
 const data: Snapshot = {
   source: "database",
   databasePath: "/isolated/test.sqlite",
@@ -32,6 +33,7 @@ const data: Snapshot = {
   categories: [],
   documents: [],
   goals: [],
+  agentProfiles: [],
 };
 function UpdaterPreferences() {
   const updater = useAppUpdater();

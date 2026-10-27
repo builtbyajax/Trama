@@ -8,7 +8,7 @@ use trama_lib::{
     store::{Store, SCHEMA_VERSION},
 };
 
-const FIXTURES: [&str; 11] = [
+const FIXTURES: [&str; 12] = [
     include_str!("fixtures/schema-v1.sql"),
     include_str!("fixtures/schema-v2.sql"),
     include_str!("fixtures/schema-v3.sql"),
@@ -20,6 +20,7 @@ const FIXTURES: [&str; 11] = [
     include_str!("fixtures/schema-v9.sql"),
     include_str!("fixtures/schema-v10.sql"),
     include_str!("fixtures/schema-v11.sql"),
+    include_str!("fixtures/schema-v12.sql"),
 ];
 const V11: &str = include_str!("fixtures/schema-v11.sql");
 
@@ -340,6 +341,7 @@ fn empty_database_has_latest_schema_and_foreign_keys() {
             "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
         ),
         [
+            "agent_profiles",
             "goals",
             "projects",
             "settings",
@@ -676,4 +678,38 @@ INSERT INTO task_events VALUES('to-done-1','done-with-event','agent','status','d
         "SELECT name FROM sqlite_master WHERE type='trigger' AND name='tasks_unarchive'"
     )
     .is_empty());
+}
+
+#[test]
+fn agent_tasks_become_any_agent_keeping_their_assignee_and_history() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("v12.sqlite");
+    let db = Connection::open(&path).unwrap();
+    db.execute_batch(include_str!("fixtures/schema-v12.sql"))
+        .unwrap();
+    drop(db);
+    let store = Store::open(&path).unwrap();
+    assert_eq!(
+        strings(
+            &store.db,
+            "SELECT assignee||':'||COALESCE(agent_profile_id,'any') FROM tasks"
+        ),
+        ["agent:any"]
+    );
+    assert_eq!(
+        strings(
+            &store.db,
+            "SELECT author||':'||body||':'||COALESCE(agent_profile_id,'none') FROM task_messages"
+        ),
+        ["agent:Public message:none"]
+    );
+    assert_eq!(
+        strings(
+            &store.db,
+            "SELECT CAST(COUNT(*) AS TEXT) FROM agent_profiles"
+        ),
+        ["0"]
+    );
+    assert!(strings(&store.db, "PRAGMA foreign_key_check").is_empty());
+    assert!(strings(&store.db, "PRAGMA integrity_check") == ["ok"]);
 }

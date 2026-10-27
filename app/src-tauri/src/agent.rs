@@ -5,12 +5,14 @@ use crate::store::{Result, Store};
 use serde_json::{json, Value};
 pub const PROTOCOL: &str = "2026-07-28";
 const LEGACY: [&str; 4] = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
-const INSTRUCTIONS: &str = "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); post decisions, blockers and questions with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Ideas and work not yet prioritized wait in backlog (Pendências); they are not your queue. Never move a task to done unless asked: done concludes it and takes it off the board to the Archive. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations.";
+const INSTRUCTIONS: &str = "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); post decisions, blockers and questions with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Ideas and work not yet prioritized wait in backlog (Pendências); they are not your queue. Never move a task to done unless asked: done concludes it and takes it off the board to the Archive. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations. Each connection is its own agent profile, shown to the person on the tasks it holds and in the activity: at the start, call set_profile with a short name for your role (color, shape and eyes are optional) and keep its profile_id; after a context reset or in a resumed session, call set_profile with that profile_id to continue as the same profile. A task you move to inProgress becomes yours; when your session ends, the tasks you had in progress go back to To do, still yours.";
 pub struct Agent {
     store: Store,
     project_id: Option<String>,
     /// Why there is no database to work on: every tool call answers with it.
     unavailable: Option<String>,
+    /// The MCP client's name from `initialize`, the default name of the session's profile.
+    client: std::cell::RefCell<String>,
 }
 impl Agent {
     pub fn new(store: Store, project_id: &str) -> Result<Self> {
@@ -19,6 +21,7 @@ impl Agent {
             store,
             project_id: Some(project.id),
             unavailable: None,
+            client: Default::default(),
         })
     }
     pub fn workspace(store: Store) -> Self {
@@ -26,6 +29,7 @@ impl Agent {
             store,
             project_id: None,
             unavailable: None,
+            client: Default::default(),
         }
     }
     /// Connects and lists the tools without a workspace to work on; each tool call says `reason`.
@@ -34,7 +38,33 @@ impl Agent {
             store: Store::open(std::path::Path::new(":memory:"))?,
             project_id: None,
             unavailable: Some(reason.into()),
+            client: Default::default(),
         })
+    }
+    /// Carries the client's name and the session's profile into an agent that reopened the file.
+    pub fn with_session(self, client: &str, profile: Option<String>) -> Self {
+        *self.client.borrow_mut() = client.into();
+        self.store.adopt_session(profile);
+        self
+    }
+    pub fn client(&self) -> String {
+        self.client.borrow().clone()
+    }
+    /// The session's profile, once a tool was called.
+    pub fn profile(&self) -> Option<String> {
+        self.store.session_profile()
+    }
+    /// The process is closing: its session ends, and its work in progress goes back to To do.
+    pub fn end_session(&self) -> Result<()> {
+        self.store.end_session()
+    }
+    /// The first tool call starts the session; connecting and listing tools alone doesn't.
+    fn session(&self) -> Result<()> {
+        // None yet, or the person deleted it in the app: a new one.
+        if !self.store.touch_session()? {
+            self.store.start_session(&self.client.borrow())?;
+        }
+        Ok(())
     }
     pub fn handle(&self, request: Value) -> Option<Value> {
         let id = request.get("id").cloned().unwrap_or(Value::Null);
@@ -63,6 +93,12 @@ impl Agent {
             return Some(e);
         }
         let modern = version == Some(PROTOCOL) || method == "server/discover";
+        // Without initialize, the modern protocol names the client on each request.
+        if let Some(name) =
+            request["params"]["_meta"]["io.modelcontextprotocol/clientInfo"]["name"].as_str()
+        {
+            *self.client.borrow_mut() = name.chars().take(80).collect();
+        }
         let mut result = match method {
             "server/discover" => {
                 json!({"supportedVersions":supported(),"capabilities":{"tools":{"listChanged":false}},"instructions":INSTRUCTIONS,"ttlMs":0,"cacheScope":"private"})
@@ -71,6 +107,9 @@ impl Agent {
                 let Some(requested) = request["params"]["protocolVersion"].as_str() else {
                     return Some(error(id, -32602, "Protocol version is required"));
                 };
+                if let Some(name) = request["params"]["clientInfo"]["name"].as_str() {
+                    *self.client.borrow_mut() = name.chars().take(80).collect();
+                }
                 let negotiated = if LEGACY.contains(&requested) {
                     requested
                 } else {
@@ -109,6 +148,7 @@ impl Agent {
                     .map_or(Ok(()), Err)
                     .and_then(|_| self.store.check_supported_schema())
                     .and_then(|_| schema::validate(arguments, &definition["inputSchema"]))
+                    .and_then(|_| self.session())
                     .and_then(|_| self.execute(name, arguments.as_object().unwrap()));
                 match outcome {
                     Ok(value) => {

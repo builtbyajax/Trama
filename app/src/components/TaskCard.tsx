@@ -1,6 +1,15 @@
 import { createContext, useContext, type KeyboardEvent } from "react";
 import { useDraggable } from "@dnd-kit/core";
-import { ago, isAgentWorking, statusTitle, type Task } from "../lib/types";
+import { ago, statusTitle, type Task } from "../lib/types";
+import {
+  agentColor,
+  agentName,
+  agentTint,
+  useAgentProfile,
+  useWorkState,
+  shortName,
+} from "../lib/agents";
+import { AgentBot } from "./AgentBot";
 import { AgentTrail } from "./AgentTrail";
 import { Glyph } from "./BoardFilters";
 import { Icon } from "./Icon";
@@ -13,8 +22,9 @@ export const BranchesContext = createContext<string[] | null>(null);
 export const GoalNamesContext = createContext<Map<string, string>>(new Map());
 
 export function TaskCardContent({ task }: { task: Task }) {
-  const working = isAgentWorking(task);
+  const work = useWorkState(task);
   const agent = task.assignee === "agent";
+  const profile = useAgentProfile(agent ? task.agentProfileId : null);
   const branches = useContext(BranchesContext);
   const branch = task.repositoryBranch;
   const goal = useContext(GoalNamesContext).get(task.goalId ?? "");
@@ -24,7 +34,28 @@ export function TaskCardContent({ task }: { task: Task }) {
   );
   return (
     <>
-      {working && <AgentTrail />}
+      {work === "live" && <AgentTrail />}
+      {profile && work && (
+        // While it works, the character walks along the card's top edge; stopped, it sits there
+        // and dozes. In the other stages it stays small in the meta line, like your own mark.
+        <span
+          className={`card-bot perched ${work === "live" ? "walking" : ""}`}
+        >
+          <AgentBot
+            shape={profile.shape}
+            eyes={work === "stopped" ? "sleepy" : profile.eyes}
+            color={agentColor(profile)}
+            size={30}
+          />
+          {work === "stopped" && (
+            <span className="bot-zzz" aria-hidden="true">
+              <span>z</span>
+              <span>z</span>
+              <span>z</span>
+            </span>
+          )}
+        </span>
+      )}
       <div className="card-top">
         <span className="card-category" title={task.category}>
           {task.category}
@@ -50,16 +81,12 @@ export function TaskCardContent({ task }: { task: Task }) {
           <span className="truncate">{branch}</span>
         </span>
       )}
-      {working && (
-        <span className="card-live">
-          <span className="agent-pulse" aria-hidden="true" />
-          {t("Working now")}
-        </span>
-      )}
       <div className="card-meta">
-        <Glyph who={task.assignee} />
+        {!(profile && work) && (
+          <Glyph who={task.assignee} profileId={task.agentProfileId} />
+        )}
         <span className="truncate">
-          {agent ? t("Agent") : t("You")}, {ago(task.updatedAt)}
+          {agent ? agentName(profile) : t("You")}, {ago(task.updatedAt)}
         </span>
         {task.documentCount > 0 && (
           <span
@@ -114,10 +141,12 @@ export function TaskCard({
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: task.id,
   });
-  const working = isAgentWorking(task);
+  const work = useWorkState(task);
+  const profile = useAgentProfile(task.agentProfileId);
   const goal = useContext(GoalNamesContext).get(task.goalId ?? "");
   const state = [
-    working && "working",
+    work && "working",
+    work === "stopped" && "stopped",
     (isDragging || keyboardActive) && "drag-origin",
     hidden && "drag-hidden",
     landed && "landed",
@@ -131,7 +160,7 @@ export function TaskCard({
     <div
       ref={setNodeRef}
       data-task-id={task.id}
-      style={order === undefined ? undefined : { order }}
+      style={{ ...(work && agentTint(profile)), order }}
       {...listeners}
       {...attributes}
       onClick={() => {
@@ -163,12 +192,17 @@ export function TaskCard({
         task.title,
         task.category,
         goal && t("goal {0}", [goal]),
-        task.assignee === "agent" ? t("agent") : t("you"),
+        task.assignee === "agent"
+          ? profile
+            ? shortName(profile.displayName)
+            : t("agent")
+          : t("you"),
         statusTitle[task.status],
         task.repositoryBranch && t("branch {0}", [task.repositoryBranch]),
         task.documentCount === 1 && t("1 attached note"),
         task.documentCount > 1 && t("{0} attached notes", [task.documentCount]),
-        working && t("agent working"),
+        work === "live" && t("agent working"),
+        work === "stopped" && t("Stopped"),
       ]
         .filter(Boolean)
         .join(", ")}

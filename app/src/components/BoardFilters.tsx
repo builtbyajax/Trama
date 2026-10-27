@@ -10,12 +10,27 @@ import {
 import { createPortal } from "react-dom";
 import { usePopover } from "../hooks/usePopover";
 import { revealLabel } from "../lib/api";
-import type { Goal, Project, Task, TaskAssignee } from "../lib/types";
+import type {
+  AgentProfile,
+  Goal,
+  Project,
+  Task,
+  TaskAssignee,
+} from "../lib/types";
+import {
+  agentColor,
+  presenceTitle,
+  taskProfile,
+  useAgentProfile,
+  useAgentProfiles,
+  shortName,
+} from "../lib/agents";
 import { ariaKeys, shortcutLabel, shortcuts } from "../lib/shortcuts";
+import { AgentBot } from "./AgentBot";
 import { Icon } from "./Icon";
 import { KeyHint } from "./KeyHint";
 import { ProjectMark } from "./ProjectMark";
-import { Select } from "./Select";
+import { Select, type SelectOption } from "./Select";
 import { goalChoices } from "./Goals";
 import { ContextMenu } from "./Sidebar";
 import { locale, t } from "../lib/i18n";
@@ -27,12 +42,15 @@ import { Segmented, type SegmentedOption } from "./Segmented";
  */
 export type BoardFilter = {
   assignee: "all" | TaskAssignee;
+  /** With the agent: "*" for every agent, "" for any agent, or a profile id. */
+  agent: string;
   category: string;
   branch: string;
   goal: string;
 };
 export const defaultFilter: BoardFilter = {
   assignee: "all",
+  agent: "*",
   category: "*",
   branch: "*",
   goal: "*",
@@ -40,8 +58,28 @@ export const defaultFilter: BoardFilter = {
 
 export type ProjectMode = "project" | "board" | "git" | "notes";
 
-/** The two threads of the app: a ring for you, a diamond for the agent. */
-export function Glyph({ who }: { who: TaskAssignee }) {
+/**
+ * The two threads of the app: a ring for you, a diamond for the agent. An agent profile shows its
+ * character instead.
+ */
+export function Glyph({
+  who,
+  profileId,
+}: {
+  who: TaskAssignee;
+  /** The agent's profile, when it has one. */
+  profileId?: string | null;
+}) {
+  const profile = useAgentProfile(who === "agent" ? profileId : null);
+  if (profile)
+    return (
+      <AgentBot
+        shape={profile.shape}
+        eyes={profile.eyes}
+        color={agentColor(profile)}
+        className="glyph"
+      />
+    );
   return <span className={`glyph ${who}`} aria-hidden="true" />;
 }
 
@@ -153,6 +191,8 @@ export function ProjectHeader({
       : []),
     ...branches.map((name) => ({ value: name, label: name })),
   ];
+  const profiles = useAgentProfiles();
+  const assigneeOptions = assigneeFilterOptions(tasks, profiles);
   const chips = [
     { value: "*", label: t("All|filter"), count: byAssignee.length },
     ...categories.map((name) => ({
@@ -366,36 +406,89 @@ export function ProjectHeader({
               onChange={(branch) => onFilter({ branch })}
             />
           )}
-          <Segmented
-            size="small"
+          <Select
             label={t("Assignee")}
-            options={[
-              { value: "all", label: t("Everyone") },
-              {
-                value: "user",
-                label: (
-                  <>
-                    <Glyph who="user" />
-                    {t("You")}
-                  </>
-                ),
-              },
-              {
-                value: "agent",
-                label: (
-                  <>
-                    <Glyph who="agent" />
-                    {t("Agent")}
-                  </>
-                ),
-              },
-            ]}
-            value={filter.assignee}
-            onChange={(assignee) => onFilter({ assignee })}
+            size="sm"
+            className={`branch-filter ${filter.assignee !== "all" ? "on" : ""}`}
+            value={
+              filter.assignee === "agent"
+                ? `agent:${filter.agent}`
+                : filter.assignee
+            }
+            options={assigneeOptions}
+            search={t("Filter by…")}
+            align="end"
+            mark={
+              filter.assignee === "agent" && filter.agent === "*" ? (
+                <AgentFaces profiles={heldProfiles(tasks, profiles)} />
+              ) : undefined
+            }
+            onChange={(choice) =>
+              onFilter(
+                choice.startsWith("agent:")
+                  ? { assignee: "agent", agent: choice.slice(6) }
+                  : { assignee: choice as BoardFilter["assignee"], agent: "*" },
+              )
+            }
           />
         </div>
       )}
     </div>
+  );
+}
+
+/** The profiles that hold one of these tasks: the connected ones first. */
+function heldProfiles(tasks: Task[], profiles: Map<string, AgentProfile>) {
+  const held = [...profiles.values()].filter((profile) =>
+    tasks.some((task) => taskProfile(task, profiles)?.id === profile.id),
+  );
+  return [
+    ...held.filter((p) => p.presence !== "offline"),
+    ...held.filter((p) => p.presence === "offline"),
+  ];
+}
+
+/**
+ * Everyone, you, every agent and the tasks with no agent set, then the profiles that hold one of
+ * these tasks: the connected ones with their presence, then the offline ones, quieter. An agent
+ * choice is `agent:` followed by the agent filter.
+ */
+function assigneeFilterOptions(
+  tasks: Task[],
+  profiles: Map<string, AgentProfile>,
+): SelectOption<string>[] {
+  return [
+    { value: "all", label: t("Everyone") },
+    { value: "user", label: t("You"), icon: <Glyph who="user" /> },
+    { value: "agent:*", label: t("All agents"), icon: <Glyph who="agent" /> },
+    { value: "agent:", label: t("No agent set"), icon: <Glyph who="agent" /> },
+    ...heldProfiles(tasks, profiles).map((profile) => ({
+      value: `agent:${profile.id}`,
+      label: shortName(profile.displayName),
+      icon: <Glyph who="agent" profileId={profile.id} />,
+      group: t("Agents"),
+      ...(profile.presence === "offline"
+        ? { hint: t("Not connected"), muted: true }
+        : { hint: presenceTitle[profile.presence] }),
+    })),
+  ];
+}
+
+/** Up to three of the agents on the board, overlapped, beside "All agents" on the filter. */
+function AgentFaces({ profiles }: { profiles: AgentProfile[] }) {
+  if (profiles.length === 0) return <Glyph who="agent" />;
+  return (
+    <span className="agent-faces-mini" aria-hidden="true">
+      {profiles.slice(0, 3).map((profile) => (
+        <AgentBot
+          key={profile.id}
+          shape={profile.shape}
+          eyes={profile.eyes}
+          color={agentColor(profile)}
+          size={14}
+        />
+      ))}
+    </span>
   );
 }
 

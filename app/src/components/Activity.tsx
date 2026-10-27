@@ -5,8 +5,10 @@ import {
   statusTitle,
   type TaskDetails,
   type TaskEvent,
+  type AgentProfile,
   type TaskStatus,
 } from "../lib/types";
+import { agentName, useAgentProfiles } from "../lib/agents";
 import { noteName } from "../lib/markdown";
 import { Glyph } from "./BoardFilters";
 import { Icon } from "./Icon";
@@ -24,6 +26,8 @@ interface Entry {
   changes: ReactNode[];
   refs: string[];
   noteId?: string;
+  /** The agent's profile, on what an agent session wrote. */
+  profileId?: string | null;
 }
 
 /** A note, branch or other value inside a change line, set apart from the words around it. */
@@ -35,7 +39,13 @@ const named = (value: string | null, note = false) => (
 );
 const status = (value: string | null) =>
   statusTitle[value as TaskStatus] ?? value ?? "";
-const agentChange = (e: TaskEvent): ReactNode => {
+/** Who a profile event names: the profile, or any agent when it was cleared. */
+const holder = (e: TaskEvent, profiles: Map<string, AgentProfile>) =>
+  e.value ? agentName(profiles.get(e.value)) : t("Any agent");
+const agentChange = (
+  e: TaskEvent,
+  profiles: Map<string, AgentProfile>,
+): ReactNode => {
   switch (e.kind) {
     case "created":
       return t("Created the task");
@@ -85,9 +95,14 @@ const agentChange = (e: TaskEvent): ReactNode => {
       ) : (
         t("Removed the goal")
       );
+    case "agentProfile":
+      return t("Took the task as {0}", [holder(e, profiles)]);
   }
 };
-const personChange = (e: TaskEvent): ReactNode => {
+const personChange = (
+  e: TaskEvent,
+  profiles: Map<string, AgentProfile>,
+): ReactNode => {
   switch (e.kind) {
     case "created":
       return e.actor ? t("Created by you") : t("Task created");
@@ -131,8 +146,10 @@ const personChange = (e: TaskEvent): ReactNode => {
       ) : (
         t("Goal removed")
       );
+    case "agentProfile":
+      return t("Handed to {0}", [holder(e, profiles)]);
     default:
-      return agentChange(e);
+      return agentChange(e, profiles);
   }
 };
 const reference = (e: TaskEvent) =>
@@ -148,11 +165,14 @@ const reference = (e: TaskEvent) =>
  * Newest first. Events written by one call share a timestamp and read as one entry: the agent's
  * summary, what it changed and the commit or PR it registered.
  */
-export function activityEntries(details: TaskDetails): Entry[] {
+export function activityEntries(
+  details: TaskDetails,
+  profiles: Map<string, AgentProfile> = new Map(),
+): Entry[] {
   const entries: Entry[] = [];
   const groups = new Map<string, TaskEvent[]>();
   for (const e of details.events) {
-    const key = `${e.actor}:${e.createdAt}`;
+    const key = `${e.actor}:${e.agentProfileId ?? ""}:${e.createdAt}`;
     groups.set(key, [...(groups.get(key) ?? []), e]);
   }
   for (const [key, events] of groups) {
@@ -164,7 +184,10 @@ export function activityEntries(details: TaskDetails): Entry[] {
       at: events[0].createdAt,
       meta: agent && summary ? "resumo" : undefined,
       text: agent ? (summary ?? undefined) : undefined,
-      changes: events.map(agent ? agentChange : personChange).filter(Boolean),
+      changes: events
+        .map((e) => (agent ? agentChange : personChange)(e, profiles))
+        .filter(Boolean),
+      profileId: agent ? events[0].agentProfileId : undefined,
       refs: events
         .map(reference)
         .filter((line): line is string => Boolean(line)),
@@ -179,6 +202,7 @@ export function activityEntries(details: TaskDetails): Entry[] {
       text: m.body,
       changes: [],
       refs: [],
+      profileId: m.author === "agent" ? m.agentProfileId : undefined,
     });
   for (const n of details.notes)
     entries.push({
@@ -223,7 +247,8 @@ export function Activity({
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<string | null>(null);
-  const all = details ? activityEntries(details) : [];
+  const profiles = useAgentProfiles();
+  const all = details ? activityEntries(details, profiles) : [];
   const entries = all.filter(
     (e) =>
       filter === "all" ||
@@ -258,13 +283,20 @@ export function Activity({
         {entries.map((e) => (
           <li key={e.id} className={`entry ${e.kind}`}>
             <span className="entry-node" aria-hidden="true">
-              <Glyph who={e.kind === "agent" ? "agent" : "user"} />
+              <Glyph
+                who={e.kind === "agent" ? "agent" : "user"}
+                profileId={e.profileId}
+              />
             </span>
             <div className="entry-body">
               {e.kind !== "system" && (
                 <span className="entry-head">
                   <span className="entry-who">
-                    {e.kind === "agent" ? t("Agent") : t("You")}
+                    {e.kind === "agent"
+                      ? agentName(
+                          e.profileId ? profiles.get(e.profileId) : undefined,
+                        )
+                      : t("You")}
                   </span>
                   <span className="entry-meta" title={dateTime(e.at)}>
                     {" · "}

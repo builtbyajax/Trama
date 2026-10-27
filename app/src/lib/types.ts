@@ -1,3 +1,4 @@
+import type { BotEyes, BotShape } from "../components/AgentBot";
 import { locale, t } from "./i18n";
 export type TaskStatus = "backlog" | "todo" | "inProgress" | "review" | "done";
 export type TaskAssignee = "user" | "agent";
@@ -28,6 +29,8 @@ export interface TaskInput {
   pullRequestNumber: number | null;
   /** The project goal the task counts toward. */
   goalId: string | null;
+  /** The agent profile that has it; with the agent and none, it's for any agent. */
+  agentProfileId?: string | null;
 }
 export interface Task extends TaskInput {
   id: string;
@@ -48,6 +51,8 @@ export interface TaskMessage {
   author: TaskAssignee;
   body: string;
   createdAt: number;
+  /** The agent profile that wrote it; none for you and for older agent messages. */
+  agentProfileId: string | null;
 }
 export interface TaskCheck {
   id: string;
@@ -75,7 +80,8 @@ export type TaskEventKind =
   | "pullRequest"
   | "document"
   | "documentRemoved"
-  | "goal";
+  | "goal"
+  | "agentProfile";
 /** Something that happened to a task; `actor` is null for events older than the activity. */
 export interface TaskEvent {
   id: string;
@@ -84,6 +90,8 @@ export interface TaskEvent {
   kind: TaskEventKind;
   value: string | null;
   createdAt: number;
+  /** The agent profile that did it; none for you and for older agent events. */
+  agentProfileId: string | null;
 }
 /** A note attached to a task; `path` is relative to the project's notes folder. */
 export interface TaskDocument {
@@ -135,6 +143,34 @@ export interface Snapshot {
   categories: Category[];
   documents: TaskDocument[];
   goals: Goal[];
+  agentProfiles: AgentProfile[];
+}
+/** `active`: a tool call in the last 15 minutes; `idle`: connected, without calls since; `offline`: ended. */
+export type Presence = "active" | "idle" | "offline";
+/** When the Mac stays awake while an agent works. */
+export type KeepAwake = "off" | "always" | "power";
+/** An agent session's profile; it stays after the session ends, for the history. */
+export interface AgentProfile {
+  id: string;
+  /** The MCP client's own name, such as `claude-code`. */
+  client: string;
+  /** What the agent or you called it; null shows `displayName`, from the client. */
+  name: string | null;
+  displayName: string;
+  /** Index into the agent palette. */
+  color: number;
+  /** The character: a shape in its color, with eyes. */
+  shape: BotShape;
+  eyes: BotEyes;
+  /** You edited it, so the agent can't change it anymore. */
+  editedByUser: boolean;
+  createdAt: number;
+  activeAt: number;
+  aliveAt: number;
+  endedAt: number | null;
+  /** You deleted it: it's off the page, but the history still shows it. */
+  deleted: boolean;
+  presence: Presence;
 }
 /** What a group of a project's tasks is for; its progress is how many of them are done. */
 export interface Goal {

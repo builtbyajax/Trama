@@ -6,6 +6,23 @@
 
 Changes delivered in each Trama version. **Unreleased** lists implemented changes that have not shipped yet; when publishing a version, replace that heading with the release number and date.
 
+## [0.4.0](https://github.com/builtbyajax/Trama/releases/tag/v0.4.0) — 2026-10-27
+
+### Added
+
+- Agent profiles: each MCP session gets a character of its own, with a name, a color, a shape and eyes, shown on the tasks it holds, in the activity and in the filters. Agents set it up with the new `set_profile` tool, and a session without one shows the MCP client's name.
+- Agents page to see every profile and whether it is active, stopped or disconnected, and to rename it, change its look, see its tasks or delete it. Once you edit a profile, the agent can no longer change it. Deleting one leaves its tasks to any agent and keeps it in the history.
+- While an agent works on a task, its character walks along the card's top edge. When the agent stops, it dozes there. Hovering over a character enlarges it.
+- Assign a task to a specific agent or to any agent, and filter the board by agent.
+- Resume a session as the same profile with `set_profile` and its `profile_id`. When a session ends, the tasks it had in progress go back to To do, still with its profile.
+- Keep the Mac awake while an agent called a tool in the last 15 minutes, always or only on power, from Preferences.
+
+### Changed
+
+- Upgrade the database to schema 13 while preserving existing data. Agent tasks become tasks for any agent. After migration, Trama 0.3 cannot open that database.
+- `list_tasks` filters by `agent_profile_id`, `get_context` reports the session's `profile_id`, and tasks, messages and events report the profile that wrote them.
+- The Trama skill tells agents to introduce themselves at the start of a session and to leave other profiles' tasks alone.
+
 ## [0.3.1](https://github.com/builtbyajax/Trama/releases/tag/v0.3.1) — 2026-10-26
 
 ### Changed

@@ -1,4 +1,5 @@
 pub mod agent;
+pub mod awake;
 pub mod commands;
 pub mod diff;
 pub mod documents;

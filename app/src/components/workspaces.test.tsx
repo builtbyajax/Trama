@@ -251,6 +251,7 @@ const data: Snapshot = {
   categories: [],
   documents: [],
   goals: [],
+  agentProfiles: [],
 };
 function General({
   workspaces,

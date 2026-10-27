@@ -22,13 +22,21 @@ import {
 import {
   ago,
   byPosition,
-  isAgentWorking,
   statusTitle,
   type Goal,
   type Task,
   type TaskStatus,
 } from "../lib/types";
 import { Glyph } from "./BoardFilters";
+import { AgentBot } from "./AgentBot";
+import { ArchiveFlight, ConcludeZone } from "./Board";
+import {
+  agentColor,
+  agentName,
+  useAgentProfile,
+  useWorkState,
+} from "../lib/agents";
+import { useReducedMotion } from "../hooks/useReducedMotion";
 import { Icon, StatusIcon } from "./Icon";
 import { menuRequest, type MenuRequest } from "./TaskMenu";
 import { t } from "../lib/i18n";
@@ -47,8 +55,11 @@ interface Drop {
   index: number;
 }
 
+// The bar to conclude lies over the groups and wins, as on the board.
 const collision: CollisionDetection = (args) => {
   const hits = pointerWithin(args);
+  const done = hits.find((hit) => hit.id === "done");
+  if (done) return [done];
   return hits.length ? hits : rectIntersection(args);
 };
 
@@ -56,7 +67,8 @@ const collision: CollisionDetection = (args) => {
  * The board as a list, for those who prefer it to columns: one group per stage, one row per task,
  * in the same manual order. Rows are dragged like cards: inside a group to change the priority,
  * to another group to change the stage. From the keyboard, Space picks a row up, ↑/↓ choose the
- * place (crossing into the next group), Space drops it and Esc cancels.
+ * place (crossing into the next group), Space drops it and Esc cancels. A row dropped on the bar
+ * that rises at the bottom while dragging is concluded and goes to the Archive.
  */
 export function BoardList({
   tasks,
@@ -88,6 +100,12 @@ export function BoardList({
   const [keyboardId, setKeyboardId] = useState<string | null>(null);
   const [drop, setDrop] = useState<Drop | null>(null);
   const [announcement, setAnnouncement] = useState("");
+  const box = useRef<SVGSVGElement>(null);
+  const zone = useRef<HTMLDivElement>(null);
+  const [flight, setFlight] = useState<{ task: Task; rect: DOMRect } | null>(
+    null,
+  );
+  const reduceMotion = useReducedMotion();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
@@ -133,6 +151,12 @@ export function BoardList({
   }
   /** Index among the other rows of `status` under the pointer. */
   function locate(status: TaskStatus | null) {
+    if (dragged && status === "done") {
+      setDrop((current) =>
+        current?.status === "done" ? current : { status, index: 0 },
+      );
+      return;
+    }
     const point = pointer.current;
     const list = status && lists.current.get(status);
     if (!dragged || !point || !list || !status) {
@@ -296,48 +320,65 @@ export function BoardList({
         const target = drop;
         const move = changed;
         finish();
-        if (task && target && move) commit(task, target);
+        if (!task || !target || !move) return;
+        if (target.status === "done") {
+          const overlay = document.querySelector(".list-row.drag-overlay");
+          if (overlay)
+            setFlight({ task, rect: overlay.getBoundingClientRect() });
+          onMove(task.id, "done", null);
+          return;
+        }
+        commit(task, target);
       }}
     >
-      <div
-        ref={body}
-        className={`board-list scroll ${dragged ? "dragging" : ""}`}
-      >
-        {tasks.length === 0 ? (
-          <div className="empty-state">
-            <Icon name="board" size={22} />
-            <strong>{t("No tasks with these filters")}</strong>
-            <p>{t("Change the category, branch or assignee.")}</p>
-          </div>
-        ) : (
-          listOrder.map((status) => {
-            const group = groups[status];
-            const line =
-              changed && drop?.status === status
-                ? (others(status, moving!.id)[drop.index]?.id ?? "end")
-                : null;
-            const nodes: ReactNode[] = group.flatMap((task) =>
-              line === task.id
-                ? [<DropLine key="line" />, row(task)]
-                : [row(task)],
-            );
-            if (line === "end") nodes.push(<DropLine key="line" />);
-            return (
-              <ListGroup
-                key={status}
-                status={status}
-                count={group.length}
-                target={changed && drop?.status === status}
-                listRef={(node) => {
-                  if (node) lists.current.set(status, node);
-                  else lists.current.delete(status);
-                }}
-              >
-                {nodes}
-              </ListGroup>
-            );
-          })
-        )}
+      <div className="board-area">
+        <div
+          ref={body}
+          className={`board-list scroll ${dragged ? "dragging" : ""}`}
+        >
+          {tasks.length === 0 ? (
+            <div className="empty-state">
+              <Icon name="board" size={22} />
+              <strong>{t("No tasks with these filters")}</strong>
+              <p>{t("Change the category, branch or assignee.")}</p>
+            </div>
+          ) : (
+            listOrder.map((status) => {
+              const group = groups[status];
+              const line =
+                changed && drop?.status === status
+                  ? (others(status, moving!.id)[drop.index]?.id ?? "end")
+                  : null;
+              const nodes: ReactNode[] = group.flatMap((task) =>
+                line === task.id
+                  ? [<DropLine key="line" />, row(task)]
+                  : [row(task)],
+              );
+              if (line === "end") nodes.push(<DropLine key="line" />);
+              return (
+                <ListGroup
+                  key={status}
+                  status={status}
+                  count={group.length}
+                  target={changed && drop?.status === status}
+                  listRef={(node) => {
+                    if (node) lists.current.set(status, node);
+                    else lists.current.delete(status);
+                  }}
+                >
+                  {nodes}
+                </ListGroup>
+              );
+            })
+          )}
+        </div>
+        <ConcludeZone
+          zoneRef={zone}
+          boxRef={box}
+          active={Boolean(dragged)}
+          over={drop?.status === "done"}
+          receiving={Boolean(flight)}
+        />
       </div>
       <span className="sr-only" role="status">
         {announcement}
@@ -345,6 +386,23 @@ export function BoardList({
       <DragOverlay dropAnimation={null}>
         {dragged && row(dragged, true)}
       </DragOverlay>
+      {flight && (
+        <ArchiveFlight
+          key={flight.task.id}
+          className="list-row"
+          rect={flight.rect}
+          box={box}
+          reduceMotion={reduceMotion}
+          onDone={() => setFlight(null)}
+        >
+          <div className="row-button">
+            <ListRowContent
+              task={flight.task}
+              goal={goalName(flight.task.goalId)}
+            />
+          </div>
+        </ArchiveFlight>
+      )}
     </DndContext>
   );
 }
@@ -412,36 +470,15 @@ function ListRow({
     id: task.id,
     disabled: overlay,
   });
-  const working = isAgentWorking(task);
   const state = [
     overlay && "drag-overlay",
     !overlay && origin && "drag-origin",
     landed && "landed",
     selected && "selected",
-    working && "working",
   ]
     .filter(Boolean)
     .join(" ");
-  const content = (
-    <>
-      <span className="row-title truncate">{task.title}</span>
-      <span className="list-cell truncate">{task.category}</span>
-      <span className={`list-cell truncate ${goal ? "" : "faint"}`}>
-        {goal ?? t("No goal")}
-      </span>
-      <span className="list-cell list-who">
-        <Glyph who={task.assignee} />
-        <span className="truncate">
-          {working
-            ? t("Working now")
-            : task.assignee === "agent"
-              ? t("Agent")
-              : t("You")}
-        </span>
-      </span>
-      <span className="list-cell list-when">{ago(task.updatedAt)}</span>
-    </>
-  );
+  const content = <ListRowContent task={task} goal={goal} />;
   if (overlay)
     return (
       <div className={`list-row ${state}`}>
@@ -468,5 +505,50 @@ function ListRow({
         {content}
       </div>
     </li>
+  );
+}
+
+/**
+ * A row's cells. Who has the task is a plain mark like on the card's meta line, except an agent at
+ * work: its character hops while it works and dozes once it stops.
+ */
+function ListRowContent({ task, goal }: { task: Task; goal: string | null }) {
+  const work = useWorkState(task);
+  const profile = useAgentProfile(task.agentProfileId);
+  return (
+    <>
+      <span className="row-title truncate">{task.title}</span>
+      <span className="list-cell truncate">{task.category}</span>
+      <span className={`list-cell truncate ${goal ? "" : "faint"}`}>
+        {goal ?? t("No goal")}
+      </span>
+      <span className="list-cell list-who">
+        {profile && work ? (
+          <span className={`list-bot ${work}`}>
+            <AgentBot
+              shape={profile.shape}
+              eyes={work === "stopped" ? "sleepy" : profile.eyes}
+              color={agentColor(profile)}
+              className="glyph"
+            />
+            {work === "stopped" && (
+              <span className="face-z" aria-hidden="true">
+                z
+              </span>
+            )}
+          </span>
+        ) : (
+          <Glyph who={task.assignee} profileId={task.agentProfileId} />
+        )}
+        <span className="truncate">
+          {task.assignee === "user"
+            ? t("You")
+            : work === "stopped"
+              ? `${agentName(profile)}, ${t("Stopped").toLowerCase()}`
+              : agentName(profile)}
+        </span>
+      </span>
+      <span className="list-cell list-when">{ago(task.updatedAt)}</span>
+    </>
   );
 }

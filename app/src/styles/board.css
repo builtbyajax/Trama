@@ -87,7 +87,7 @@
     transform: translateY(2px) scale(1.08, 0.92);
   }
 }
-.card.archive-flight {
+:is(.card, .list-row).archive-flight {
   position: fixed;
   z-index: 400;
   margin: 0;
@@ -162,7 +162,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  padding: 2px calc(10px - var(--bar)) 10px 10px;
+  /* Starts 6px up, in the head's bottom padding, so a character perched on the first card shows
+     whole above it instead of cut at the column's edge. */
+  margin-top: -6px;
+  padding: 8px calc(10px - var(--bar)) 10px 10px;
 }
 .column-empty {
   flex: none;
@@ -221,6 +224,14 @@
 .card.menu-open {
   border-color: var(--line-strong);
   background: var(--card-hover);
+}
+/* Hovered or with its menu open, a working card keeps its agent's color, a little stronger. */
+.card.working:hover,
+.card.working.menu-open {
+  background: color-mix(in srgb, var(--agent) 14%, transparent);
+}
+.card.working.menu-open {
+  border-color: var(--agent-line);
 }
 /* The card that is being moved stays in place as an outline, so its column never jumps; one
    flying back keeps it until it lands. */
@@ -300,6 +311,10 @@
   gap: 10px;
   min-width: 0;
 }
+.card-bot {
+  position: absolute;
+  display: flex;
+}
 /* The category and the goal share the line: each takes at most half and truncates past it. */
 .card-top > * {
   max-width: calc(50% - 5px);
@@ -349,13 +364,6 @@
   color: var(--ink-3);
   text-decoration: line-through;
 }
-.card-live {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 11.5px;
-  color: var(--agent-ink);
-}
 .card-meta {
   display: flex;
   align-items: center;
@@ -387,8 +395,75 @@
   height: 7px;
   margin: 0 1px;
   border-radius: 1.5px;
-  background: var(--agent);
+  background: var(--glyph, var(--agent));
   transform: rotate(45deg);
+}
+/* An agent profile's character: its shape in the profile's color, with dark eyes. */
+.agent-bot {
+  flex: none;
+  overflow: visible;
+}
+.agent-bot.glyph {
+  margin: -2px -1px;
+}
+/* On the card and in the list a little bigger, without pushing the line: the negative margins
+   absorb the extra. */
+:is(.card-meta, .list-who) .agent-bot.glyph {
+  --size: 18px;
+  --margin-y: -4px;
+  --margin-x: -2px;
+}
+/* Where an agent's character marks who did something (the card, the task's activity and its
+   banner, the history), hovering it grows it over what's around it, to be seen up close. It is
+   drawn at the grown size and shrunk at rest, so it stays sharp: scaling a small one up blurs it.
+   The margins take back what the bigger box would add to the line. */
+:is(
+    .card-meta,
+    .entry-node,
+    .agent-working,
+    .history-lead,
+    .history-task,
+    .detail-mark,
+    .list-who
+  )
+  .agent-bot.glyph {
+  --grown: calc(var(--size, 14px) * 2.4);
+  --extra: calc(var(--size, 14px) * -0.7);
+  position: relative;
+  width: var(--grown);
+  height: var(--grown);
+  margin: calc(var(--margin-y, -2px) + var(--extra))
+    calc(var(--margin-x, -1px) + var(--extra));
+  transform: scale(calc(1 / 2.4));
+  transition: transform 160ms ease;
+}
+:is(
+    .card-meta,
+    .entry-node,
+    .agent-working,
+    .history-lead,
+    .history-task,
+    .detail-mark,
+    .list-who
+  )
+  .agent-bot.glyph:hover {
+  z-index: 2;
+  transform: none;
+}
+.bot-body {
+  fill: var(--bot, var(--agent));
+}
+.bot-eyes {
+  fill: #17171a;
+}
+.bot-eyes .bot-white {
+  fill: #fff;
+}
+.bot-line {
+  fill: none;
+  stroke: #17171a;
+  stroke-width: 1.2;
+  stroke-linecap: round;
 }
 .agent-pulse {
   flex: none;
@@ -434,5 +509,470 @@
   }
   .card.drag-overlay {
     transform: none;
+  }
+}
+
+/* A session holds the task but stopped calling tools: its color stays, the border stops. */
+.card.working.stopped {
+  border-color: var(--agent-line);
+}
+
+/* A working agent's character stands on the card's top edge, half outside it. Working, it walks
+   slowly from one end to the other and back, pausing to look around and blink; stopped, it sits in
+   the corner and dozes. */
+.card.working:has(> .card-bot.perched) {
+  margin-top: 16px;
+}
+.card-bot.perched {
+  top: -20px;
+  right: 10px;
+  /* From the right end to the left one: the card's width (inner width, padding and border) less
+     both 10px gaps and the 30px character. */
+  --walk: calc(22px - 100cqw);
+}
+.card-bot.perched .bot-body {
+  stroke: var(--bg-canvas);
+  stroke-width: 1.6px;
+  paint-order: stroke;
+}
+.card-bot.walking {
+  animation: bot-walk 24s ease-in-out infinite;
+}
+.card-bot.walking .agent-bot {
+  animation: bot-hop 24s linear infinite;
+}
+.card-bot.walking .bot-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bot-look 24s ease-in-out infinite;
+}
+.card:hover .card-bot.walking,
+.card:hover .card-bot.walking * {
+  animation-play-state: paused;
+}
+@keyframes bot-walk {
+  0%,
+  18% {
+    transform: translateX(0);
+  }
+  50%,
+  68% {
+    transform: translateX(var(--walk));
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+@keyframes bot-hop {
+  18.00% {
+    transform: translateY(0);
+  }
+  19.60% {
+    transform: translateY(-2.5px);
+  }
+  21.20% {
+    transform: translateY(0);
+  }
+  22.80% {
+    transform: translateY(-2.5px);
+  }
+  24.40% {
+    transform: translateY(0);
+  }
+  26.00% {
+    transform: translateY(-2.5px);
+  }
+  27.60% {
+    transform: translateY(0);
+  }
+  29.20% {
+    transform: translateY(-2.5px);
+  }
+  30.80% {
+    transform: translateY(0);
+  }
+  32.40% {
+    transform: translateY(-2.5px);
+  }
+  34.00% {
+    transform: translateY(0);
+  }
+  35.60% {
+    transform: translateY(-2.5px);
+  }
+  37.20% {
+    transform: translateY(0);
+  }
+  38.80% {
+    transform: translateY(-2.5px);
+  }
+  40.40% {
+    transform: translateY(0);
+  }
+  42.00% {
+    transform: translateY(-2.5px);
+  }
+  43.60% {
+    transform: translateY(0);
+  }
+  45.20% {
+    transform: translateY(-2.5px);
+  }
+  46.80% {
+    transform: translateY(0);
+  }
+  48.40% {
+    transform: translateY(-2.5px);
+  }
+  50.00% {
+    transform: translateY(0);
+  }
+  68.00% {
+    transform: translateY(0);
+  }
+  69.60% {
+    transform: translateY(-2.5px);
+  }
+  71.20% {
+    transform: translateY(0);
+  }
+  72.80% {
+    transform: translateY(-2.5px);
+  }
+  74.40% {
+    transform: translateY(0);
+  }
+  76.00% {
+    transform: translateY(-2.5px);
+  }
+  77.60% {
+    transform: translateY(0);
+  }
+  79.20% {
+    transform: translateY(-2.5px);
+  }
+  80.80% {
+    transform: translateY(0);
+  }
+  82.40% {
+    transform: translateY(-2.5px);
+  }
+  84.00% {
+    transform: translateY(0);
+  }
+  85.60% {
+    transform: translateY(-2.5px);
+  }
+  87.20% {
+    transform: translateY(0);
+  }
+  88.80% {
+    transform: translateY(-2.5px);
+  }
+  90.40% {
+    transform: translateY(0);
+  }
+  92.00% {
+    transform: translateY(-2.5px);
+  }
+  93.60% {
+    transform: translateY(0);
+  }
+  95.20% {
+    transform: translateY(-2.5px);
+  }
+  96.80% {
+    transform: translateY(0);
+  }
+  98.40% {
+    transform: translateY(-2.5px);
+  }
+  100.00% {
+    transform: translateY(0);
+  }
+}
+@keyframes bot-look {
+  /* Each stop: the eyes come back to the middle, blink halfway through and turn to where it goes
+     next just before it sets off. */
+  0% {
+    transform: translateX(1px);
+  }
+  1.8%,
+  8.4% {
+    transform: translateX(0) scaleY(1);
+  }
+  9% {
+    transform: translateX(0) scaleY(0.1);
+  }
+  9.6%,
+  15.6% {
+    transform: translateX(0) scaleY(1);
+  }
+  17.4%,
+  50% {
+    transform: translateX(-1px);
+  }
+  51.8%,
+  58.4% {
+    transform: translateX(0) scaleY(1);
+  }
+  59% {
+    transform: translateX(0) scaleY(0.1);
+  }
+  59.6%,
+  65.6% {
+    transform: translateX(0) scaleY(1);
+  }
+  67.4%,
+  100% {
+    transform: translateX(1px);
+  }
+}
+/* The visor doesn't blink: its light sweeps to the other side and back instead. */
+.card-bot.walking
+  .bot-eyes:is(.visor, .wink, .suspicious, .happy, .angry, .focused) {
+  animation-name: bot-glance;
+}
+.card-bot.walking .visor .bot-white {
+  animation: bot-scan 24s ease-in-out infinite;
+}
+@keyframes bot-glance {
+  0% {
+    transform: translateX(1px);
+  }
+  1.8%,
+  15.6% {
+    transform: translateX(0);
+  }
+  17.4%,
+  50% {
+    transform: translateX(-1px);
+  }
+  51.8%,
+  65.6% {
+    transform: translateX(0);
+  }
+  67.4%,
+  100% {
+    transform: translateX(1px);
+  }
+}
+@keyframes bot-scan {
+  0%,
+  7.5% {
+    transform: translateX(0);
+  }
+  10.5% {
+    transform: translateX(4.2px);
+  }
+  13.5%,
+  57.5% {
+    transform: translateX(0);
+  }
+  60.5% {
+    transform: translateX(4.2px);
+  }
+  63.5%,
+  100% {
+    transform: translateX(0);
+  }
+}
+/* Some eyes have a blink of their own, at the moment the others close: a wink opens the shut eye
+   and winks again, suspicious eyes raise the brow, happy ones hop, angry ones narrow and focused
+   ones take aim. The card's walk and the agent's panel play them on the same clock, so they look
+   alike everywhere: once every --blink-every, 2.16s into it, which on the card is the middle of
+   each stop (its 24s walk is two of these). The delay brings the middle of the eyes' own move
+   (86.5% for a wink, 89.5% for the brow, 94% for the others) there. */
+:root {
+  --blink-every: 12s;
+}
+.bot-eyes.wink {
+  --eye-delay: -8.22s;
+}
+.bot-eyes.suspicious {
+  --eye-delay: -8.58s;
+}
+.bot-eyes:is(.happy, .angry, .focused) {
+  --eye-delay: -9.12s;
+}
+:is(.agent-stage.active, .card-bot.walking) .bot-eyes * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+:is(.agent-stage.active, .card-bot.walking) .wink .eye-shut {
+  animation: wink-shut var(--blink-every) ease-in-out var(--eye-delay, 0s)
+    infinite;
+}
+.bot-eyes .eye-peek {
+  opacity: 0;
+}
+:is(.agent-stage.active, .card-bot.walking) .wink .eye-peek {
+  animation: wink-open var(--blink-every) ease-in-out var(--eye-delay, 0s)
+    infinite;
+}
+:is(.agent-stage.active, .card-bot.walking) .suspicious .brow {
+  animation: brow-raise var(--blink-every) ease-in-out var(--eye-delay, 0s)
+    infinite;
+}
+:is(.agent-stage.active, .card-bot.walking) .happy path {
+  animation: eye-hop var(--blink-every) ease-in-out var(--eye-delay, 0s)
+    infinite;
+}
+:is(.agent-stage.active, .card-bot.walking) .angry path {
+  animation: eye-glare var(--blink-every) ease-in-out var(--eye-delay, 0s)
+    infinite;
+}
+/* Focused eyes take aim: the brows come down and the pupils narrow, held, then let go. */
+:is(.agent-stage.active, .card-bot.walking) .focused circle {
+  animation: focus-pupil var(--blink-every) ease-in-out var(--eye-delay, 0s)
+    infinite;
+}
+:is(.agent-stage.active, .card-bot.walking) .focused path {
+  animation: focus-brow var(--blink-every) ease-in-out var(--eye-delay, 0s)
+    infinite;
+}
+/* The shut eye opens quickly, held a moment, then winks: it closes like a blink while the arc
+   comes back. */
+@keyframes wink-shut {
+  0%,
+  83.5%,
+  89.5%,
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  85%,
+  88% {
+    opacity: 0;
+    transform: scaleY(0.4);
+  }
+}
+@keyframes wink-open {
+  0%,
+  83.5%,
+  89.5%,
+  100% {
+    opacity: 0;
+    transform: scaleY(0.1);
+  }
+  85%,
+  88% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+@keyframes brow-raise {
+  /* Up, a moment held there, then back down. */
+  0%,
+  83%,
+  96%,
+  100% {
+    transform: translateY(0);
+  }
+  86%,
+  93% {
+    transform: translateY(-0.8px);
+  }
+}
+@keyframes eye-hop {
+  0%,
+  88%,
+  94%,
+  100% {
+    transform: translateY(0);
+  }
+  91%,
+  97% {
+    transform: translateY(-0.8px);
+  }
+}
+@keyframes eye-glare {
+  0%,
+  88%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  91%,
+  97% {
+    transform: scaleY(0.5);
+  }
+}
+@keyframes focus-pupil {
+  0%,
+  88%,
+  100% {
+    transform: scale(1);
+  }
+  90.5%,
+  97% {
+    transform: scale(0.65);
+  }
+}
+@keyframes focus-brow {
+  0%,
+  88%,
+  100% {
+    transform: translateY(0) scaleX(1);
+  }
+  90.5%,
+  97% {
+    transform: translateY(0.7px) scaleX(0.85);
+  }
+}
+/* Dozing, a z leaves the character every so often, rising from its right side. */
+.bot-zzz {
+  position: absolute;
+  z-index: 1;
+  top: 2px;
+  left: 24px;
+  pointer-events: none;
+}
+.bot-zzz > span {
+  position: absolute;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  animation: bot-zzz 3.6s ease-out infinite;
+}
+.bot-zzz > span:nth-child(2) {
+  animation-delay: 1.2s;
+}
+.bot-zzz > span:nth-child(3) {
+  animation-delay: 2.4s;
+}
+@keyframes bot-zzz {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(9px, -14px) scale(1.2);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-bot.walking,
+  .card-bot.walking * {
+    animation: none;
+  }
+  /* Without motion, the three stand still, growing as they leave. */
+  .bot-zzz > span {
+    animation: none;
+    opacity: 0.9;
+  }
+  .bot-zzz > span:nth-child(1) {
+    transform: translate(0, 0) scale(0.7);
+  }
+  .bot-zzz > span:nth-child(2) {
+    transform: translate(4px, -6px) scale(0.9);
+  }
+  .bot-zzz > span:nth-child(3) {
+    transform: translate(8px, -12px) scale(1.1);
   }
 }

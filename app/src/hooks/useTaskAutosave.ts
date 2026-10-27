@@ -8,6 +8,7 @@ type Edit = Pick<
   | "details"
   | "category"
   | "assignee"
+  | "agentProfileId"
   | "status"
   | "repositoryBranch"
   | "goalId"
@@ -121,6 +122,7 @@ export function useTaskAutosave(task: Task, onSaved: () => void) {
     details: task.details,
     category: task.category,
     assignee: task.assignee,
+    agentProfileId: task.agentProfileId,
     status: task.status,
     repositoryBranch: task.repositoryBranch,
     goalId: task.goalId,

@@ -278,6 +278,15 @@ kbd {
 .popover-option > .icon {
   color: var(--accent-text);
 }
+.popover-option.muted:not(.active) {
+  color: var(--ink-3);
+}
+.popover-note {
+  flex: none;
+  margin-left: auto;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
 .popover-option.create {
   color: var(--accent-text);
 }
@@ -638,4 +647,19 @@ input[type="checkbox"]:checked::after {
     opacity: 0;
     transform: translate(-50%, -6px);
   }
+}
+
+/* The agents on the board, overlapped on the assignee filter when it shows all of them. Each body
+   is outlined in the chip's color, so they read as separate characters. */
+.agent-faces-mini {
+  display: inline-flex;
+  flex: none;
+}
+.agent-faces-mini .agent-bot + .agent-bot {
+  margin-left: -5px;
+}
+.agent-faces-mini .bot-body {
+  stroke: var(--bg-raised);
+  stroke-width: 1.6px;
+  paint-order: stroke;
 }

@@ -56,6 +56,7 @@ describe("board lifecycle", () => {
       actor: "agent",
       value,
       createdAt,
+      agentProfileId: null,
     });
     const events = [
       event("inProgress", 200),

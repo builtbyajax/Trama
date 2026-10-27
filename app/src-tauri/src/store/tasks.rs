@@ -56,6 +56,16 @@ impl Store {
         if !["user", "agent"].contains(&input.assignee.as_str()) {
             return Err("Invalid assignee.".into());
         }
+        if input.assignee == "user" {
+            input.agent_profile_id = None;
+        }
+        if let Some(profile) = input.agent_profile_id.as_deref().filter(|p| !p.is_empty()) {
+            // A deleted profile holds nothing: the task goes to any agent.
+            let profile = self.agent_profile(profile)?;
+            input.agent_profile_id = (!profile.deleted).then_some(profile.id);
+        } else {
+            input.agent_profile_id = None;
+        }
         if input.pull_request_number.is_some_and(|n| n <= 0) {
             return Err("The PR number must be positive.".into());
         }
@@ -81,7 +91,7 @@ impl Store {
             None
         };
         if let Some(previous) = &previous {
-            sql(self.db.execute("UPDATE tasks SET title=?,details=?,category=?,assignee=?,status=?,agent_summary=?,repository_branch=?,commit_hash=?,pull_request_url=?,pull_request_number=?,goal_id=?,updated_at=? WHERE id=? AND project_id=?",params![input.title,input.details,input.category,input.assignee,input.status,input.agent_summary,input.repository_branch,input.commit_hash,input.pull_request_url,input.pull_request_number,input.goal_id,timestamp,task_id,project.id]))?;
+            sql(self.db.execute("UPDATE tasks SET title=?,details=?,category=?,assignee=?,status=?,agent_summary=?,repository_branch=?,commit_hash=?,pull_request_url=?,pull_request_number=?,goal_id=?,agent_profile_id=?,updated_at=? WHERE id=? AND project_id=?",params![input.title,input.details,input.category,input.assignee,input.status,input.agent_summary,input.repository_branch,input.commit_hash,input.pull_request_url,input.pull_request_number,input.goal_id,input.agent_profile_id,timestamp,task_id,project.id]))?;
             if previous.status != input.status {
                 self.place_on_top(&task_id, &project.id, &input.status)?;
             }
@@ -120,6 +130,12 @@ impl Store {
                     self.record(&task_id, actor, kind, value, timestamp)?;
                 }
             }
+            // Who among the agents has it: recorded only while the task stays with the agent, since
+            // the assignee event already covers handing it to the person.
+            if previous.agent_profile_id != input.agent_profile_id && input.assignee == "agent" {
+                let value = input.agent_profile_id.as_deref();
+                self.record(&task_id, actor, "agentProfile", value, timestamp)?;
+            }
             if previous.goal_id != input.goal_id {
                 let name = goal.as_ref().map(|g| g.name.as_str());
                 self.record(&task_id, actor, "goal", name, timestamp)?;
@@ -135,7 +151,7 @@ impl Store {
             }
         } else {
             let position = self.top_position(&project.id, &input.status)?;
-            sql(self.db.execute("INSERT INTO tasks(id,project_id,title,details,category,assignee,status,position,agent_summary,repository_branch,commit_hash,pull_request_url,pull_request_number,goal_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",params![task_id,project.id,input.title,input.details,input.category,input.assignee,input.status,position,input.agent_summary,input.repository_branch,input.commit_hash,input.pull_request_url,input.pull_request_number,input.goal_id,timestamp,timestamp]))?;
+            sql(self.db.execute("INSERT INTO tasks(id,project_id,title,details,category,assignee,status,position,agent_summary,repository_branch,commit_hash,pull_request_url,pull_request_number,goal_id,agent_profile_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",params![task_id,project.id,input.title,input.details,input.category,input.assignee,input.status,position,input.agent_summary,input.repository_branch,input.commit_hash,input.pull_request_url,input.pull_request_number,input.goal_id,input.agent_profile_id,timestamp,timestamp]))?;
             self.record(&task_id, actor, "created", None, timestamp)?;
         }
         self.remember_category(&project.id, &input.category)?;
@@ -186,6 +202,9 @@ impl Store {
         if let Some(v) = patch.goal_id {
             input.goal_id = v;
         }
+        if let Some(v) = patch.agent_profile_id {
+            input.agent_profile_id = v;
+        }
         let task = self.save_task_inner(Some(&task.id), input, actor)?;
         sql(tx.commit())?;
         Ok(task)
@@ -233,10 +252,7 @@ impl Store {
                 "UPDATE tasks SET status=?,updated_at=? WHERE id=? AND project_id=?",
                 params![status, timestamp, task.id, task.project_id],
             ))?;
-            sql(tx.execute(
-                "INSERT INTO task_events(id,task_id,actor,kind,value,created_at) VALUES(?,?,?,'status',?,?)",
-                params![id(), task.id, actor, status, timestamp],
-            ))?;
+            self.record(&task.id, actor, "status", Some(status), timestamp)?;
         }
         for (position, id) in order.iter().enumerate() {
             sql(tx.execute(
@@ -255,9 +271,12 @@ impl Store {
         value: Option<&str>,
         at: f64,
     ) -> Result<()> {
+        let profile = (actor == "agent")
+            .then(|| self.profile.borrow().clone())
+            .flatten();
         sql(self.db.execute(
-            "INSERT INTO task_events(id,task_id,actor,kind,value,created_at) VALUES(?,?,?,?,?,?)",
-            params![id(), task_id, actor, kind, value, at],
+            "INSERT INTO task_events(id,task_id,actor,kind,value,created_at,agent_profile_id) VALUES(?,?,?,?,?,?,?)",
+            params![id(), task_id, actor, kind, value, at, profile],
         ))?;
         Ok(())
     }
@@ -287,7 +306,7 @@ impl Store {
     pub fn events(&self, task_id: &str, project_id: &str) -> Result<Vec<Event>> {
         let task = self.task(task_id, project_id)?;
         let mut stmt = sql(self.db.prepare(
-            "SELECT id,task_id,actor,kind,value,created_at FROM task_events WHERE task_id=? ORDER BY created_at,rowid",
+            "SELECT id,task_id,actor,kind,value,created_at,agent_profile_id FROM task_events WHERE task_id=? ORDER BY created_at,rowid",
         ))?;
         let result = sql(stmt
             .query_map([task.id], |r| {
@@ -298,6 +317,7 @@ impl Store {
                     kind: r.get(3)?,
                     value: r.get(4)?,
                     created_at: r.get(5)?,
+                    agent_profile_id: r.get(6)?,
                 })
             })
             .and_then(|rows| rows.collect()));
@@ -307,7 +327,7 @@ impl Store {
     /// every task still open or touched since `since`, oldest first.
     pub fn handoff_events(&self, since: f64) -> Result<Vec<Event>> {
         let mut stmt = sql(self.db.prepare(
-            "SELECT e.id,e.task_id,e.actor,e.kind,e.value,e.created_at FROM task_events e JOIN tasks t ON t.id=e.task_id \
+            "SELECT e.id,e.task_id,e.actor,e.kind,e.value,e.created_at,e.agent_profile_id FROM task_events e JOIN tasks t ON t.id=e.task_id \
              WHERE e.kind IN('created','status','assignee') AND (t.updated_at>=? OR t.status<>'done') \
              ORDER BY e.created_at,e.rowid",
         ))?;
@@ -320,6 +340,7 @@ impl Store {
                     kind: r.get(3)?,
                     value: r.get(4)?,
                     created_at: r.get(5)?,
+                    agent_profile_id: r.get(6)?,
                 })
             })
             .and_then(|rows| rows.collect()));

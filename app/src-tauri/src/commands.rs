@@ -19,6 +19,8 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
     match command {
         "list_workspaces" => return encoded(Ok(workspaces::list())),
         "dismiss_organized" => return encoded(workspaces::dismiss_organized()),
+        "keep_awake" => return encoded(Ok(workspaces::keep_awake())),
+        "set_keep_awake" => return encoded(workspaces::set_keep_awake(text(&args, "mode")?)),
         // The MCP server ships next to the app's executable, so Preferences can show the command.
         "agent_path" => {
             let name = if cfg!(windows) {
@@ -68,7 +70,19 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
             .ok_or_else(|| "Connect a repository to see the Git history.".to_string())
     };
     match command {
-        "load_snapshot" => encoded(store.snapshot()),
+        "load_snapshot" => {
+            // A session whose process died without closing is offline: end it before showing it.
+            store.end_stale_sessions()?;
+            encoded(store.snapshot())
+        }
+        "edit_agent_profile" => encoded(store.edit_agent_profile(
+            text(&args, "profileId")?,
+            args["name"].as_str(),
+            args["color"].as_i64().ok_or("Missing argument: color")?,
+            text(&args, "shape")?,
+            text(&args, "eyes")?,
+        )),
+        "delete_agent_profile" => encoded(store.delete_agent_profile(text(&args, "profileId")?)),
         "save_project" => {
             let folder = match args["documentsFolder"]
                 .as_str()

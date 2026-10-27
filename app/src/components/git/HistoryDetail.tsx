@@ -16,7 +16,7 @@ import {
   type Task,
 } from "../../lib/types";
 import { Glyph } from "../BoardFilters";
-import { Icon } from "../Icon";
+import { Icon, StatusIcon } from "../Icon";
 import {
   CommitPeek,
   FileRows,
@@ -304,7 +304,7 @@ export function HistoryDetail({
     mark = (
       <span className="detail-mark">
         {task ? (
-          <Glyph who={task.assignee} />
+          <Glyph who={task.assignee} profileId={task.agentProfileId} />
         ) : (
           <Icon
             name={front.key.startsWith("pr:") ? "pullRequest" : "branch"}
@@ -339,7 +339,8 @@ export function HistoryDetail({
     meta = (
       <>
         {task && (
-          <span className={`front-status s-${task.status}`}>
+          <span className="front-status">
+            <StatusIcon status={task.status} size={13} />
             {statusTitle[task.status]}
           </span>
         )}
@@ -394,7 +395,7 @@ export function HistoryDetail({
             className="detail-task"
             onClick={() => actions.onSelect(`task:${task.id}`)}
           >
-            <Glyph who={task.assignee} />
+            <Glyph who={task.assignee} profileId={task.agentProfileId} />
             <span className="truncate">{task.title}</span>
           </button>
         )}

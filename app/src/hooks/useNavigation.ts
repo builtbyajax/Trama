@@ -6,9 +6,8 @@ type Place = { destination: Destination; mode: ProjectMode };
 const samePlace = (a: Place, b: Place) =>
   a.mode === b.mode &&
   a.destination.kind === b.destination.kind &&
-  (a.destination.kind !== "project" ||
-    (b.destination.kind === "project" &&
-      a.destination.id === b.destination.id));
+  ("id" in a.destination ? a.destination.id : undefined) ===
+    ("id" in b.destination ? b.destination.id : undefined);
 
 /**
  * Where the person is and the back and forward history. `leave` runs before moving and says

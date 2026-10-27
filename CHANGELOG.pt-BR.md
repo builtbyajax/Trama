@@ -6,6 +6,23 @@
 
 Mudanças entregues em cada versão do Trama. A seção **Em desenvolvimento** reúne alterações implementadas que ainda não foram lançadas; ao publicar uma versão, substitua esse título pelo número e pela data da release.
 
+## [0.4.0](https://github.com/builtbyajax/Trama/releases/tag/v0.4.0) — 2026-10-27
+
+### Adicionado
+
+- Perfis de agente: cada sessão do MCP ganha um personagem próprio, com nome, cor, forma e olhos, mostrado nas tarefas com ela, na atividade e nos filtros. Os agentes o definem com a nova ferramenta `set_profile`, e uma sessão sem perfil aparece com o nome do cliente MCP.
+- Página Agentes para ver cada perfil e se está ativo, parado ou desconectado, e para renomear, mudar a aparência, ver as tarefas ou excluir. Depois que você edita um perfil, o agente não muda mais. Excluir um perfil deixa as tarefas dele para qualquer agente e mantém o perfil no histórico.
+- Enquanto um agente trabalha numa tarefa, o personagem dele anda pela borda de cima do cartão. Quando o agente para, ele cochila ali. Passar o ponteiro sobre um personagem o amplia.
+- Atribuição de uma tarefa a um agente específico ou a qualquer agente, e filtro do quadro por agente.
+- Retomada de uma sessão com o mesmo perfil, por `set_profile` com o `profile_id`. Quando uma sessão termina, as tarefas que ela tinha em andamento voltam para A fazer, ainda com o perfil dela.
+- Opção nas Preferências para manter o Mac acordado enquanto um agente chamou uma ferramenta nos últimos 15 minutos, sempre ou só na tomada.
+
+### Alterado
+
+- Atualização do banco para o schema 13, preservando os dados. As tarefas do agente passam a ser de qualquer agente. Depois da migração, o Trama 0.3 não abre esse banco.
+- `list_tasks` filtra por `agent_profile_id`, `get_context` informa o `profile_id` da sessão, e tarefas, mensagens e eventos informam o perfil que os escreveu.
+- A skill do Trama orienta os agentes a se apresentar no início da sessão e a não mexer nas tarefas de outros perfis.
+
 ## [0.3.1](https://github.com/builtbyajax/Trama/releases/tag/v0.3.1) — 2026-10-26
 
 ### Alterado

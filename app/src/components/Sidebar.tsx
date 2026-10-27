@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
+  type CSSProperties,
   type MouseEvent,
   type ReactNode,
   type RefObject,
@@ -20,6 +21,13 @@ import {
 } from "../lib/shortcuts";
 import { Icon, type IconName } from "./Icon";
 import { KeyHint } from "./KeyHint";
+import { AgentBot } from "./AgentBot";
+import {
+  agentColor,
+  presenceTitle,
+  shortName,
+  useAgentProfiles,
+} from "../lib/agents";
 import { ProjectMark } from "./ProjectMark";
 import { t } from "../lib/i18n";
 import { SidebarLeaving } from "./SidebarSlot";
@@ -29,6 +37,7 @@ export type Destination =
   | { kind: "overview" }
   | { kind: "archive" }
   | { kind: "notes" }
+  | { kind: "agents"; id?: string }
   | { kind: "preferences"; section?: PreferencesSection }
   | { kind: "project"; id: string };
 
@@ -97,6 +106,19 @@ export function Sidebar({
     y: number;
     trigger: HTMLElement;
   } | null>(null);
+  const connected = [...useAgentProfiles().values()].filter(
+    (p) => p.presence !== "offline",
+  );
+  // Seven fit a row; past two rows, the last face gives way to a count.
+  const faces = connected.length > 14 ? connected.slice(0, 13) : connected;
+  const hidden = connected.slice(faces.length);
+  const active = connected.filter((p) => p.presence === "active").length;
+  // The rail has room for one face: a working agent before a stopped one, the latest first.
+  const lead = [...connected].sort(
+    (a, b) =>
+      Number(b.presence === "active") - Number(a.presence === "active") ||
+      b.activeAt - a.activeAt,
+  )[0];
   const agentLine =
     workingCount === 1
       ? t("The agent is on 1 task")
@@ -132,6 +154,14 @@ export function Sidebar({
           keys={shortcuts.notes}
           selected={destination.kind === "notes"}
           onClick={() => onNavigate({ kind: "notes" })}
+        />
+        <NavItem
+          rail={rail}
+          icon="bot"
+          label={t("Agents")}
+          count={connected.length || undefined}
+          selected={destination.kind === "agents"}
+          onClick={() => onNavigate({ kind: "agents" })}
         />
       </div>
 
@@ -196,7 +226,115 @@ export function Sidebar({
         )}
       </div>
 
-      {workingCount > 0 && (
+      {connected.length > 0 ? (
+        <div
+          className={`agent-status ${rail ? "rail-faces" : "sessions"}`}
+          role="status"
+          aria-label={t("Connected agents")}
+        >
+          {rail && lead ? (
+            <>
+              <button
+                type="button"
+                className={`agent-face ${lead.presence}`}
+                aria-label={`${lead.displayName} · ${presenceTitle[lead.presence]}`}
+                data-tooltip={`${shortName(lead.displayName)} · ${presenceTitle[lead.presence]}`}
+                data-tooltip-side="right"
+                style={hopTiming(lead.id)}
+                onClick={() => onNavigate({ kind: "agents", id: lead.id })}
+              >
+                <AgentBot
+                  shape={lead.shape}
+                  eyes={lead.presence === "idle" ? "sleepy" : lead.eyes}
+                  color={agentColor(lead)}
+                  size={20}
+                />
+                {lead.presence === "idle" && (
+                  <span className="face-z" aria-hidden="true">
+                    z
+                  </span>
+                )}
+              </button>
+              {connected.length > 1 && (
+                <button
+                  type="button"
+                  className="agent-face more"
+                  onClick={() => onNavigate({ kind: "agents" })}
+                  aria-label={t("{0} more agents", [connected.length - 1])}
+                  data-tooltip={t("{0} more agents", [connected.length - 1])}
+                  data-tooltip-side="right"
+                >
+                  +{connected.length - 1}
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="sidebar-section agent-heading"
+                onClick={() => onNavigate({ kind: "agents" })}
+              >
+                <span>{t("Agents")}</span>
+                <span className="agent-count">
+                  {active > 0 ? t("{0} working", [active]) : t("All stopped")}
+                </span>
+              </button>
+              <ul className="agent-faces">
+                {faces.map((p) => {
+                  return (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        className={`agent-face ${p.presence}`}
+                        aria-label={`${p.displayName} · ${presenceTitle[p.presence]}`}
+                        data-tooltip={`${shortName(p.displayName)} · ${presenceTitle[p.presence]}`}
+                        style={hopTiming(p.id)}
+                        onClick={() =>
+                          onNavigate({
+                            kind: "agents",
+                            // Its panel already open: clicking it again closes it.
+                            id:
+                              destination.kind === "agents" &&
+                              destination.id === p.id
+                                ? undefined
+                                : p.id,
+                          })
+                        }
+                      >
+                        <AgentBot
+                          shape={p.shape}
+                          eyes={p.presence === "idle" ? "sleepy" : p.eyes}
+                          color={agentColor(p)}
+                          size={20}
+                        />
+                        {p.presence === "idle" && (
+                          <span className="face-z" aria-hidden="true">
+                            z
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+                {hidden.length > 0 && (
+                  <li>
+                    <button
+                      type="button"
+                      className="agent-face more"
+                      onClick={() => onNavigate({ kind: "agents" })}
+                      aria-label={t("{0} more agents", [hidden.length])}
+                      data-tooltip={t("{0} more agents", [hidden.length])}
+                    >
+                      +{hidden.length}
+                    </button>
+                  </li>
+                )}
+              </ul>
+            </>
+          )}
+        </div>
+      ) : workingCount > 0 ? (
         <div
           className="agent-status"
           role="status"
@@ -206,6 +344,24 @@ export function Sidebar({
           <span className="agent-pulse" aria-hidden="true" />
           <span>{agentLine}</span>
         </div>
+      ) : (
+        // An empty slot where the faces go: it opens Agents, which shows how to connect one.
+        <button
+          type="button"
+          className="agent-status none"
+          data-tooltip={rail ? t("No agent connected") : undefined}
+          data-tooltip-side="right"
+          aria-label={t("No agent connected")}
+          onClick={() => onNavigate({ kind: "agents" })}
+        >
+          <AgentBot
+            shape="blob"
+            eyes="sleepy"
+            color="var(--ink-off)"
+            size={16}
+          />
+          {!rail && <span>{t("No agent connected")}</span>}
+        </button>
       )}
       {menu && (
         <ContextMenu
@@ -532,4 +688,18 @@ function DashedOutline() {
       />
     </svg>
   );
+}
+
+/**
+ * Each working face hops on its own beat, taken from its id so it keeps it across renders: the row
+ * never moves in order, and no two faces stay in step.
+ */
+function hopTiming(id: string): CSSProperties {
+  let hash = 0;
+  for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  const beat = Math.abs(hash);
+  return {
+    animationDuration: `${3.2 + (beat % 23) / 10}s`,
+    animationDelay: `-${(beat % 41) / 10}s`,
+  };
 }

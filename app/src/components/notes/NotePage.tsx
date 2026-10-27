@@ -179,7 +179,7 @@ function AttachedTasks({
                 onMouseMove={() => setActive(index)}
                 onClick={() => pick(index)}
               >
-                <Glyph who={task.assignee} />
+                <Glyph who={task.assignee} profileId={task.agentProfileId} />
                 <span className="popover-label">{task.title}</span>
                 <span className="note-task-status">
                   {statusTitle[task.status]}
@@ -236,7 +236,7 @@ export function NotePage({
                 onClick={() => onOpenTask(task)}
               >
                 <Icon name="clip" size={12} />
-                <Glyph who={task.assignee} />
+                <Glyph who={task.assignee} profileId={task.agentProfileId} />
                 <span className="truncate">{task.title}</span>
               </button>
             ))

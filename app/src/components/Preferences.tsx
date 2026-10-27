@@ -13,6 +13,7 @@ import type {
   Workspace,
   Workspaces,
 } from "../lib/types";
+import { KeepAwakeRow } from "./AgentProfiles";
 import { CopyIcon, Icon, type IconName } from "./Icon";
 import { ContextMenu, NavItem, type MenuItem } from "./Sidebar";
 import { workspaceName } from "./Workspaces";
@@ -49,18 +50,13 @@ export function PreferencesNav({
   section,
   updateAvailable,
   onSection,
-  onBack,
 }: {
   section: PreferencesSection;
   updateAvailable: boolean;
   onSection: (section: PreferencesSection) => void;
-  onBack: () => void;
 }) {
   return (
     <nav className="sidebar preferences-nav" aria-label={t("Preferences")}>
-      <div className="sidebar-group">
-        <NavItem icon="chevronLeft" label={t("Back")} onClick={onBack} />
-      </div>
       <div className="sidebar-section">
         <span>{t("Preferences")}</span>
       </div>
@@ -255,7 +251,10 @@ export function Preferences({
             </div>
           </section>
         ) : section === "agent" ? (
-          <AgentSection projects={data.projects} copyButton={copyButton} />
+          <>
+            <KeepAwakeRow fail={fail} />
+            <AgentSection projects={data.projects} copyButton={copyButton} />
+          </>
         ) : (
           <UpdatesSection updater={updater} fail={fail} />
         )}
@@ -518,7 +517,7 @@ function AgentSection({
         <h2>{t("Connect every project")}</h2>
         <p className="muted">
           {t(
-            "The agent sees every project of the open workspace and picks one by its ID. This is the command for Claude Code; other agents take the same program and arguments.",
+            "The agent sees every project of the open workspace and picks one by its ID. This is the command for Claude Code. Other agents take the same program and arguments.",
           )}
         </p>
         <div className="settings-row">

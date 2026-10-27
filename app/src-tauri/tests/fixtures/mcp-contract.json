@@ -6,89 +6,108 @@
     "title": "Verified"
   },
   "add-message": {
+    "agent_profile_id": "<uuid-3>",
     "author": "agent",
     "body": "Progress",
     "created_at": "<timestamp>",
-    "id": "<uuid-3>",
+    "id": "<uuid-4>",
     "task_id": "<uuid-2>"
   },
   "agent-events": {
     "events": [
       {
         "actor": "agent",
+        "agent_profile_id": "<uuid-3>",
         "created_at": "<timestamp>",
-        "id": "<uuid-4>",
+        "id": "<uuid-5>",
         "kind": "created",
         "task_id": "<uuid-2>",
         "value": null
       },
       {
         "actor": "agent",
+        "agent_profile_id": "<uuid-3>",
         "created_at": "<timestamp>",
-        "id": "<uuid-5>",
+        "id": "<uuid-6>",
         "kind": "status",
         "task_id": "<uuid-2>",
         "value": "inProgress"
       },
       {
         "actor": "agent",
+        "agent_profile_id": "<uuid-3>",
         "created_at": "<timestamp>",
-        "id": "<uuid-6>",
+        "id": "<uuid-7>",
+        "kind": "agentProfile",
+        "task_id": "<uuid-2>",
+        "value": "<uuid-3>"
+      },
+      {
+        "actor": "agent",
+        "agent_profile_id": "<uuid-3>",
+        "created_at": "<timestamp>",
+        "id": "<uuid-8>",
         "kind": "document",
         "task_id": "<uuid-2>",
         "value": "note.md"
       },
       {
         "actor": "agent",
+        "agent_profile_id": "<uuid-3>",
         "created_at": "<timestamp>",
-        "id": "<uuid-7>",
+        "id": "<uuid-9>",
         "kind": "documentRemoved",
         "task_id": "<uuid-2>",
         "value": "note.md"
       },
       {
         "actor": "agent",
+        "agent_profile_id": "<uuid-3>",
         "created_at": "<timestamp>",
-        "id": "<uuid-8>",
+        "id": "<uuid-10>",
         "kind": "summary",
         "task_id": "<uuid-2>",
         "value": "Delivered"
       },
       {
         "actor": "agent",
+        "agent_profile_id": "<uuid-3>",
         "created_at": "<timestamp>",
-        "id": "<uuid-9>",
+        "id": "<uuid-11>",
         "kind": "branch",
         "task_id": "<uuid-2>",
         "value": "test/contract"
       },
       {
         "actor": "agent",
+        "agent_profile_id": "<uuid-3>",
         "created_at": "<timestamp>",
-        "id": "<uuid-10>",
+        "id": "<uuid-12>",
         "kind": "commit",
         "task_id": "<uuid-2>",
         "value": "<commit>"
       },
       {
         "actor": "agent",
+        "agent_profile_id": "<uuid-3>",
         "created_at": "<timestamp>",
-        "id": "<uuid-11>",
+        "id": "<uuid-13>",
         "kind": "pullRequest",
         "task_id": "<uuid-2>",
         "value": "1"
       },
       {
         "actor": "agent",
+        "agent_profile_id": "<uuid-3>",
         "created_at": "<timestamp>",
-        "id": "<uuid-12>",
+        "id": "<uuid-14>",
         "kind": "status",
         "task_id": "<uuid-2>",
         "value": "review"
       }
     ],
     "next_offset": null,
-    "total": 9
+    "total": 10
   },
   "attach-document": {
     "actor": "agent",
@@ -97,6 +116,7 @@
     "task_id": "<uuid-2>"
   },
   "backlog-to-todo": {
+    "agent_profile_id": null,
     "agent_summary": null,
     "assignee": "agent",
     "category": "Feature",
@@ -107,10 +127,10 @@
     "details": "",
     "document_count": 0,
     "goal_id": null,
-    "id": "<uuid-13>",
+    "id": "<uuid-15>",
     "message_count": 0,
     "position": 0,
-    "project_id": "<uuid-14>",
+    "project_id": "<uuid-16>",
     "pull_request_number": null,
     "pull_request_url": null,
     "repository_branch": null,
@@ -119,6 +139,7 @@
     "updated_at": "<timestamp>"
   },
   "clear-delivery": {
+    "agent_profile_id": "<uuid-3>",
     "agent_summary": null,
     "assignee": "agent",
     "category": "Feature",
@@ -128,11 +149,11 @@
     "created_at": "<timestamp>",
     "details": "",
     "document_count": 0,
-    "goal_id": "<uuid-15>",
+    "goal_id": "<uuid-17>",
     "id": "<uuid-2>",
     "message_count": 0,
     "position": 0,
-    "project_id": "<uuid-14>",
+    "project_id": "<uuid-16>",
     "pull_request_number": null,
     "pull_request_url": null,
     "repository_branch": null,
@@ -142,28 +163,29 @@
   },
   "create-category": {
     "name": "Synthetic",
-    "project_id": "<uuid-14>",
+    "project_id": "<uuid-16>",
     "task_count": 0
   },
   "create-goal": {
     "completed_at": null,
     "created_at": "<timestamp>",
     "description": "Synthetic",
-    "id": "<uuid-15>",
+    "id": "<uuid-17>",
     "name": "Outcome",
-    "project_id": "<uuid-14>",
+    "project_id": "<uuid-16>",
     "target_date": "2026-12-01",
     "tasks_done": 0,
     "tasks_total": 0
   },
   "create-project": {
     "created_at": "<timestamp>",
-    "id": "<uuid-16>",
+    "id": "<uuid-18>",
     "name": "Disposable",
     "notes_folder": null,
     "repository_path": null
   },
   "create-task": {
+    "agent_profile_id": null,
     "agent_summary": null,
     "assignee": "agent",
     "category": "Feature",
@@ -173,11 +195,11 @@
     "created_at": "<timestamp>",
     "details": "",
     "document_count": 0,
-    "goal_id": "<uuid-15>",
+    "goal_id": "<uuid-17>",
     "id": "<uuid-2>",
     "message_count": 0,
     "position": -1,
-    "project_id": "<uuid-14>",
+    "project_id": "<uuid-16>",
     "pull_request_number": null,
     "pull_request_url": null,
     "repository_branch": null,
@@ -201,6 +223,7 @@
     "deleted": true
   },
   "deliver-task": {
+    "agent_profile_id": "<uuid-3>",
     "agent_summary": "Delivered",
     "assignee": "agent",
     "category": "Feature",
@@ -210,11 +233,11 @@
     "created_at": "<timestamp>",
     "details": "",
     "document_count": 0,
-    "goal_id": "<uuid-15>",
+    "goal_id": "<uuid-17>",
     "id": "<uuid-2>",
     "message_count": 0,
     "position": 0,
-    "project_id": "<uuid-14>",
+    "project_id": "<uuid-16>",
     "pull_request_number": 1,
     "pull_request_url": "https://github.com/example/repository/pull/1",
     "repository_branch": "test/contract",
@@ -241,7 +264,7 @@
           "listChanged": false
         }
       },
-      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); post decisions, blockers and questions with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Ideas and work not yet prioritized wait in backlog (Pendências); they are not your queue. Never move a task to done unless asked: done concludes it and takes it off the board to the Archive. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations.",
+      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); post decisions, blockers and questions with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Ideas and work not yet prioritized wait in backlog (Pendências); they are not your queue. Never move a task to done unless asked: done concludes it and takes it off the board to the Archive. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations. Each connection is its own agent profile, shown to the person on the tasks it holds and in the activity: at the start, call set_profile with a short name for your role (color, shape and eyes are optional) and keep its profile_id; after a context reset or in a resumed session, call set_profile with that profile_id to continue as the same profile. A task you move to inProgress becomes yours; when your session ends, the tasks you had in progress go back to To do, still yours.",
       "resultType": "complete",
       "supportedVersions": [
         "2026-07-28",
@@ -257,6 +280,7 @@
     "next_offset": 1,
     "tasks": [
       {
+        "agent_profile_id": null,
         "agent_summary": null,
         "assignee": "agent",
         "category": "Feature",
@@ -267,10 +291,10 @@
         "details": "Public briefing",
         "document_count": 0,
         "goal_id": null,
-        "id": "<uuid-17>",
+        "id": "<uuid-19>",
         "message_count": 0,
         "position": 0,
-        "project_id": "<uuid-14>",
+        "project_id": "<uuid-16>",
         "pull_request_number": null,
         "pull_request_url": null,
         "repository_branch": null,
@@ -303,7 +327,7 @@
           "listChanged": false
         }
       },
-      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); post decisions, blockers and questions with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Ideas and work not yet prioritized wait in backlog (Pendências); they are not your queue. Never move a task to done unless asked: done concludes it and takes it off the board to the Archive. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations.",
+      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); post decisions, blockers and questions with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Ideas and work not yet prioritized wait in backlog (Pendências); they are not your queue. Never move a task to done unless asked: done concludes it and takes it off the board to the Archive. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations. Each connection is its own agent profile, shown to the person on the tasks it holds and in the activity: at the start, call set_profile with a short name for your role (color, shape and eyes are optional) and keep its profile_id; after a context reset or in a resumed session, call set_profile with that profile_id to continue as the same profile. A task you move to inProgress becomes yours; when your session ends, the tasks you had in progress go back to To do, still yours.",
       "protocolVersion": "2025-11-25",
       "serverInfo": {
         "name": "trama-agent-bridge",
@@ -406,6 +430,7 @@
     "next_offset": null,
     "tasks": [
       {
+        "agent_profile_id": "<uuid-3>",
         "agent_summary": "Delivered",
         "assignee": "agent",
         "category": "Feature",
@@ -415,11 +440,11 @@
         "created_at": "<timestamp>",
         "details": "",
         "document_count": 0,
-        "goal_id": "<uuid-15>",
+        "goal_id": "<uuid-17>",
         "id": "<uuid-2>",
         "message_count": 0,
         "position": 0,
-        "project_id": "<uuid-14>",
+        "project_id": "<uuid-16>",
         "pull_request_number": 1,
         "pull_request_url": "https://github.com/example/repository/pull/1",
         "repository_branch": "test/contract",
@@ -439,7 +464,7 @@
           "listChanged": false
         }
       },
-      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); post decisions, blockers and questions with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Ideas and work not yet prioritized wait in backlog (Pendências); they are not your queue. Never move a task to done unless asked: done concludes it and takes it off the board to the Archive. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations.",
+      "instructions": "Manage the local Trama through these tools. Read get_context/get_task_details before editing. Send only the fields you want to change; null removes optional metadata. Flow: the agent's queue is assignee=agent and status=todo; when you start, move the task to inProgress (the person sees you're working on it); post decisions, blockers and questions with add_task_message; when you deliver, fill in agent_summary and the branch/commit/PR references and move it to review, where it waits for the person. Ideas and work not yet prioritized wait in backlog (Pendências); they are not your queue. Never move a task to done unless asked: done concludes it and takes it off the board to the Archive. Plans, reports and other Markdown documents go in the project's notes folder (notes_folder in get_context) and are attached to the task with attach_document. Personal annotations are private and never accessible. The activity is a history, not a queue that starts agents. Git/PR tools only read; use external tools to run code or publish deliveries. Goals group a project's tasks toward one outcome: set goal_id on a task to count it toward one; concluding a goal is the person's decision. In workspace mode, list projects first and pass project_id to project operations. Each connection is its own agent profile, shown to the person on the tasks it holds and in the activity: at the start, call set_profile with a short name for your role (color, shape and eyes are optional) and keep its profile_id; after a context reset or in a resumed session, call set_profile with that profile_id to continue as the same profile. A task you move to inProgress becomes yours; when your session ends, the tasks you had in progress go back to To do, still yours.",
       "protocolVersion": "2024-11-05",
       "serverInfo": {
         "name": "trama-agent-bridge",
@@ -493,6 +518,65 @@
             "type": "object"
           },
           "name": "list_projects"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Names this session's agent profile, shown on its tasks, messages and events. Call it once at the start, choosing a short name, a color index and the character's shape and eyes. profile_id resumes the profile of an earlier session of this same conversation (keep the id from get_context or this reply); fields not sent are kept. Changes the person made in Trama are kept.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "color": {
+                "description": "Index into Trama's agent palette: 0 teal, 1 green, 2 amber, 3 orange, 4 pink, 5 slate.",
+                "maximum": 5,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "eyes": {
+                "description": "The character's eyes.",
+                "enum": [
+                  "dots",
+                  "tall",
+                  "happy",
+                  "wink",
+                  "focused",
+                  "visor",
+                  "angry",
+                  "suspicious"
+                ],
+                "type": "string"
+              },
+              "name": {
+                "description": "Up to 40 characters.",
+                "type": "string"
+              },
+              "profile_id": {
+                "description": "An earlier profile of this conversation, to take back after resuming.",
+                "format": "uuid",
+                "type": "string"
+              },
+              "shape": {
+                "description": "The character's shape, filled in the profile's color.",
+                "enum": [
+                  "blob",
+                  "ghost",
+                  "cat",
+                  "square",
+                  "drop",
+                  "triangle",
+                  "slime",
+                  "star"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
+          "name": "set_profile"
         },
         {
           "annotations": {
@@ -632,6 +716,11 @@
           "inputSchema": {
             "additionalProperties": false,
             "properties": {
+              "agent_profile_id": {
+                "description": "Only tasks with that agent profile; your own is in get_context.",
+                "format": "uuid",
+                "type": "string"
+              },
               "assignee": {
                 "enum": [
                   "user",
@@ -1473,13 +1562,14 @@
     "result": {
       "content": [
         {
-          "text": "{\"agent_execution\":\"external\",\"assignees\":[\"user\",\"agent\"],\"briefing_field\":\"details\",\"categories\":[{\"name\":\"Documentation\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Feature\",\"project_id\":\"<uuid-14>\",\"task_count\":2},{\"name\":\"Fix\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Infrastructure\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Interface\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Investigation\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Migration\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Performance\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Refactoring\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Security\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Tests\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Validation\",\"project_id\":\"<uuid-14>\",\"task_count\":0}],\"private_notes_accessible\":false,\"project\":{\"created_at\":\"<timestamp>\",\"id\":\"<uuid-14>\",\"name\":\"Contract\",\"notes_folder\":\"<temp>/notes\",\"repository_path\":\"<temp>/repo\"},\"schema_version\":12,\"scope\":\"workspace\",\"statuses\":[\"backlog\",\"todo\",\"inProgress\",\"review\",\"done\"],\"working_indicator\":\"assignee=agent and status=inProgress\"}",
+          "text": "{\"agent_execution\":\"external\",\"agent_profiles\":\"assignee=agent with agent_profile_id null is for any agent; starting it (inProgress) gives it to your profile\",\"assignees\":[\"user\",\"agent\"],\"briefing_field\":\"details\",\"categories\":[{\"name\":\"Documentation\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Feature\",\"project_id\":\"<uuid-16>\",\"task_count\":2},{\"name\":\"Fix\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Infrastructure\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Interface\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Investigation\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Migration\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Performance\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Refactoring\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Security\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Tests\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Validation\",\"project_id\":\"<uuid-16>\",\"task_count\":0}],\"private_notes_accessible\":false,\"project\":{\"created_at\":\"<timestamp>\",\"id\":\"<uuid-16>\",\"name\":\"Contract\",\"notes_folder\":\"<temp>/notes\",\"repository_path\":\"<temp>/repo\"},\"schema_version\":13,\"scope\":\"workspace\",\"session_profile\":{\"client\":\"\",\"color\":3,\"edited_by_person\":false,\"eyes\":\"dots\",\"name\":\"Contract agent\",\"presence\":\"active\",\"profile_id\":\"<uuid-3>\",\"shape\":\"blob\"},\"statuses\":[\"backlog\",\"todo\",\"inProgress\",\"review\",\"done\"],\"working_indicator\":\"assignee=agent and status=inProgress\"}",
           "type": "text"
         }
       ],
       "isError": false,
       "structuredContent": {
         "agent_execution": "external",
+        "agent_profiles": "assignee=agent with agent_profile_id null is for any agent; starting it (inProgress) gives it to your profile",
         "assignees": [
           "user",
           "agent"
@@ -1488,75 +1578,85 @@
         "categories": [
           {
             "name": "Documentation",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Feature",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 2
           },
           {
             "name": "Fix",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Infrastructure",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Interface",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Investigation",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Migration",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Performance",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Refactoring",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Security",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Tests",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Validation",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           }
         ],
         "private_notes_accessible": false,
         "project": {
           "created_at": "<timestamp>",
-          "id": "<uuid-14>",
+          "id": "<uuid-16>",
           "name": "Contract",
           "notes_folder": "<temp>/notes",
           "repository_path": "<temp>/repo"
         },
-        "schema_version": 12,
+        "schema_version": 13,
         "scope": "workspace",
+        "session_profile": {
+          "client": "",
+          "color": 3,
+          "edited_by_person": false,
+          "eyes": "dots",
+          "name": "Contract agent",
+          "presence": "active",
+          "profile_id": "<uuid-3>",
+          "shape": "blob"
+        },
         "statuses": [
           "backlog",
           "todo",
@@ -1574,12 +1674,13 @@
     "result": {
       "content": [
         {
-          "text": "{\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-17>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"}",
+          "text": "{\"agent_profile_id\":null,\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-19>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-16>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"}",
           "type": "text"
         }
       ],
       "isError": false,
       "structuredContent": {
+        "agent_profile_id": null,
         "agent_summary": null,
         "assignee": "agent",
         "category": "Feature",
@@ -1590,10 +1691,10 @@
         "details": "Public briefing",
         "document_count": 0,
         "goal_id": null,
-        "id": "<uuid-17>",
+        "id": "<uuid-19>",
         "message_count": 0,
         "position": 0,
-        "project_id": "<uuid-14>",
+        "project_id": "<uuid-16>",
         "pull_request_number": null,
         "pull_request_url": null,
         "repository_branch": null,
@@ -1609,7 +1710,7 @@
     "result": {
       "content": [
         {
-          "text": "{\"checks\":[],\"documents\":[],\"events\":[{\"actor\":\"user\",\"created_at\":\"<timestamp>\",\"id\":\"<uuid-18>\",\"kind\":\"created\",\"task_id\":\"<uuid-17>\",\"value\":null}],\"messages\":[],\"task\":{\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-17>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"}}",
+          "text": "{\"checks\":[],\"documents\":[],\"events\":[{\"actor\":\"user\",\"agent_profile_id\":null,\"created_at\":\"<timestamp>\",\"id\":\"<uuid-20>\",\"kind\":\"created\",\"task_id\":\"<uuid-19>\",\"value\":null}],\"messages\":[],\"task\":{\"agent_profile_id\":null,\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-19>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-16>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"}}",
           "type": "text"
         }
       ],
@@ -1620,15 +1721,17 @@
         "events": [
           {
             "actor": "user",
+            "agent_profile_id": null,
             "created_at": "<timestamp>",
-            "id": "<uuid-18>",
+            "id": "<uuid-20>",
             "kind": "created",
-            "task_id": "<uuid-17>",
+            "task_id": "<uuid-19>",
             "value": null
           }
         ],
         "messages": [],
         "task": {
+          "agent_profile_id": null,
           "agent_summary": null,
           "assignee": "agent",
           "category": "Feature",
@@ -1639,10 +1742,10 @@
           "details": "Public briefing",
           "document_count": 0,
           "goal_id": null,
-          "id": "<uuid-17>",
+          "id": "<uuid-19>",
           "message_count": 0,
           "position": 0,
-          "project_id": "<uuid-14>",
+          "project_id": "<uuid-16>",
           "pull_request_number": null,
           "pull_request_url": null,
           "repository_branch": null,
@@ -1770,7 +1873,7 @@
     "result": {
       "content": [
         {
-          "text": "{\"categories\":[{\"name\":\"Documentation\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Feature\",\"project_id\":\"<uuid-14>\",\"task_count\":2},{\"name\":\"Fix\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Infrastructure\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Interface\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Investigation\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Migration\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Performance\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Refactoring\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Security\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Tests\",\"project_id\":\"<uuid-14>\",\"task_count\":0},{\"name\":\"Validation\",\"project_id\":\"<uuid-14>\",\"task_count\":0}]}",
+          "text": "{\"categories\":[{\"name\":\"Documentation\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Feature\",\"project_id\":\"<uuid-16>\",\"task_count\":2},{\"name\":\"Fix\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Infrastructure\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Interface\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Investigation\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Migration\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Performance\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Refactoring\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Security\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Tests\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Validation\",\"project_id\":\"<uuid-16>\",\"task_count\":0}]}",
           "type": "text"
         }
       ],
@@ -1779,62 +1882,62 @@
         "categories": [
           {
             "name": "Documentation",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Feature",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 2
           },
           {
             "name": "Fix",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Infrastructure",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Interface",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Investigation",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Migration",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Performance",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Refactoring",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Security",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Tests",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           },
           {
             "name": "Validation",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "task_count": 0
           }
         ]
@@ -1847,7 +1950,7 @@
     "result": {
       "content": [
         {
-          "text": "{\"goals\":[{\"completed_at\":null,\"created_at\":\"<timestamp>\",\"description\":\"Synthetic\",\"id\":\"<uuid-15>\",\"name\":\"Renamed outcome\",\"project_id\":\"<uuid-14>\",\"target_date\":null,\"tasks_done\":0,\"tasks_total\":1}]}",
+          "text": "{\"goals\":[{\"completed_at\":null,\"created_at\":\"<timestamp>\",\"description\":\"Synthetic\",\"id\":\"<uuid-17>\",\"name\":\"Renamed outcome\",\"project_id\":\"<uuid-16>\",\"target_date\":null,\"tasks_done\":0,\"tasks_total\":1}]}",
           "type": "text"
         }
       ],
@@ -1858,9 +1961,9 @@
             "completed_at": null,
             "created_at": "<timestamp>",
             "description": "Synthetic",
-            "id": "<uuid-15>",
+            "id": "<uuid-17>",
             "name": "Renamed outcome",
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "target_date": null,
             "tasks_done": 0,
             "tasks_total": 1
@@ -1875,7 +1978,7 @@
     "result": {
       "content": [
         {
-          "text": "{\"projects\":[{\"created_at\":\"<timestamp>\",\"id\":\"<uuid-14>\",\"name\":\"Contract\",\"notes_folder\":\"<temp>/notes\",\"repository_path\":\"<temp>/repo\"},{\"created_at\":\"<timestamp>\",\"id\":\"<uuid-19>\",\"name\":\"Other\",\"notes_folder\":null,\"repository_path\":null}]}",
+          "text": "{\"projects\":[{\"created_at\":\"<timestamp>\",\"id\":\"<uuid-16>\",\"name\":\"Contract\",\"notes_folder\":\"<temp>/notes\",\"repository_path\":\"<temp>/repo\"},{\"created_at\":\"<timestamp>\",\"id\":\"<uuid-21>\",\"name\":\"Other\",\"notes_folder\":null,\"repository_path\":null}]}",
           "type": "text"
         }
       ],
@@ -1884,14 +1987,14 @@
         "projects": [
           {
             "created_at": "<timestamp>",
-            "id": "<uuid-14>",
+            "id": "<uuid-16>",
             "name": "Contract",
             "notes_folder": "<temp>/notes",
             "repository_path": "<temp>/repo"
           },
           {
             "created_at": "<timestamp>",
-            "id": "<uuid-19>",
+            "id": "<uuid-21>",
             "name": "Other",
             "notes_folder": null,
             "repository_path": null
@@ -1955,7 +2058,7 @@
     "result": {
       "content": [
         {
-          "text": "{\"next_offset\":null,\"tasks\":[{\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-17>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"},{\"agent_summary\":\"Delivered\",\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":\"<commit>\",\"created_at\":\"<timestamp>\",\"details\":\"\",\"document_count\":0,\"goal_id\":\"<uuid-15>\",\"id\":\"<uuid-2>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-14>\",\"pull_request_number\":1,\"pull_request_url\":\"https://github.com/example/repository/pull/1\",\"repository_branch\":\"test/contract\",\"status\":\"review\",\"title\":\"Lifecycle\",\"updated_at\":\"<timestamp>\"}],\"total\":2}",
+          "text": "{\"next_offset\":null,\"tasks\":[{\"agent_profile_id\":null,\"agent_summary\":null,\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":null,\"created_at\":\"<timestamp>\",\"details\":\"Public briefing\",\"document_count\":0,\"goal_id\":null,\"id\":\"<uuid-19>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-16>\",\"pull_request_number\":null,\"pull_request_url\":null,\"repository_branch\":null,\"status\":\"todo\",\"title\":\"Public task\",\"updated_at\":\"<timestamp>\"},{\"agent_profile_id\":\"<uuid-3>\",\"agent_summary\":\"Delivered\",\"assignee\":\"agent\",\"category\":\"Feature\",\"checks_done\":0,\"checks_total\":0,\"commit_hash\":\"<commit>\",\"created_at\":\"<timestamp>\",\"details\":\"\",\"document_count\":0,\"goal_id\":\"<uuid-17>\",\"id\":\"<uuid-2>\",\"message_count\":0,\"position\":0,\"project_id\":\"<uuid-16>\",\"pull_request_number\":1,\"pull_request_url\":\"https://github.com/example/repository/pull/1\",\"repository_branch\":\"test/contract\",\"status\":\"review\",\"title\":\"Lifecycle\",\"updated_at\":\"<timestamp>\"}],\"total\":2}",
           "type": "text"
         }
       ],
@@ -1964,6 +2067,7 @@
         "next_offset": null,
         "tasks": [
           {
+            "agent_profile_id": null,
             "agent_summary": null,
             "assignee": "agent",
             "category": "Feature",
@@ -1974,10 +2078,10 @@
             "details": "Public briefing",
             "document_count": 0,
             "goal_id": null,
-            "id": "<uuid-17>",
+            "id": "<uuid-19>",
             "message_count": 0,
             "position": 0,
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "pull_request_number": null,
             "pull_request_url": null,
             "repository_branch": null,
@@ -1986,6 +2090,7 @@
             "updated_at": "<timestamp>"
           },
           {
+            "agent_profile_id": "<uuid-3>",
             "agent_summary": "Delivered",
             "assignee": "agent",
             "category": "Feature",
@@ -1995,11 +2100,11 @@
             "created_at": "<timestamp>",
             "details": "",
             "document_count": 0,
-            "goal_id": "<uuid-15>",
+            "goal_id": "<uuid-17>",
             "id": "<uuid-2>",
             "message_count": 0,
             "position": 0,
-            "project_id": "<uuid-14>",
+            "project_id": "<uuid-16>",
             "pull_request_number": 1,
             "pull_request_url": "https://github.com/example/repository/pull/1",
             "repository_branch": "test/contract",
@@ -2018,7 +2123,7 @@
     "result": {
       "content": [
         {
-          "text": "{\"events\":[{\"actor\":\"user\",\"created_at\":\"<timestamp>\",\"id\":\"<uuid-18>\",\"kind\":\"created\",\"task_id\":\"<uuid-17>\",\"value\":null}],\"next_offset\":null,\"total\":1}",
+          "text": "{\"events\":[{\"actor\":\"user\",\"agent_profile_id\":null,\"created_at\":\"<timestamp>\",\"id\":\"<uuid-20>\",\"kind\":\"created\",\"task_id\":\"<uuid-19>\",\"value\":null}],\"next_offset\":null,\"total\":1}",
           "type": "text"
         }
       ],
@@ -2027,10 +2132,11 @@
         "events": [
           {
             "actor": "user",
+            "agent_profile_id": null,
             "created_at": "<timestamp>",
-            "id": "<uuid-18>",
+            "id": "<uuid-20>",
             "kind": "created",
-            "task_id": "<uuid-17>",
+            "task_id": "<uuid-19>",
             "value": null
           }
         ],
@@ -2077,7 +2183,7 @@
   },
   "rename-category": {
     "name": "Renamed",
-    "project_id": "<uuid-14>",
+    "project_id": "<uuid-16>",
     "task_count": 0
   },
   "retired-status": {
@@ -2094,6 +2200,7 @@
     }
   },
   "review-task": {
+    "agent_profile_id": "<uuid-3>",
     "agent_summary": "Delivered",
     "assignee": "agent",
     "category": "Feature",
@@ -2103,11 +2210,11 @@
     "created_at": "<timestamp>",
     "details": "",
     "document_count": 0,
-    "goal_id": "<uuid-15>",
+    "goal_id": "<uuid-17>",
     "id": "<uuid-2>",
     "message_count": 0,
     "position": 0,
-    "project_id": "<uuid-14>",
+    "project_id": "<uuid-16>",
     "pull_request_number": 1,
     "pull_request_url": "https://github.com/example/repository/pull/1",
     "repository_branch": "test/contract",
@@ -2115,7 +2222,31 @@
     "title": "Lifecycle",
     "updated_at": "<timestamp>"
   },
+  "set-profile": {
+    "client": "",
+    "color": 3,
+    "edited_by_person": false,
+    "eyes": "dots",
+    "name": "Contract agent",
+    "presence": "active",
+    "profile_id": "<uuid-3>",
+    "shape": "blob"
+  },
+  "set-profile-invalid-color": {
+    "id": "<request-id>",
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "color is outside the allowed range.",
+          "type": "text"
+        }
+      ],
+      "isError": true
+    }
+  },
   "start-task": {
+    "agent_profile_id": "<uuid-3>",
     "agent_summary": null,
     "assignee": "agent",
     "category": "Feature",
@@ -2125,11 +2256,11 @@
     "created_at": "<timestamp>",
     "details": "",
     "document_count": 0,
-    "goal_id": "<uuid-15>",
+    "goal_id": "<uuid-17>",
     "id": "<uuid-2>",
     "message_count": 0,
     "position": 0,
-    "project_id": "<uuid-14>",
+    "project_id": "<uuid-16>",
     "pull_request_number": null,
     "pull_request_url": null,
     "repository_branch": null,
@@ -2155,23 +2286,24 @@
     "completed_at": null,
     "created_at": "<timestamp>",
     "description": "Synthetic",
-    "id": "<uuid-15>",
+    "id": "<uuid-17>",
     "name": "Renamed outcome",
-    "project_id": "<uuid-14>",
+    "project_id": "<uuid-16>",
     "target_date": null,
     "tasks_done": 0,
     "tasks_total": 0
   },
   "update-message": {
+    "agent_profile_id": "<uuid-3>",
     "author": "agent",
     "body": "Updated progress",
     "created_at": "<timestamp>",
-    "id": "<uuid-3>",
+    "id": "<uuid-4>",
     "task_id": "<uuid-2>"
   },
   "update-project": {
     "created_at": "<timestamp>",
-    "id": "<uuid-16>",
+    "id": "<uuid-18>",
     "name": "Updated disposable",
     "notes_folder": null,
     "repository_path": null
@@ -2244,6 +2376,65 @@
             "type": "object"
           },
           "name": "delete_project"
+        },
+        {
+          "annotations": {
+            "destructiveHint": false,
+            "openWorldHint": false,
+            "readOnlyHint": false
+          },
+          "description": "Names this session's agent profile, shown on its tasks, messages and events. Call it once at the start, choosing a short name, a color index and the character's shape and eyes. profile_id resumes the profile of an earlier session of this same conversation (keep the id from get_context or this reply); fields not sent are kept. Changes the person made in Trama are kept.",
+          "inputSchema": {
+            "additionalProperties": false,
+            "properties": {
+              "color": {
+                "description": "Index into Trama's agent palette: 0 teal, 1 green, 2 amber, 3 orange, 4 pink, 5 slate.",
+                "maximum": 5,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "eyes": {
+                "description": "The character's eyes.",
+                "enum": [
+                  "dots",
+                  "tall",
+                  "happy",
+                  "wink",
+                  "focused",
+                  "visor",
+                  "angry",
+                  "suspicious"
+                ],
+                "type": "string"
+              },
+              "name": {
+                "description": "Up to 40 characters.",
+                "type": "string"
+              },
+              "profile_id": {
+                "description": "An earlier profile of this conversation, to take back after resuming.",
+                "format": "uuid",
+                "type": "string"
+              },
+              "shape": {
+                "description": "The character's shape, filled in the profile's color.",
+                "enum": [
+                  "blob",
+                  "ghost",
+                  "cat",
+                  "square",
+                  "drop",
+                  "triangle",
+                  "slime",
+                  "star"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
+          "name": "set_profile"
         },
         {
           "annotations": {
@@ -2418,6 +2609,11 @@
           "inputSchema": {
             "additionalProperties": false,
             "properties": {
+              "agent_profile_id": {
+                "description": "Only tasks with that agent profile; your own is in get_context.",
+                "format": "uuid",
+                "type": "string"
+              },
               "assignee": {
                 "enum": [
                   "user",

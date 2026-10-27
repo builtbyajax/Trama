@@ -20,7 +20,7 @@ pub(super) fn check_version(db: &Connection) -> Result<i64> {
 pub(super) fn migrate(tx: &Transaction) -> Result<()> {
     let version = check_version(tx)?;
     let steps: [fn(&Transaction) -> Result<()>; LATEST as usize] =
-        [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12];
+        [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13];
     for step in &steps[version as usize..] {
         step(tx)?;
     }
@@ -241,6 +241,20 @@ DROP TABLE draft_shift;"))?;
 UPDATE task_events SET value='backlog' WHERE kind='status' AND value IN('preparing','reserved');
 PRAGMA user_version=12;",
     ))?;
+    Ok(())
+}
+
+fn v13(tx: &Transaction) -> Result<()> {
+    // Agent profiles: each MCP session is one. A task with the agent may name the profile that
+    // has it; without one it is for any agent, which is what every existing agent task becomes.
+    // Messages and events keep the profile that wrote them; older ones have none and show as the
+    // agent. Only columns are added, so the assignee CHECK and every row stay as they are.
+    sql(tx.execute_batch("CREATE TABLE agent_profiles(id TEXT PRIMARY KEY NOT NULL,client TEXT NOT NULL DEFAULT '',name TEXT,color INTEGER NOT NULL DEFAULT 0,avatar TEXT,edited_by_user INTEGER NOT NULL DEFAULT 0 CHECK(edited_by_user IN(0,1)),created_at REAL NOT NULL,active_at REAL NOT NULL,alive_at REAL NOT NULL,ended_at REAL,deleted_at REAL);
+ALTER TABLE tasks ADD COLUMN agent_profile_id TEXT REFERENCES agent_profiles(id) ON DELETE SET NULL;
+ALTER TABLE task_messages ADD COLUMN agent_profile_id TEXT REFERENCES agent_profiles(id) ON DELETE SET NULL;
+ALTER TABLE task_events ADD COLUMN agent_profile_id TEXT REFERENCES agent_profiles(id) ON DELETE SET NULL;
+CREATE INDEX tasks_agent_profile ON tasks(agent_profile_id);
+PRAGMA user_version=13;"))?;
     Ok(())
 }
 

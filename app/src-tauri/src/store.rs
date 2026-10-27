@@ -1,4 +1,5 @@
 //! Shared SQLite core for the desktop app and the project-bound MCP process.
+mod agents;
 pub mod backups;
 mod categories;
 mod conversation;
@@ -8,6 +9,10 @@ mod operations;
 mod search;
 mod tasks;
 mod transfer;
+pub use agents::{
+    heartbeat, AgentProfile, ACTIVE_SECONDS, ALIVE_SECONDS, PROFILE_COLORS, PROFILE_EYES,
+    PROFILE_SHAPES,
+};
 use rusqlite::{params, Connection, OptionalExtension, Row, Transaction, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -18,10 +23,10 @@ use unicode_normalization::{char::is_combining_mark, UnicodeNormalization};
 
 pub type Result<T> = std::result::Result<T, String>;
 /// Latest database schema supported by this build, also advertised through MCP.
-pub const SCHEMA_VERSION: i64 = 12;
+pub const SCHEMA_VERSION: i64 = 13;
 /// In board order: Pendências, To do, Working, In review, then the Archive.
 pub const STATUSES: [&str; 5] = ["backlog", "todo", "inProgress", "review", "done"];
-const TASK_COLUMNS: &str = "t.id,t.project_id,t.title,t.details,t.category,t.assignee,t.status,t.position,t.agent_summary,t.repository_branch,t.commit_hash,t.pull_request_url,t.pull_request_number,t.created_at,t.updated_at,(SELECT COUNT(*) FROM task_checks c WHERE c.task_id=t.id),(SELECT COUNT(*) FROM task_checks c WHERE c.task_id=t.id AND c.is_complete=1),(SELECT COUNT(*) FROM task_messages m WHERE m.task_id=t.id),(SELECT COUNT(*) FROM task_documents d WHERE d.task_id=t.id),t.archived_at,t.goal_id";
+const TASK_COLUMNS: &str = "t.id,t.project_id,t.title,t.details,t.category,t.assignee,t.status,t.position,t.agent_summary,t.repository_branch,t.commit_hash,t.pull_request_url,t.pull_request_number,t.created_at,t.updated_at,(SELECT COUNT(*) FROM task_checks c WHERE c.task_id=t.id),(SELECT COUNT(*) FROM task_checks c WHERE c.task_id=t.id AND c.is_complete=1),(SELECT COUNT(*) FROM task_messages m WHERE m.task_id=t.id),(SELECT COUNT(*) FROM task_documents d WHERE d.task_id=t.id),t.archived_at,t.goal_id,t.agent_profile_id";
 fn sql<T>(r: rusqlite::Result<T>) -> Result<T> {
     r.map_err(|e| e.to_string())
 }
@@ -95,6 +100,8 @@ pub struct Task {
     pub archived_at: Option<f64>,
     /// The goal the task counts toward, in the same project.
     pub goal_id: Option<String>,
+    /// The agent profile that has the task; with the agent and none, it is for any agent.
+    pub agent_profile_id: Option<String>,
     pub checks_total: i64,
     pub checks_done: i64,
     pub message_count: i64,
@@ -117,6 +124,8 @@ pub struct TaskInput {
     pub pull_request_number: Option<i64>,
     #[serde(default)]
     pub goal_id: Option<String>,
+    #[serde(default)]
+    pub agent_profile_id: Option<String>,
 }
 /// A partial edit: omitted fields preserve the latest value; nullable delivery fields can be cleared.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -145,6 +154,8 @@ pub struct TaskPatch {
     pub pull_request_number: Option<Option<i64>>,
     #[serde(default, deserialize_with = "nullable_patch")]
     pub goal_id: Option<Option<String>>,
+    #[serde(default, deserialize_with = "nullable_patch")]
+    pub agent_profile_id: Option<Option<String>>,
 }
 impl From<TaskInput> for TaskPatch {
     fn from(input: TaskInput) -> Self {
@@ -156,6 +167,7 @@ impl From<TaskInput> for TaskPatch {
             assignee: Some(input.assignee),
             status: Some(input.status),
             goal_id: Some(input.goal_id),
+            agent_profile_id: Some(input.agent_profile_id),
             ..Default::default()
         }
     }
@@ -182,6 +194,8 @@ pub struct Message {
     pub author: String,
     pub body: String,
     pub created_at: f64,
+    /// The agent profile that wrote it; none for the person and for older agent messages.
+    pub agent_profile_id: Option<String>,
 }
 /// A private note of the person on a task. The agent never reads or changes notes.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -194,7 +208,7 @@ pub struct Note {
 }
 /// Something that happened to a task, for its activity: `kind` is `created`, `status`,
 /// `assignee`, `category`, `title`, `details`, `summary`, `branch`, `commit`, `pullRequest`,
-/// `document`, `documentRemoved`, `goal` or `project`, with the new value (the note's path for
+/// `document`, `documentRemoved`, `goal`, `project` or `agentProfile` (the profile id, none for any agent), with the new value (the note's path for
 /// documents, the goal's or project's name for those, none when the task left its goal). `actor` is absent for events recorded before the activity existed.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -205,6 +219,8 @@ pub struct Event {
     pub kind: String,
     pub value: Option<String>,
     pub created_at: f64,
+    /// The agent profile that did it; none for the person and for older agent events.
+    pub agent_profile_id: Option<String>,
 }
 /// A note of the project's notes folder attached to a task, by its path relative to that
 /// folder. Only the path is kept, so the task always shows the file as it is now.
@@ -246,6 +262,7 @@ pub struct Snapshot {
     pub categories: Vec<Category>,
     pub goals: Vec<Goal>,
     pub documents: Vec<Document>,
+    pub agent_profiles: Vec<AgentProfile>,
 }
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -271,6 +288,8 @@ pub struct SearchResult {
 pub struct Store {
     pub db: Connection,
     path: PathBuf,
+    /// The agent profile this connection writes as: the MCP session's, none in the app.
+    profile: std::cell::RefCell<Option<String>>,
 }
 impl Store {
     pub fn open(path: &Path) -> Result<Self> {
@@ -331,6 +350,7 @@ impl Store {
         Ok(Self {
             db,
             path: path.into(),
+            profile: Default::default(),
         })
     }
     /// Prevent an older long-lived agent from using a database migrated by a newer app.
@@ -472,6 +492,7 @@ impl Store {
             categories: self.categories()?,
             goals: self.goals(None)?,
             documents: self.documents(None)?,
+            agent_profiles: self.agent_profiles()?,
         })
     }
 }
@@ -490,6 +511,7 @@ impl From<&Task> for TaskInput {
             pull_request_url: t.pull_request_url.clone(),
             pull_request_number: t.pull_request_number,
             goal_id: t.goal_id.clone(),
+            agent_profile_id: t.agent_profile_id.clone(),
         }
     }
 }
@@ -534,6 +556,7 @@ fn map_task(r: &Row) -> rusqlite::Result<Task> {
         document_count: r.get(18)?,
         archived_at: r.get(19)?,
         goal_id: r.get(20)?,
+        agent_profile_id: r.get(21)?,
     })
 }
 pub(crate) fn fold(text: &str) -> String {
