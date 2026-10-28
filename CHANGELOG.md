@@ -4,25 +4,30 @@
 
 # Changelog
 
-Changes delivered in each Trama version. **Unreleased** lists implemented changes that have not shipped yet; when publishing a version, replace that heading with the release number and date.
+Changes delivered in each Trama version. Each section records the changes included in that release.
 
-## [Unreleased]
+## [0.4.1](https://github.com/builtbyajax/Trama/releases/tag/v0.4.1) — 2026-10-28
 
 ### Added
 
 - Give a goal a version and see it beside the goal's name. Existing versions written at the end of goal names are carried into the new field without changing the name.
-- Reorder goals in the sidebar and use the optional Trama planning skill to organize work across agents.
+- Organize project goals by progress, show task progress and due dates, and reopen concluded goals.
+- Review a concluded goal through a dated task timeline and points of attention.
+- Keep each project's goals on one sidebar row and reorder them; use the optional Trama planning skill to organize work across agents.
 
 ### Changed
 
 - The review column now uses the label **Em revisão** in Brazilian Portuguese.
 - The goal picker makes it easier to search for and switch between goals.
+- Upgrade the database to schema 14 for goal versions and ordering. Trama 0.4.0 cannot open a database after this migration.
 
 ### Fixed
 
 - Keep a dialog open when a text selection starts inside it and ends outside.
 - Close the open task when switching projects, unless unsaved changes prevent it from closing.
 - Align the close icon in note tabs.
+- Reactivate an agent profile when its resumed session makes a call.
+- Restore keyboard focus to the history list after closing a commit diff.
 
 ## [0.4.0](https://github.com/builtbyajax/Trama/releases/tag/v0.4.0) — 2026-10-27
 
