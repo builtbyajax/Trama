@@ -6,6 +6,24 @@
 
 Mudanças entregues em cada versão do Trama. A seção **Em desenvolvimento** reúne alterações implementadas que ainda não foram lançadas; ao publicar uma versão, substitua esse título pelo número e pela data da release.
 
+## [Em desenvolvimento]
+
+### Adicionado
+
+- Defina uma versão para um objetivo e veja o marcador ao lado do nome. Versões já escritas no fim dos nomes passam para o novo campo sem mudar o nome.
+- Reordene objetivos na barra lateral e use a skill opcional de planejamento do Trama para organizar o trabalho entre agentes.
+
+### Alterado
+
+- A coluna de revisão agora se chama **Em revisão**.
+- O seletor de objetivos facilita a busca e a troca entre objetivos.
+
+### Corrigido
+
+- Um diálogo permanece aberto quando uma seleção de texto começa dentro dele e termina fora.
+- A tarefa aberta é fechada ao trocar de projeto, exceto quando há alterações não salvas que impedem o fechamento.
+- Alinhamento do ícone de fechar nas abas de notas.
+
 ## [0.4.0](https://github.com/builtbyajax/Trama/releases/tag/v0.4.0) — 2026-10-27
 
 ### Adicionado

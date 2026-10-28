@@ -6,6 +6,24 @@
 
 Changes delivered in each Trama version. **Unreleased** lists implemented changes that have not shipped yet; when publishing a version, replace that heading with the release number and date.
 
+## [Unreleased]
+
+### Added
+
+- Give a goal a version and see it beside the goal's name. Existing versions written at the end of goal names are carried into the new field without changing the name.
+- Reorder goals in the sidebar and use the optional Trama planning skill to organize work across agents.
+
+### Changed
+
+- The review column now uses the label **Em revisão** in Brazilian Portuguese.
+- The goal picker makes it easier to search for and switch between goals.
+
+### Fixed
+
+- Keep a dialog open when a text selection starts inside it and ends outside.
+- Close the open task when switching projects, unless unsaved changes prevent it from closing.
+- Align the close icon in note tabs.
+
 ## [0.4.0](https://github.com/builtbyajax/Trama/releases/tag/v0.4.0) — 2026-10-27
 
 ### Added
