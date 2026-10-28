@@ -205,15 +205,16 @@ impl Store {
         *self.profile.borrow_mut() = Some(profile.clone());
         self.agent_profile(&profile)
     }
-    /// A tool call: the session is active now. False when the person deleted its profile, so the
-    /// session needs a new one.
+    /// A tool call: the session is active now, even one the app ended while its process went
+    /// quiet, as with the Mac asleep. False when the person deleted its profile, so the session
+    /// needs a new one.
     pub fn touch_session(&self) -> Result<bool> {
         let Some(id) = self.session_profile() else {
             return Ok(false);
         };
         let at = now();
         let touched = sql(self.db.execute(
-            "UPDATE agent_profiles SET active_at=?,alive_at=? WHERE id=? AND deleted_at IS NULL",
+            "UPDATE agent_profiles SET ended_at=NULL,active_at=?,alive_at=? WHERE id=? AND deleted_at IS NULL",
             params![at, at, id],
         ))?;
         Ok(touched > 0)

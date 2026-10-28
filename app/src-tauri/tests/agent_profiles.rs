@@ -191,6 +191,13 @@ fn the_persons_edit_wins_and_a_dead_process_ends_its_session() {
     store.end_stale_sessions().unwrap();
     assert!(store.agent_profile(&id).unwrap().ended_at.is_some());
     assert_eq!(store.task(&t.id, &p.id).unwrap().status, "todo");
+    // The process wakes up and calls again: the same profile is back, its task stays in To do.
+    call(&agent, "list_projects", json!({}));
+    assert_eq!(agent.profile().unwrap(), id);
+    let back = store.agent_profile(&id).unwrap();
+    assert!(back.ended_at.is_none());
+    assert_eq!(back.presence, "active");
+    assert_eq!(store.task(&t.id, &p.id).unwrap().status, "todo");
 }
 
 #[test]
