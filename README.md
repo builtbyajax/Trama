@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/en/cover.svg" alt="Trama — Plan. Build. Review." width="100%">
+  <img src="docs/images/cover-agents.svg" alt="Trama — a task board for you and your coding agents, with three agent characters" width="100%">
 </p>
 
 <p align="center">

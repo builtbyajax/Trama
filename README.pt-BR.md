@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/pt-BR/cover.svg" alt="Trama — Planeje. Construa. Revise." width="100%">
+  <img src="docs/images/cover-agents.svg" alt="Trama — um quadro de tarefas para você e seus agentes de código, com três personagens de agentes" width="100%">
 </p>
 
 <p align="center">
