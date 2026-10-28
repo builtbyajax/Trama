@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <strong>A local workspace for working with coding agents.</strong><br>
+  <strong>A task board for you and your coding agents.</strong><br>
   Keep the plan, the code history, and the context together, from briefing to review.
 </p>
 
@@ -23,7 +23,9 @@
 
 ## A clear next move
 
-Write the briefing, attach the context, and put the task in your agent's queue. Trama shows who holds the work, what is in progress, and what needs your review. Your coding agent works in its own client and reads and updates the board through MCP.
+1. Write a task and give your agent the context it needs.
+2. The agent works in its own client and updates the task through MCP.
+3. Review the delivery and decide what happens next.
 
 **Tasks, Git, and notes share the same project.** A task can carry its briefing, discussion, checks, agent summary, linked notes, and delivery references, so the handoff comes with the context needed to review it.
 
@@ -35,13 +37,21 @@ The interface is available in English and Brazilian Portuguese. Choose your lang
 
 ## A board for you and your agents
 
-Move work through **Backlog → To do → In progress → In review**, and conclude it into the Archive. Assign tasks to yourself or an agent, organize them with categories and local branches, and keep ideas that aren't ready in the Backlog.
+Move work through **Backlog → To do → Working → In review**, and conclude it into the Archive. Assign tasks to yourself or an agent, organize them with categories and local branches, and keep ideas that aren't ready in the Backlog.
 
 - Drag cards or move them with the keyboard.
 - Read the activity history and the agent's delivery summary before reviewing.
 - Keep personal task notes private from MCP clients.
 - Archive completed work and bring it back when needed.
 - See where work is waiting across projects in the overview.
+
+## Agents
+
+Each connected agent session has a profile with a name, a character and a presence status. See which agent holds a task and follow its work in the board and activity. On macOS, you can choose to keep the Mac awake while agents work.
+
+## Goals
+
+Group tasks under a goal and follow its progress across the project. Goals can have a target date and a version, and can be concluded when the work is finished.
 
 ## Follow the work into Git
 
@@ -68,6 +78,8 @@ The agent can read briefings, update tasks, record delivery references, and work
 1. Install or build Trama.
 2. [Connect your MCP client](docs/installation.md#connect-your-agent).
 3. Add the included [Trama skill](skills/trama/SKILL.md) to teach your agent the queue, delivery, and review workflow.
+
+The optional [Trama planning skill](skills/trama-planning/SKILL.md) helps agents split a goal into tasks and coordinate on a shared board.
 
 ## Your workspace stays local
 
@@ -135,6 +147,7 @@ Use ⌘ on macOS and Ctrl on Windows. Project tabs use ⌃ on macOS and Alt on W
 | `⌘N` | New task |
 | `⇧⌘N` | New project |
 | `⌘K` | Search |
+| `⌘R` | Refresh |
 | `⌘1…9` | Switch project |
 | `⌘T` | Find a project by name |
 | `⌥⌘1` / `⌥⌘2` / `⌥⌘3` | Overview / Archive / Vaults |
@@ -144,6 +157,16 @@ Use ⌘ on macOS and Ctrl on Windows. Project tabs use ⌃ on macOS and Alt on W
 | `⌘B` | Toggle sidebar |
 | `⌘,` | Preferences |
 | `⌘/` | All shortcuts |
+| `↑` / `↓` | Previous / next task when a task is open |
+| `⌘↵` | Toggle the open task between full page and sheet |
+| `Esc` | Close the open task or cancel a card move |
+| `Enter` / `Space` | Open a card / pick it up or drop it |
+| `←` / `→` / `↑` / `↓` | Choose a column or position while moving a card |
+| `Enter` | Save from a title field or open a commit's changes |
+| `⌘E` | Read or edit a note |
+| `↑` / `↓` | Step through commits in Git history |
+| `⌥↑` / `⌥↓` | Previous / next changed file |
+| `Esc` | Return to Git history |
 
 </details>
 

@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <strong>Um espaço local para trabalhar com agentes de código.</strong><br>
+  <strong>Um quadro de tarefas para você e seus agentes de código.</strong><br>
   Reúna o plano, o histórico do código e o contexto, do briefing à revisão.
 </p>
 
@@ -23,7 +23,9 @@
 
 ## O próximo passo está claro
 
-Escreva o briefing, anexe o contexto e coloque a tarefa na fila do agente. O Trama mostra com quem está o trabalho, o que está em andamento e o que precisa da sua revisão. Seu agente de código trabalha no próprio cliente e lê e atualiza o quadro pelo MCP.
+1. Escreva uma tarefa e dê ao agente o contexto necessário.
+2. O agente trabalha no próprio cliente e atualiza a tarefa pelo MCP.
+3. Revise a entrega e decida o próximo passo.
 
 **Quadro, Git e notas fazem parte do mesmo projeto.** Cada tarefa pode reunir briefing, conversa, verificações, resumo do agente, notas anexadas e referências da entrega, para que a revisão venha acompanhada do contexto necessário.
 
@@ -35,13 +37,21 @@ A interface está disponível em inglês e português brasileiro. Escolha o idio
 
 ## Um quadro para você e seus agentes
 
-Mova o trabalho por **Pendências → A fazer → Em andamento → Para revisar** e conclua no Arquivo. Atribua tarefas a você ou ao agente, organize-as por categorias e branches locais e mantenha as ideias que ainda não estão prontas em Pendências.
+Mova o trabalho por **Pendências → A fazer → Trabalhando → Em revisão** e conclua no Arquivo. Atribua tarefas a você ou ao agente, organize-as por categorias e branches locais e mantenha as ideias que ainda não estão prontas em Pendências.
 
 - Arraste cartões ou mova-os pelo teclado.
 - Consulte a atividade e o resumo da entrega antes de revisar.
 - Mantenha anotações pessoais da tarefa privadas para os clientes MCP.
 - Arquive o trabalho concluído e restaure-o quando precisar.
 - Veja na visão geral onde o trabalho está parado entre seus projetos.
+
+## Agentes
+
+Cada sessão de agente conectada tem um perfil com nome, personagem e estado de presença. Veja qual agente está com cada tarefa e acompanhe o trabalho no quadro e na atividade. No macOS, você pode escolher manter o Mac acordado enquanto os agentes trabalham.
+
+## Objetivos
+
+Reúna tarefas em um objetivo e acompanhe seu progresso no projeto. Objetivos podem ter data-alvo e versão e podem ser concluídos quando o trabalho terminar.
 
 ## Acompanhe o trabalho no Git
 
@@ -68,6 +78,8 @@ O agente pode ler briefings, atualizar tarefas, registrar referências da entreg
 1. Instale ou compile o Trama.
 2. [Conecte seu cliente MCP](docs/installation.pt-BR.md#conecte-seu-agente).
 3. Adicione a [skill do Trama](skills/trama/SKILL.md) para ensinar ao agente o fluxo de fila, entrega e revisão.
+
+A [skill opcional de planejamento](skills/trama-planning/SKILL.md) ajuda os agentes a dividir um objetivo em tarefas e coordenar o trabalho no mesmo quadro.
 
 ## Seu espaço de trabalho fica local
 
@@ -135,6 +147,7 @@ Use ⌘ no macOS e Ctrl no Windows. As abas do projeto usam ⌃ no macOS e Alt n
 | `⌘N` | Nova tarefa |
 | `⇧⌘N` | Novo projeto |
 | `⌘K` | Buscar |
+| `⌘R` | Atualizar |
 | `⌘1…9` | Trocar de projeto |
 | `⌘T` | Encontrar um projeto pelo nome |
 | `⌥⌘1` / `⌥⌘2` / `⌥⌘3` | Visão geral / Arquivo / Cofres |
@@ -144,6 +157,16 @@ Use ⌘ no macOS e Ctrl no Windows. As abas do projeto usam ⌃ no macOS e Alt n
 | `⌘B` | Mostrar ou ocultar a barra lateral |
 | `⌘,` | Preferências |
 | `⌘/` | Todos os atalhos |
+| `↑` / `↓` | Tarefa anterior / próxima com uma tarefa aberta |
+| `⌘↵` | Alternar a tarefa aberta entre página inteira e painel |
+| `Esc` | Fechar a tarefa aberta ou cancelar o movimento de um cartão |
+| `Enter` / `Espaço` | Abrir um cartão / pegar ou soltar um cartão |
+| `←` / `→` / `↑` / `↓` | Escolher a coluna ou posição ao mover um cartão |
+| `Enter` | Salvar no campo de título ou abrir as alterações de um commit |
+| `⌘E` | Ler ou editar uma nota |
+| `↑` / `↓` | Percorrer commits no histórico Git |
+| `⌥↑` / `⌥↓` | Arquivo alterado anterior / próximo |
+| `Esc` | Voltar ao histórico Git |
 
 </details>
 
