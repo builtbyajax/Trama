@@ -7,81 +7,69 @@
 </p>
 
 <p align="center">
-  <strong>A task board for you and your coding agents.</strong><br>
-  Keep the plan, the code history, and the context together, from briefing to review.
+  <strong>Keep tasks, code history, and project context together — whether you work solo or with coding agents.</strong>
 </p>
 
 <p align="center">
   <a href="https://trama.ajaxdev.com.br">Website</a> &nbsp;·&nbsp;
   <a href="#get-started">Get started</a> &nbsp;·&nbsp;
-  <a href="docs/installation.md">Installation & MCP setup</a> &nbsp;·&nbsp;
-  <a href="#development">Run from source</a> &nbsp;·&nbsp;
+  <a href="docs/installation.md">Installation &amp; MCP setup</a> &nbsp;·&nbsp;
+  <a href="docs/development.md">Development guide</a> &nbsp;·&nbsp;
   <a href="CHANGELOG.md">Changelog</a>
 </p>
 
 ![Trama's task board with work assigned to a person or an agent across four columns](docs/images/en/board.png)
 
-## A clear next move
-
-1. Write a task and give your agent the context it needs.
-2. The agent works in its own client and updates the task through MCP.
-3. Review the delivery and decide what happens next.
-
-**Tasks, Git, and notes share the same project.** A task can carry its briefing, discussion, checks, agent summary, linked notes, and delivery references, so the handoff comes with the context needed to review it.
-
 ## Get started
 
-Trama is in early development. Download test installers from [GitHub Releases](https://github.com/builtbyajax/Trama/releases), with a `.dmg` for macOS and an `.exe` for Windows, or [run it from source](#development). Read the [installation guide](docs/installation.md) before opening the app.
+Trama is in early development. Download a test installer from [GitHub Releases](https://github.com/builtbyajax/Trama/releases) for macOS (Apple Silicon or Intel) or Windows x64, then follow the [installation guide](docs/installation.md) before opening the app.
 
 The interface is available in English and Brazilian Portuguese. Choose your language in **Preferences → General → Language**. The screenshots show the real interface with demonstration data.
 
-## A board for you and your agents
+## Keep work moving with its context
 
-Move work through **Backlog → To do → Working → In review**, and conclude it into the Archive. Assign tasks to yourself or an agent, organize them with categories and local branches, and keep ideas that aren't ready in the Backlog.
+1. Create a task with the briefing and checks needed to do the work.
+2. Move it through **Backlog → To do → Working → In review**. Assign it to yourself or an agent.
+3. Review the summary, activity, notes, and Git changes before deciding what happens next.
 
-- Drag cards or move them with the keyboard.
-- Read the activity history and the agent's delivery summary before reviewing.
+Use Trama on your own for a project board and work history. Connect a coding agent when you want it to read task context and update the same board.
+
+- Organize work with categories, local branches, and goals with versions and target dates.
 - Keep personal task notes private from MCP clients.
-- Archive completed work and bring it back when needed.
-- See where work is waiting across projects in the overview.
-
-## Agents
-
-Each connected agent session has a profile with a name, a character and a presence status. See which agent holds a task and follow its work in the board and activity. On macOS, you can choose to keep the Mac awake while agents work.
+- Archive completed tasks and find work across projects in the overview.
 
 ## Goals
 
-Group tasks under a goal and follow its progress across the project. Goals can have a target date and a version, and can be concluded when the work is finished.
+Group tasks under a goal to follow progress across the project. Add a target date and version, then conclude the goal when its work is complete.
 
-## Follow the work into Git
+## Connect your coding agent
 
-Browse local changes, branches, commits, and linked tasks in one history. Open changed files in a side-by-side or inline diff, inspect commit details, and see pull requests through the GitHub CLI.
+The desktop app includes **`trama-agent`**, a local MCP server over STDIO. Connect it to Codex, Claude Code, OpenCode, or another client that supports local MCP servers.
+
+The agent can read task briefings, update tasks, attach project notes, and record delivery references. Each connected session has a profile with a name, character, and presence status. Trama does not launch or host coding agents.
+
+1. [Connect your MCP client](docs/installation.md#connect-your-agent).
+2. Add the included [Trama skill](skills/trama/SKILL.md) for the queue, delivery, and review workflow.
+
+The optional [Trama planning skill](skills/trama-planning/SKILL.md) helps agents split a goal into tasks and coordinate on a shared board.
+
+## Follow changes into Git
+
+Browse local changes, branches, commits, and linked tasks in one history. Open changed files in side-by-side or inline diffs, inspect commit details, and see pull requests through the GitHub CLI.
 
 Trama's Git view is read-only. You and your coding tools keep control of commits, branches, and merges.
 
 ![Trama's Git history with a task's commits, delivery status, and changed files](docs/images/en/git.png)
 
-## Keep the context in Markdown
+## Keep project notes in Markdown
 
-Point a project at a folder of Markdown files. Browse and search the vault, open notes in tabs, and edit with formatting tools and a live preview. Attach the relevant notes to tasks so an agent can read the same context.
+Connect a folder of Markdown files to a project. Browse and search the notes, open them in tabs, and edit with formatting tools and a live preview. Attach relevant notes to tasks so an agent can read the same context.
 
 Your notes stay ordinary `.md` files in the folder you choose. Trama checks for external changes before saving.
 
 ![Trama's notes workspace with a file tree, linked tasks, and a rendered Markdown project brief](docs/images/en/notes.png)
 
-## Connect your coding agent
-
-The desktop bundle includes **`trama-agent`**, a local MCP server over STDIO. Connect it to Codex, Claude Code, OpenCode, or another client that supports local MCP servers.
-
-The agent can read briefings, update tasks, record delivery references, and work with project notes. Private task notes are excluded from its tools. Trama does not launch or host coding agents.
-
-1. Install or build Trama.
-2. [Connect your MCP client](docs/installation.md#connect-your-agent).
-3. Add the included [Trama skill](skills/trama/SKILL.md) to teach your agent the queue, delivery, and review workflow.
-
-The optional [Trama planning skill](skills/trama-planning/SKILL.md) helps agents split a goal into tasks and coordinate on a shared board.
-
-## Your workspace stays local
+## Your data stays on your computer
 
 | Data | Where it lives |
 | --- | --- |
@@ -89,86 +77,17 @@ The optional [Trama planning skill](skills/trama-planning/SKILL.md) helps agents
 | Project notes | The Markdown folder you choose |
 | Code and Git history | Your existing local repositories |
 
-Trama has no account or cloud sync. Your agent's access to data is governed by its own client and provider; connecting it through MCP lets it read the project context exposed by Trama.
+Trama has no account or cloud sync. Connecting an agent through MCP lets it read the project context exposed by Trama. The agent's client and provider have their own data policies.
 
 See the [installation guide](docs/installation.md#local-data) for database locations.
 
 ## Support and feedback
 
-Found a bug or have an idea for Trama? [Report a bug](https://github.com/builtbyajax/Trama/issues/new?template=bug_report.yml) or [suggest a feature](https://github.com/builtbyajax/Trama/issues/new?template=feature_request.yml). You can write in English or Portuguese. Please remove private information from screenshots and logs before sharing them.
+Found a bug or have an idea for Trama? [Report a bug](https://github.com/builtbyajax/Trama/issues/new?template=bug_report.yml) or [suggest a feature](https://github.com/builtbyajax/Trama/issues/new?template=feature_request.yml). You can write in English or Portuguese.
 
 ## Development
 
-Built with **Tauri 2, React, TypeScript, and Rust**, with SQLite for local storage.
-
-You need Node.js **22.12+**, Rust **1.90+**, and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for your platform. Git enables repository features; an installed and authenticated [GitHub CLI](https://cli.github.com/) enables pull request lookup.
-
-From the repository root:
-
-```sh
-cd app
-npm ci
-npm run tauri dev
-```
-
-For the browser development view, run `npm run dev` instead. It uses the same Rust core through a local development bridge at `http://127.0.0.1:1420`.
-
-Development commands use `.trama-local/development` for their data by default, so schema changes do not migrate the installed app's databases. An explicit `TRAMA_HOME` or `TRAMA_DB` selects another location. Set `TRAMA_DEV_PERSONAL=1` only when you intend to use and potentially migrate your personal data.
-
-To build a desktop package on your platform:
-
-```sh
-npm run tauri build
-```
-
-Build output is written to `app/src-tauri/target/release/bundle/` and includes the MCP server. Signing and release distribution are separate from a local build.
-
-Before sending changes, run these checks from `app/`:
-
-```sh
-npm run typecheck
-npm run format:check
-npm test
-cargo test --locked --manifest-path src-tauri/Cargo.toml --features agent-cli,dev-bridge
-cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --features agent-cli,dev-bridge -- -D warnings
-```
-
-Use `TRAMA_DB` to point a development session at a separate database.
-
-[Testing and CI](docs/testing.md)
-
-<details>
-<summary>Keyboard shortcuts</summary>
-
-Use ⌘ on macOS and Ctrl on Windows. Project tabs use ⌃ on macOS and Alt on Windows.
-
-| Shortcut on macOS | Action |
-| --- | --- |
-| `⌘N` | New task |
-| `⇧⌘N` | New project |
-| `⌘K` | Search |
-| `⌘R` | Refresh |
-| `⌘1…9` | Switch project |
-| `⌘T` | Find a project by name |
-| `⌥⌘1` / `⌥⌘2` / `⌥⌘3` | Overview / Archive / Vaults |
-| `⌃1` / `⌃2` / `⌃3` / `⌃4` | Project / Board / Git history / Notes |
-| `⇧⌘L` | Switch the board between Kanban and List |
-| `⌘[` / `⌘]` | Back / Forward |
-| `⌘B` | Toggle sidebar |
-| `⌘,` | Preferences |
-| `⌘/` | All shortcuts |
-| `↑` / `↓` | Previous / next task when a task is open |
-| `⌘↵` | Toggle the open task between full page and sheet |
-| `Esc` | Close the open task or cancel a card move |
-| `Enter` / `Space` | Open a card / pick it up or drop it |
-| `←` / `→` / `↑` / `↓` | Choose a column or position while moving a card |
-| `Enter` | Save from a title field or open a commit's changes |
-| `⌘E` | Read or edit a note |
-| `↑` / `↓` | Step through commits in Git history |
-| `⌥↑` / `⌥↓` | Previous / next changed file |
-| `Esc` | Return to Git history |
-
-</details>
+Trama is built with **Tauri 2, React, TypeScript, Rust, and SQLite**. See the [development guide](docs/development.md) for setup, local development data, build instructions, and checks. See [Testing and CI](docs/testing.md) for test coverage and workflows.
 
 ## License
 
