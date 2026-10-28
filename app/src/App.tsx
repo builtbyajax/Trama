@@ -232,8 +232,18 @@ export function App() {
     setSheetMode("sheet");
     return true;
   }
-  /** Another project opens on the same tab; the open project again returns to its page. */
+  /**
+   * Another project opens on the same tab; the open project again returns to its page.
+   * A task from another project closes first, and stays when it has unsaved edits.
+   */
   const navigate = (next: Destination) => {
+    if (
+      next.kind === "project" &&
+      selectedTask &&
+      selectedTask.projectId !== next.id &&
+      !closeDetails()
+    )
+      return;
     const keep =
       next.kind === "project" &&
       destination.kind === "project" &&
