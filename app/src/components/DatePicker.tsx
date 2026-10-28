@@ -84,11 +84,14 @@ export function DatePicker({
   onChange,
   id,
   labelledBy,
+  chip = false,
 }: {
   value: string;
   onChange: (day: string) => void;
   id?: string;
   labelledBy?: string;
+  /** Shows the trigger as a property chip with a flag, as in the task sheet. */
+  chip?: boolean;
 }) {
   const trigger = useRef<HTMLButtonElement>(null);
   const popup = useRef<HTMLDivElement>(null);
@@ -178,7 +181,7 @@ export function DatePicker({
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-labelledby={labelledBy}
-        className={`select select-md date-field ${open ? "open" : ""} ${value ? "" : "empty"}`}
+        className={`${chip ? "prop-chip" : "select select-md date-field"} ${open ? "open" : ""} ${value ? "" : "empty"}`}
         onClick={() => {
           trigger.current?.focus();
           if (open) setOpen(false);
@@ -191,8 +194,10 @@ export function DatePicker({
           }
         }}
       >
-        <Icon name="calendar" size={14} />
-        <span className="select-value">
+        <Icon name={chip ? "flag" : "calendar"} size={chip ? 12 : 14} />
+        <span
+          className={chip ? (value ? "" : "prop-chip-key") : "select-value"}
+        >
           {value ? longDay(value) : t("No date")}
         </span>
         {value && <span className="date-field-hint">{relativeDay(value)}</span>}

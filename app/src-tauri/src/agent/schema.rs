@@ -84,13 +84,14 @@ pub fn tools(workspace: bool) -> Vec<Value> {
     );
     add("delete_category","Deletes a category; replacement is required when it has tasks. Logs the change in the activity.",json!({"name":text,"replacement":nullable}),vec!["name"],true,false,true);
     add("list_tasks","Lists the project's tasks in board order: Pendências (backlog), To do, Working, In review, then the Archive (done), each column top to bottom. Filter by status to leave the Archive out. Paginated with limit/offset (at most 200).",json!({"status":status,"category":text,"assignee":assignee,"agent_profile_id":{"type":"string","format":"uuid","description":"Only tasks with that agent profile; your own is in get_context."},"goal_id":{"type":"string","format":"uuid"},"limit":limit,"offset":offset}),vec![],true,true,false);
-    add("list_goals","Lists the project's goals with their progress (done tasks over all its tasks). Concluded goals have completed_at.",json!({}),vec![],true,true,false);
+    add("list_goals","Lists the project's goals in the person's order, with their version and progress (done tasks over all its tasks). Concluded goals have completed_at.",json!({}),vec![],true,true,false);
     let date =
         json!({"type":["string","null"],"description":"A day, YYYY-MM-DD; null removes it."});
+    let version = json!({"type":["string","null"],"description":"The release the goal is for, such as 0.4.1, up to 24 characters and kept out of the name; null removes it."});
     add(
         "create_goal",
         "Creates a goal in the project: what a group of its tasks is for.",
-        json!({"name":text,"description":text,"target_date":date}),
+        json!({"name":text,"description":text,"target_date":date,"version":version}),
         vec!["name"],
         true,
         false,
@@ -99,7 +100,7 @@ pub fn tools(workspace: bool) -> Vec<Value> {
     add(
         "update_goal",
         "Edits only the goal fields sent. Concluding a goal is left to the person.",
-        json!({"goal_id":uuid,"name":text,"description":text,"target_date":date}),
+        json!({"goal_id":uuid,"name":text,"description":text,"target_date":date,"version":version}),
         vec!["goal_id"],
         true,
         false,

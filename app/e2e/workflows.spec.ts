@@ -252,19 +252,18 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
     page.getByRole("button", { name: "1 concluded", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "1 concluded", exact: true }).click();
-  const concludedMenu = page.getByRole("menu", {
-    name: "Concluded",
-    exact: true,
+  const concludedGoal = page.locator(".project-goal.concluded").filter({
+    hasText: "Release test",
   });
-  const menuBox = await concludedMenu.boundingBox();
-  const triggerBox = await page
-    .getByRole("button", { name: "1 concluded", exact: true })
-    .boundingBox();
-  expect(menuBox!.x).toBeGreaterThan(triggerBox!.x);
-  await concludedMenu
-    .getByRole("menuitemradio", { name: /Release test/ })
+  await expect(concludedGoal).toBeVisible();
+  await concludedGoal
+    .getByRole("button", { name: "Release test", exact: true })
     .click();
   await page.getByRole("button", { name: "Reopen goal", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "Reopen goal?", exact: true })
+    .getByRole("button", { name: "Just reopen", exact: true })
+    .click();
   await expect(
     page.getByRole("button", {
       name: "Release test, 2 of 2 done",
@@ -273,6 +272,7 @@ test("workspace, board, goals, transfer and note conflicts persist through the r
   ).toBeVisible();
   data = await command<Snapshot>(request, "load_snapshot");
   expect(data.goals[0].completedAt).toBeNull();
+  expect(data.tasks.every((task) => task.status === "done")).toBe(true);
   const source = spaces.active;
   const destination = await command<Workspaces>(request, "create_workspace", {
     name: `Destination ${run}`,
@@ -468,10 +468,10 @@ test("concluding from the board and the list, and reopening from the Archive", a
     .click();
   await openBoard(page);
 
-  // Kanban: drop a card on the bar at the bottom, then conclude another from its menu.
+  // Kanban: drop a card on the done column, then conclude another from its menu.
   const card = (title: string) =>
     page.locator(".card[data-task-id]").filter({ hasText: title });
-  const zone = await page.locator(".conclude-zone").boundingBox();
+  const zone = await page.locator(".done-lane").boundingBox();
   await drag(page, (await card("Alpha").boundingBox())!, {
     x: zone!.x + zone!.width / 2,
     y: zone!.y + zone!.height / 2,
@@ -481,6 +481,16 @@ test("concluding from the board and the list, and reopening from the Archive", a
   await card("Beta").click({ button: "right" });
   await page.getByRole("menuitem", { name: "Conclude", exact: true }).click();
   await expect.poll(() => status("Beta")).toBe("done");
+  await page
+    .getByRole("button", { name: "Done tasks, 2", exact: true })
+    .click();
+  const doneColumn = page.getByRole("region", {
+    name: "Done tasks",
+    exact: true,
+  });
+  await expect(doneColumn.locator(".card[data-task-id]")).toHaveCount(2);
+  await expect(doneColumn.getByText("Alpha", { exact: true })).toBeVisible();
+  await expect(doneColumn.getByText("Beta", { exact: true })).toBeVisible();
 
   // List, chosen in Preferences: drag a row into another stage.
   await page.getByRole("button", { name: "Preferences", exact: true }).click();

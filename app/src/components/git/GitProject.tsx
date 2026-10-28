@@ -94,6 +94,13 @@ export function GitProject({
   useEffect(() => {
     if (!diffOpen) setDiff(null);
   }, [diffOpen]);
+  // Back from the changes, however it closed, the keyboard returns to the list it left.
+  const wasReading = useRef(false);
+  const readingNow = Boolean(diff && diffOpen);
+  useEffect(() => {
+    if (wasReading.current && !readingNow) setReveal((n) => n + 1);
+    wasReading.current = readingNow;
+  }, [readingNow]);
   // Leaving the history (another project, another tab) leaves the diff behind too.
   useEffect(() => () => onDiff(null), []);
   useEffect(() => {

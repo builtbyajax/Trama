@@ -240,6 +240,7 @@ impl Agent {
                     required(args, "name")?,
                     text(args, "description").unwrap_or(""),
                     text(args, "target_date"),
+                    text(args, "version"),
                 )?;
                 Ok(goal_value(&goal, &[]))
             }
@@ -250,12 +251,17 @@ impl Agent {
                     Some(value) => value.as_str(),
                     None => goal.target_date.as_deref(),
                 };
+                let version = match args.get("version") {
+                    Some(value) => value.as_str(),
+                    None => goal.version.as_deref(),
+                };
                 let goal = self.store.save_goal(
                     Some(&goal.id),
                     &project,
                     text(args, "name").unwrap_or(&goal.name),
                     text(args, "description").unwrap_or(&goal.description),
                     target_date,
+                    version,
                 )?;
                 Ok(goal_value(&goal, &self.store.tasks(Some(&project))?))
             }
@@ -456,7 +462,7 @@ fn goal_value(g: &Goal, tasks: &[Task]) -> Value {
         .filter(|t| t.goal_id.as_deref() == Some(g.id.as_str()))
         .collect();
     let done = counted.iter().filter(|t| t.status == "done").count();
-    json!({"id":g.id,"project_id":g.project_id,"name":g.name,"description":g.description,"target_date":g.target_date,"completed_at":g.completed_at.map(timestamp),"tasks_total":counted.len(),"tasks_done":done,"created_at":timestamp(g.created_at)})
+    json!({"id":g.id,"project_id":g.project_id,"name":g.name,"description":g.description,"target_date":g.target_date,"version":g.version,"completed_at":g.completed_at.map(timestamp),"tasks_total":counted.len(),"tasks_done":done,"created_at":timestamp(g.created_at)})
 }
 fn message_value(m: &Message) -> Value {
     json!({"id":m.id,"task_id":m.task_id,"author":m.author,"agent_profile_id":m.agent_profile_id,"body":m.body,"created_at":timestamp(m.created_at)})

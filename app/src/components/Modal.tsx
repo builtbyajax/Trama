@@ -1,4 +1,10 @@
-import { useEffect, useRef, type ReactNode, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  type ReactNode,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
 import { Icon } from "./Icon";
 import { t } from "../lib/i18n";
 export function trapDialogTab(event: KeyboardEvent<HTMLDialogElement>) {
@@ -39,6 +45,9 @@ export function Modal({
   // Escape handled and stopped by an inner list must not close the dialog. Chromium honours
   // preventDefault on the key; WebKit still fires `cancel`, so the key's path is remembered.
   const escape = useRef<"inner" | "dialog" | null>(null);
+  // A click outside closes only when it also started outside: dragging a text selection out
+  // of a field ends on the backdrop and must keep the dialog open.
+  const pressedOutside = useRef(false);
   useEffect(() => {
     const dialog = ref.current;
     dialog?.showModal();
@@ -69,17 +78,12 @@ export function Modal({
         escape.current = null;
         if (!handledInside) onClose();
       }}
+      onPointerDown={(event) => {
+        pressedOutside.current = outside(event);
+      }}
       onClick={(event) => {
-        if (event.target === event.currentTarget) {
-          const rect = event.currentTarget.getBoundingClientRect();
-          if (
-            event.clientX < rect.left ||
-            event.clientX > rect.right ||
-            event.clientY < rect.top ||
-            event.clientY > rect.bottom
-          )
-            onClose();
-        }
+        if (pressedOutside.current && outside(event)) onClose();
+        pressedOutside.current = false;
       }}
     >
       <header className="modal-head">
@@ -95,5 +99,17 @@ export function Modal({
       </header>
       {children}
     </dialog>
+  );
+}
+
+// The backdrop belongs to the dialog element, so it is told apart by the click's position.
+function outside(event: MouseEvent<HTMLDialogElement>) {
+  if (event.target !== event.currentTarget) return false;
+  const rect = event.currentTarget.getBoundingClientRect();
+  return (
+    event.clientX < rect.left ||
+    event.clientX > rect.right ||
+    event.clientY < rect.top ||
+    event.clientY > rect.bottom
   );
 }

@@ -157,7 +157,7 @@ impl Normalize {
                 if (s.len() == 40 || s.len() == 64) && s.chars().all(|c| c.is_ascii_hexdigit()) {
                     return json!("<commit>");
                 }
-                if key == "version" {
+                if key == "version" && s == env!("CARGO_PKG_VERSION") {
                     return json!("<app-version>");
                 }
                 // Optional gh availability is host-specific; its concrete errors are tested
@@ -356,10 +356,10 @@ fn every_tool_has_a_blackbox_contract_and_private_notes_never_leave_the_process(
         assert_eq!(response["result"]["isError"], true);
         replies.insert(format!("invalid-{label}"), response);
     }
-    let goal=m.ok("create_goal",json!({"project_id":p.id,"name":"Outcome","description":"Synthetic","target_date":"2026-12-01"}));
+    let goal=m.ok("create_goal",json!({"project_id":p.id,"name":"Outcome","description":"Synthetic","target_date":"2026-12-01","version":"1.2.3"}));
     let goal_id = goal["id"].as_str().unwrap();
     replies.insert("create-goal".into(), goal.clone());
-    replies.insert("update-goal".into(),m.ok("update_goal",json!({"project_id":p.id,"goal_id":goal_id,"name":"Renamed outcome","target_date":null})));
+    replies.insert("update-goal".into(),m.ok("update_goal",json!({"project_id":p.id,"goal_id":goal_id,"name":"Renamed outcome","target_date":null,"version":null})));
     let created = m.ok(
         "create_task",
         json!({"project_id":p.id,"title":"Lifecycle","goal_id":goal_id}),

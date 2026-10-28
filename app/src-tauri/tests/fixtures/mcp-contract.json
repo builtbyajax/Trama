@@ -175,7 +175,8 @@
     "project_id": "<uuid-16>",
     "target_date": "2026-12-01",
     "tasks_done": 0,
-    "tasks_total": 0
+    "tasks_total": 0,
+    "version": "1.2.3"
   },
   "create-project": {
     "created_at": "<timestamp>",
@@ -767,7 +768,7 @@
             "openWorldHint": false,
             "readOnlyHint": true
           },
-          "description": "Lists the project's goals with their progress (done tasks over all its tasks). Concluded goals have completed_at.",
+          "description": "Lists the project's goals in the person's order, with their version and progress (done tasks over all its tasks). Concluded goals have completed_at.",
           "inputSchema": {
             "additionalProperties": false,
             "properties": {},
@@ -794,6 +795,13 @@
               },
               "target_date": {
                 "description": "A day, YYYY-MM-DD; null removes it.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "version": {
+                "description": "The release the goal is for, such as 0.4.1, up to 24 characters and kept out of the name; null removes it.",
                 "type": [
                   "string",
                   "null"
@@ -829,6 +837,13 @@
               },
               "target_date": {
                 "description": "A day, YYYY-MM-DD; null removes it.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "version": {
+                "description": "The release the goal is for, such as 0.4.1, up to 24 characters and kept out of the name; null removes it.",
                 "type": [
                   "string",
                   "null"
@@ -1562,7 +1577,7 @@
     "result": {
       "content": [
         {
-          "text": "{\"agent_execution\":\"external\",\"agent_profiles\":\"assignee=agent with agent_profile_id null is for any agent; starting it (inProgress) gives it to your profile\",\"assignees\":[\"user\",\"agent\"],\"briefing_field\":\"details\",\"categories\":[{\"name\":\"Documentation\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Feature\",\"project_id\":\"<uuid-16>\",\"task_count\":2},{\"name\":\"Fix\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Infrastructure\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Interface\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Investigation\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Migration\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Performance\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Refactoring\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Security\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Tests\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Validation\",\"project_id\":\"<uuid-16>\",\"task_count\":0}],\"private_notes_accessible\":false,\"project\":{\"created_at\":\"<timestamp>\",\"id\":\"<uuid-16>\",\"name\":\"Contract\",\"notes_folder\":\"<temp>/notes\",\"repository_path\":\"<temp>/repo\"},\"schema_version\":13,\"scope\":\"workspace\",\"session_profile\":{\"client\":\"\",\"color\":3,\"edited_by_person\":false,\"eyes\":\"dots\",\"name\":\"Contract agent\",\"presence\":\"active\",\"profile_id\":\"<uuid-3>\",\"shape\":\"blob\"},\"statuses\":[\"backlog\",\"todo\",\"inProgress\",\"review\",\"done\"],\"working_indicator\":\"assignee=agent and status=inProgress\"}",
+          "text": "{\"agent_execution\":\"external\",\"agent_profiles\":\"assignee=agent with agent_profile_id null is for any agent; starting it (inProgress) gives it to your profile\",\"assignees\":[\"user\",\"agent\"],\"briefing_field\":\"details\",\"categories\":[{\"name\":\"Documentation\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Feature\",\"project_id\":\"<uuid-16>\",\"task_count\":2},{\"name\":\"Fix\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Infrastructure\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Interface\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Investigation\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Migration\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Performance\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Refactoring\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Security\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Tests\",\"project_id\":\"<uuid-16>\",\"task_count\":0},{\"name\":\"Validation\",\"project_id\":\"<uuid-16>\",\"task_count\":0}],\"private_notes_accessible\":false,\"project\":{\"created_at\":\"<timestamp>\",\"id\":\"<uuid-16>\",\"name\":\"Contract\",\"notes_folder\":\"<temp>/notes\",\"repository_path\":\"<temp>/repo\"},\"schema_version\":14,\"scope\":\"workspace\",\"session_profile\":{\"client\":\"\",\"color\":3,\"edited_by_person\":false,\"eyes\":\"dots\",\"name\":\"Contract agent\",\"presence\":\"active\",\"profile_id\":\"<uuid-3>\",\"shape\":\"blob\"},\"statuses\":[\"backlog\",\"todo\",\"inProgress\",\"review\",\"done\"],\"working_indicator\":\"assignee=agent and status=inProgress\"}",
           "type": "text"
         }
       ],
@@ -1645,7 +1660,7 @@
           "notes_folder": "<temp>/notes",
           "repository_path": "<temp>/repo"
         },
-        "schema_version": 13,
+        "schema_version": 14,
         "scope": "workspace",
         "session_profile": {
           "client": "",
@@ -1950,7 +1965,7 @@
     "result": {
       "content": [
         {
-          "text": "{\"goals\":[{\"completed_at\":null,\"created_at\":\"<timestamp>\",\"description\":\"Synthetic\",\"id\":\"<uuid-17>\",\"name\":\"Renamed outcome\",\"project_id\":\"<uuid-16>\",\"target_date\":null,\"tasks_done\":0,\"tasks_total\":1}]}",
+          "text": "{\"goals\":[{\"completed_at\":null,\"created_at\":\"<timestamp>\",\"description\":\"Synthetic\",\"id\":\"<uuid-17>\",\"name\":\"Renamed outcome\",\"project_id\":\"<uuid-16>\",\"target_date\":null,\"tasks_done\":0,\"tasks_total\":1,\"version\":null}]}",
           "type": "text"
         }
       ],
@@ -1966,7 +1981,8 @@
             "project_id": "<uuid-16>",
             "target_date": null,
             "tasks_done": 0,
-            "tasks_total": 1
+            "tasks_total": 1,
+            "version": null
           }
         ]
       }
@@ -2291,7 +2307,8 @@
     "project_id": "<uuid-16>",
     "target_date": null,
     "tasks_done": 0,
-    "tasks_total": 0
+    "tasks_total": 0,
+    "version": null
   },
   "update-message": {
     "agent_profile_id": "<uuid-3>",
@@ -2666,7 +2683,7 @@
             "openWorldHint": false,
             "readOnlyHint": true
           },
-          "description": "Lists the project's goals with their progress (done tasks over all its tasks). Concluded goals have completed_at.",
+          "description": "Lists the project's goals in the person's order, with their version and progress (done tasks over all its tasks). Concluded goals have completed_at.",
           "inputSchema": {
             "additionalProperties": false,
             "properties": {
@@ -2708,6 +2725,13 @@
                   "string",
                   "null"
                 ]
+              },
+              "version": {
+                "description": "The release the goal is for, such as 0.4.1, up to 24 characters and kept out of the name; null removes it.",
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "required": [
@@ -2744,6 +2768,13 @@
               },
               "target_date": {
                 "description": "A day, YYYY-MM-DD; null removes it.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "version": {
+                "description": "The release the goal is for, such as 0.4.1, up to 24 characters and kept out of the name; null removes it.",
                 "type": [
                   "string",
                   "null"

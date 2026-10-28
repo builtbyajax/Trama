@@ -797,12 +797,21 @@ button.holder:hover {
 .shortcuts-body {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: var(--sp-5) var(--sp-6);
   padding-bottom: var(--sp-6);
+}
+.shortcut-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
 }
 @container (max-width: 520px) {
   .shortcuts-body {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .shortcut-column {
+    display: contents;
   }
 }
 .shortcut-group h3 {
@@ -891,53 +900,55 @@ button.holder:hover {
   color: var(--accent-text);
 }
 
-/* ───── project page: what is happening now, goals by stage, work outside goals ───── */
+/* ───── project page: its goals by stage, work outside goals and recent deliveries ───── */
 .project-page {
   padding: 12px calc(var(--page-x) - var(--bar)) 40px var(--page-x);
 }
 .project-page .page-inner {
   max-width: none;
   margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
 }
-.project-panels {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-.project-panel {
-  display: flex;
-  flex-direction: column;
+/* Under the project's name: what waits for you, what the agent is on, what was done this week. */
+.project-pulse {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
-  min-width: 0;
-  padding: 14px 16px;
-  border: 1px solid var(--line-subtle);
-  border-radius: var(--radius-panel);
-  background: var(--card);
 }
-.project-panel h3 {
-  color: var(--ink-3);
+.page-title p:has(> .project-pulse) {
+  height: auto;
+  margin-top: 10px;
+}
+.pulse-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
   font-size: var(--fs-sm);
-  font-weight: 500;
 }
-.project-count {
-  font-size: 22px;
-  font-weight: 650;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
+.pulse-chip:hover {
+  border-color: var(--line-strong);
+  background: var(--hover);
+  color: var(--ink);
 }
-.project-panel ul {
-  display: flex;
-  flex-direction: column;
-  margin: 0 -6px;
-  padding: 0;
-  list-style: none;
+.pulse-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
-.project-note {
-  color: var(--ink-3);
-  font-size: var(--fs-sm);
+.pulse-chip .glyph {
+  flex: none;
+}
+:is(.pulse-chip, .project-legend) .dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
 }
 .project-columns {
   display: grid;
@@ -946,7 +957,6 @@ button.holder:hover {
   align-items: start;
 }
 @container page (max-width: 860px) {
-  .project-panels,
   .project-columns {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -954,9 +964,23 @@ button.holder:hover {
 .project-section-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 10px;
+  gap: 14px;
+  min-width: 0;
+  margin-bottom: 12px;
+}
+.project-section-head .chips {
+  flex: none;
+}
+.project-goals .project-section-head {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+.project-order {
+  flex: none;
+  margin-left: auto;
+}
+.project-order + .project-legend {
+  margin-left: 0;
 }
 .project-section-head h2,
 .project-section-title {
@@ -969,8 +993,8 @@ button.holder:hover {
 .project-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 12px;
-  margin: 0;
+  gap: 4px 14px;
+  margin: 0 0 0 auto;
   padding: 0;
   list-style: none;
   color: var(--ink-3);
@@ -979,17 +1003,12 @@ button.holder:hover {
 .project-legend li {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-}
-.project-legend .dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+  gap: 6px;
 }
 .project-goal-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -998,8 +1017,8 @@ button.holder:hover {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 8px;
+  padding: 12px 16px;
   border: 1px solid var(--line-subtle);
   border-radius: var(--radius-panel);
   background: var(--card);
@@ -1007,15 +1026,15 @@ button.holder:hover {
 .project-goal-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   min-width: 0;
 }
 .project-goal-name {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   min-width: 0;
+  margin-right: auto;
   padding: 0;
   border: 0;
   border-radius: var(--radius-panel);
@@ -1026,14 +1045,15 @@ button.holder:hover {
   font-weight: 650;
   text-align: left;
 }
-/* The name's button covers the whole card; the task lines sit above it and open their task. */
+/* The name's button covers the whole card; the task lines and the menu sit above it. */
 .project-goal-name::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
 }
-.project-goal:has(.project-goal-name:hover) {
+.project-goal:has(.project-goal-name:hover),
+.project-goal.menu-open {
   background: var(--card-hover);
 }
 .project-goal:has(.project-goal-name:focus-visible) {
@@ -1047,55 +1067,51 @@ button.holder:hover {
   flex: none;
   color: var(--ink-3);
 }
-.project-goal-meta {
+.project-goal.concluded .project-goal-name {
+  color: var(--ink-2);
+}
+.project-goal.concluded .project-goal-name svg {
+  color: var(--s-done);
+}
+.project-goal-day,
+.project-goal-count {
   flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
   color: var(--ink-3);
   font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
 }
-.project-goal-meta svg {
-  margin-left: 6px;
-}
-.project-goal-bar {
-  display: flex;
-  gap: 2px;
-  height: 8px;
-  border-radius: 4px;
-  background: var(--line-subtle);
-  overflow: hidden;
-}
-.project-goal-bar > span {
-  min-width: 4px;
-}
-.project-goal-bar > span:first-child {
-  border-radius: 4px 0 0 4px;
-}
-.project-goal-bar > span:last-child {
-  border-radius: 0 4px 4px 0;
-}
-.project-goal-bar > span:only-child {
-  border-radius: 4px;
-}
-.project-goal-now {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 16px;
-  margin: 0 -6px;
-  padding: 0;
-  list-style: none;
-}
-.project-goal-now li {
-  min-width: 0;
-  max-width: 100%;
-}
-.project-goal-now .project-task {
+.project-goal-day {
   position: relative;
 }
-.project-more {
-  margin-top: 10px;
+.project-goal-day.late {
+  color: var(--danger);
+}
+.project-goal-count {
+  min-width: 3.6em;
+  text-align: right;
+}
+.project-goal-head .goal-dots,
+.project-goal-head .goal-bar {
+  flex: none;
+}
+.project-goal-done {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.project-goal-done.late {
+  color: var(--s-review);
+}
+.project-goal-tasks {
+  display: flex;
+  flex-direction: column;
+  margin: 2px -4px 0 -6px;
+  padding: 6px 0 0;
+  border-top: 1px solid var(--line-subtle);
+  list-style: none;
+}
+.project-goal-tasks .project-task {
+  position: relative;
 }
 .project-side {
   display: flex;
@@ -1135,8 +1151,38 @@ button.holder:hover {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
+.project-task > .truncate {
+  flex: 1;
+}
+.project-who {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  width: 18px;
+}
+.project-status {
+  display: flex;
+  flex: none;
+}
+/* Lined up with the titles above: who, the status when shown, and the gaps between. */
 .project-task.more {
+  padding-left: 53px;
   color: var(--accent-text);
+}
+.project-task.more.done {
+  padding-left: 32px;
+}
+.project-section-count {
+  margin-left: 8px;
+  color: var(--ink-3);
+  font-size: var(--fs-md);
+  font-weight: 400;
+}
+.project-when {
+  flex: none;
+  margin-left: auto;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
 }
 .project-ref {
   flex: none;
@@ -1144,9 +1190,6 @@ button.holder:hover {
   color: var(--ink-3);
   font-family: var(--mono);
   font-size: var(--fs-xs);
-}
-.project-task .status-icon {
-  flex: none;
 }
 
 /* ───── Agentes: cards by state, and the chosen agent beside them ───── */

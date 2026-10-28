@@ -88,6 +88,7 @@ export const saveGoal = (
   name: string,
   description: string,
   targetDate: string | null,
+  version: string | null,
   goalId: string | null = null,
 ) =>
   call<Goal>("save_goal", {
@@ -96,6 +97,14 @@ export const saveGoal = (
     name,
     description,
     targetDate,
+    version,
+  });
+/** Puts the goal right after `afterId` in its project's list (or at the top). */
+export const moveGoal = (goal: Goal, afterId: string | null) =>
+  call<Goal[]>("move_goal", {
+    goalId: goal.id,
+    projectId: goal.projectId,
+    afterId,
   });
 export const completeGoal = (goal: Goal, completed: boolean) =>
   call<Goal>("complete_goal", {

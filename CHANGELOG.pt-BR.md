@@ -4,7 +4,30 @@
 
 # Changelog
 
-Mudanças entregues em cada versão do Trama. A seção **Em desenvolvimento** reúne alterações implementadas que ainda não foram lançadas; ao publicar uma versão, substitua esse título pelo número e pela data da release.
+Mudanças entregues em cada versão do Trama. Cada seção reúne as mudanças incluídas naquela release.
+
+## [0.4.1](https://github.com/builtbyajax/Trama/releases/tag/v0.4.1) — 2026-10-28
+
+### Adicionado
+
+- Defina uma versão para um objetivo e veja o marcador ao lado do nome. Versões já escritas no fim dos nomes passam para o novo campo sem mudar o nome.
+- Organize os objetivos do projeto por etapa, veja o progresso das tarefas e os prazos, e reabra objetivos concluídos.
+- Revise um objetivo concluído por uma linha do tempo datada das tarefas e pelos pontos de atenção.
+- Mantenha os objetivos de cada projeto em uma linha na barra lateral e reordene-os; use a skill opcional de planejamento do Trama para organizar o trabalho entre agentes.
+
+### Alterado
+
+- A coluna de revisão agora se chama **Em revisão**.
+- O seletor de objetivos facilita a busca e a troca entre objetivos.
+- Atualização do banco para o schema 14, com versão e ordem dos objetivos. O Trama 0.4.0 não abre um banco depois dessa migração.
+
+### Corrigido
+
+- Um diálogo permanece aberto quando uma seleção de texto começa dentro dele e termina fora.
+- A tarefa aberta é fechada ao trocar de projeto, exceto quando há alterações não salvas que impedem o fechamento.
+- Alinhamento do ícone de fechar nas abas de notas.
+- Reativação do perfil do agente quando uma sessão retomada faz uma chamada.
+- Foco do teclado volta para o histórico depois de fechar o diff de um commit.
 
 ## [0.4.0](https://github.com/builtbyajax/Trama/releases/tag/v0.4.0) — 2026-10-27
 

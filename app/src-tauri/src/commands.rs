@@ -145,7 +145,11 @@ pub fn execute(command: &str, args: Value) -> store::Result<Value> {
             text(&args, "name")?,
             args["description"].as_str().unwrap_or(""),
             args["targetDate"].as_str(),
+            args["version"].as_str(),
         )),
+        "move_goal" => {
+            encoded(store.move_goal(text(&args, "goalId")?, project()?, args["afterId"].as_str()))
+        }
         "complete_goal" => encoded(
             store.complete_goal(
                 text(&args, "goalId")?,

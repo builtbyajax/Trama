@@ -12,6 +12,8 @@ type AppCommands = {
   setProjectMode: (mode: ProjectMode) => void;
   /** Switches every board between kanban and list. */
   toggleBoardView: () => void;
+  /** Expands or folds the board's Done column. */
+  toggleDone: () => void;
   openShortcuts: () => void;
   openSearch: () => void;
   openSwitcher: () => void;
@@ -68,6 +70,9 @@ export function useAppCommands(commands: AppCommands) {
         break;
       case "board_view":
         commands.toggleBoardView();
+        break;
+      case "toggle_done":
+        commands.toggleDone();
         break;
       case "switch_project":
         commands.openSwitcher();

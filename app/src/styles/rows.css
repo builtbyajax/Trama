@@ -206,6 +206,14 @@ code.archive-ref {
   align-items: center;
   gap: 6px;
 }
+/* The person's ring and the plain agent mark take the 14px a character takes, centred, so every
+   name in the column starts at the same place. */
+.list-who > .glyph.user {
+  margin-inline: 2.5px;
+}
+.list-who > .glyph.agent {
+  margin-inline: 3.5px;
+}
 .list-when {
   text-align: right;
 }
@@ -254,7 +262,7 @@ code.archive-ref {
   background: var(--card-hover);
   box-shadow:
     0 14px 32px rgba(0, 0, 0, 0.55),
-    0 0 0 1px var(--accent-line);
+    0 0 0 1px color-mix(in srgb, var(--lane, var(--accent)) 55%, transparent);
 }
 .list-row.landed .row-button {
   animation: row-landed 0.9s var(--ease);
@@ -277,7 +285,7 @@ code.archive-ref {
   top: 0;
   height: 2px;
   border-radius: 1px;
-  background: var(--accent);
+  background: var(--lane, var(--accent));
 }
 /* An empty stage is only its heading, which takes the dropped row; nothing appears when a drag starts. */
 .list-group.empty .list-group-head {
@@ -286,13 +294,53 @@ code.archive-ref {
   border-radius: 9px;
   color: var(--ink-3);
 }
+/* A stage under a dragged row, its heading and the line where the row lands take its colour. */
 .list-group.empty.drop-target .list-group-head {
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--lane, var(--accent)) 14%, transparent);
 }
 .list-group.drop-target .list-group-head {
-  color: var(--accent-text);
+  color: var(--lane, var(--accent-text));
 }
 .list-row .row-button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
+}
+/* The concluded tasks, folded on top of the list until opened. Its head reads like the others'
+   and lights up green when a row is dropped on it. */
+.done-group .list-group-head {
+  padding: 0;
+}
+.done-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: calc(100% + 24px);
+  margin: 0 -12px;
+  padding: 8px 12px 6px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  transition: background-color 0.15s;
+}
+/* The heading is a button: hovering shows it opens and folds. */
+.done-toggle:hover {
+  background: var(--hover);
+}
+.done-toggle .icon {
+  color: var(--ink-3);
+}
+.done-group.drop-target {
+  margin-inline: -12px;
+  padding-inline: 12px;
+  border-radius: 9px;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--s-done) 16%, transparent),
+    transparent
+  );
+}
+.done-group.drop-target .list-group-head {
+  color: var(--s-done);
 }

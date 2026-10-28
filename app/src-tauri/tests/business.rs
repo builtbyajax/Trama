@@ -188,14 +188,21 @@ fn deleting_a_goal_unlinks_tasks_and_cross_project_assignments_are_rejected() {
     let other = project(&s, "Other");
     let t = task(&s, &p.id, "Task", "todo");
     let goal = s
-        .save_goal(None, &p.id, " Goal ", " Description ", Some("2026-12-01"))
+        .save_goal(
+            None,
+            &p.id,
+            " Goal ",
+            " Description ",
+            Some("2026-12-01"),
+            None,
+        )
         .unwrap();
     assert_eq!(
         (&goal.name, &goal.description),
         (&"Goal".to_string(), &"Description".to_string())
     );
     let edited = s
-        .save_goal(Some(&goal.id), &p.id, "Updated", "New", None)
+        .save_goal(Some(&goal.id), &p.id, "Updated", "New", None, None)
         .unwrap();
     assert!(edited.target_date.is_none());
     assert!(s
@@ -217,7 +224,9 @@ fn deleting_a_goal_unlinks_tasks_and_cross_project_assignments_are_rejected() {
         },
     )
     .unwrap();
-    let foreign = s.save_goal(None, &other.id, "Foreign", "", None).unwrap();
+    let foreign = s
+        .save_goal(None, &other.id, "Foreign", "", None, None)
+        .unwrap();
     assert!(s
         .edit_task(
             &t.id,
@@ -230,10 +239,48 @@ fn deleting_a_goal_unlinks_tasks_and_cross_project_assignments_are_rejected() {
         .is_err());
     s.delete_goal(&goal.id, &p.id).unwrap();
     assert!(s.task(&t.id, &p.id).unwrap().goal_id.is_none());
-    assert!(s.save_goal(None, &p.id, "", "", None).is_err());
+    assert!(s.save_goal(None, &p.id, "", "", None, None).is_err());
     assert!(s
-        .save_goal(None, &p.id, "Invalid date", "", Some("2026-02-30"))
+        .save_goal(None, &p.id, "Invalid date", "", Some("2026-02-30"), None)
         .is_err());
+}
+
+#[test]
+fn goals_keep_a_version_and_the_order_the_person_gives_them() {
+    let s = memory();
+    let p = project(&s, "Goals");
+    let first = s
+        .save_goal(None, &p.id, "First", "", None, Some(" 0.4.1 "))
+        .unwrap();
+    let second = s.save_goal(None, &p.id, "Second", "", None, None).unwrap();
+    let third = s
+        .save_goal(None, &p.id, "Third", "", None, Some(""))
+        .unwrap();
+    assert_eq!(first.version.as_deref(), Some("0.4.1"));
+    assert!(third.version.is_none());
+    assert!(s
+        .save_goal(None, &p.id, "Long", "", None, Some(&"9".repeat(25)))
+        .is_err());
+    let names =
+        |goals: Vec<trama_lib::store::Goal>| goals.into_iter().map(|g| g.name).collect::<Vec<_>>();
+    assert_eq!(
+        names(s.goals(Some(&p.id)).unwrap()),
+        ["First", "Second", "Third"]
+    );
+    assert_eq!(
+        names(s.move_goal(&third.id, &p.id, None).unwrap()),
+        ["Third", "First", "Second"]
+    );
+    assert_eq!(
+        names(s.move_goal(&third.id, &p.id, Some(&second.id)).unwrap()),
+        ["First", "Second", "Third"]
+    );
+    let edited = s
+        .save_goal(Some(&first.id), &p.id, "First", "", None, None)
+        .unwrap();
+    assert!(edited.version.is_none());
+    let other = project(&s, "Other");
+    assert!(s.move_goal(&first.id, &other.id, None).is_err());
 }
 
 #[test]

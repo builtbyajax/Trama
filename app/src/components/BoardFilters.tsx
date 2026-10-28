@@ -31,7 +31,7 @@ import { Icon } from "./Icon";
 import { KeyHint } from "./KeyHint";
 import { ProjectMark } from "./ProjectMark";
 import { Select, type SelectOption } from "./Select";
-import { goalChoices } from "./Goals";
+import { goalChoices, goalSearch } from "./Goals";
 import { ContextMenu } from "./Sidebar";
 import { locale, t } from "../lib/i18n";
 import { Segmented, type SegmentedOption } from "./Segmented";
@@ -91,6 +91,7 @@ export function ProjectHeader({
   project,
   color,
   tasks,
+  allTasks,
   goals,
   goal,
   mode,
@@ -101,11 +102,14 @@ export function ProjectHeader({
   onReveal,
   onShowConcluded,
   onNewGoal,
+  pulse,
 }: {
   project: Project;
   color: string;
-  /** The project's board tasks, unfiltered. */
+  /** The tasks the filters offer, unfiltered: the project's open ones, or the open goal's. */
   tasks: Task[];
+  /** Every task of the project, done ones included: a goal counts all of its own. */
+  allTasks: Task[];
   /** The project's goals. */
   goals: Goal[];
   /**
@@ -116,6 +120,7 @@ export function ProjectHeader({
   goal?: {
     id: string;
     name: string;
+    version: string | null;
     description: string;
     summary: ReactNode;
     actions: ReactNode;
@@ -133,6 +138,8 @@ export function ProjectHeader({
   /** Opens every concluded goal, from the goal menus. */
   onShowConcluded: () => void;
   onNewGoal: () => void;
+  /** Stands in for the task count under the name, on the project's page. */
+  pulse?: ReactNode;
 }) {
   const goalSwitch = useRef<HTMLButtonElement>(null);
   const [goalMenu, setGoalMenu] = useState<{ x: number; y: number } | null>(
@@ -167,9 +174,9 @@ export function ProjectHeader({
       onReveal(path);
     },
   });
-  // With a goal open, the summary line counts that goal's tasks.
+  // With a goal open, the summary line counts all of that goal's tasks, done ones included.
   const counted = goal
-    ? tasks.filter((task) => task.goalId === goal.id)
+    ? allTasks.filter((task) => task.goalId === goal.id)
     : tasks;
   const withAgent = counted.filter(
     (task) => task.assignee === "agent" && task.status !== "done",
@@ -231,6 +238,9 @@ export function ProjectHeader({
                   }}
                 >
                   <span className="truncate">{goal.name}</span>
+                  {goal.version && (
+                    <span className="version-tag">{goal.version}</span>
+                  )}
                   <Icon name="chevronUpDown" size={14} />
                 </button>
                 {goal.summary}
@@ -261,10 +271,14 @@ export function ProjectHeader({
             )}
           </h1>
           <p>
-            {counted.length === 1
-              ? t("1 task")
-              : t("{0} tasks", [counted.length])}
-            {withAgent > 0 && t(", {0} with the agent", [withAgent])}
+            {pulse ?? (
+              <>
+                {counted.length === 1
+                  ? t("1 task")
+                  : t("{0} tasks", [counted.length])}
+                {withAgent > 0 && t(", {0} with the agent", [withAgent])}
+              </>
+            )}
             {!goal && mode === "notes" && project.documentsFolder && (
               <button
                 type="button"
@@ -306,6 +320,8 @@ export function ProjectHeader({
             y={goalMenu.y}
             anchor={goalSwitch}
             label={t("Goals")}
+            className="goal-menu"
+            search={goalSearch(goals)}
             items={[
               ...goalChoices(goals, goal.id, (id) => onFilter({ goal: id }), {
                 recent: 3,
@@ -316,11 +332,13 @@ export function ProjectHeader({
                 label: t("Edit goal…"),
                 icon: "pencil" as const,
                 separated: true,
+                pinned: true,
                 onSelect: goal.onEdit,
               },
               {
                 label: t("Show every task"),
                 icon: "board" as const,
+                pinned: true,
                 onSelect: goal.onClear,
               },
               {
@@ -328,6 +346,7 @@ export function ProjectHeader({
                 icon: "trash" as const,
                 danger: true,
                 separated: true,
+                pinned: true,
                 onSelect: goal.onDelete,
               },
             ]}
@@ -343,6 +362,8 @@ export function ProjectHeader({
             y={pickerMenu.y}
             anchor={goalPicker}
             label={t("Open a goal")}
+            className="goal-menu"
+            search={goalSearch(goals)}
             items={goalChoices(goals, null, (id) => onFilter({ goal: id }), {
               recent: 3,
               onShowAll: onShowConcluded,
@@ -358,6 +379,7 @@ export function ProjectHeader({
         )}
         <Segmented
           label={t("Project view")}
+          arrows={false}
           options={[
             tab(
               "project",

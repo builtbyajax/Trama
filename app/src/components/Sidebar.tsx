@@ -29,7 +29,7 @@ import {
   useAgentProfiles,
 } from "../lib/agents";
 import { ProjectMark } from "./ProjectMark";
-import { t } from "../lib/i18n";
+import { locale, t } from "../lib/i18n";
 import { SidebarLeaving } from "./SidebarSlot";
 import type { PreferencesSection } from "./Preferences";
 
@@ -53,7 +53,7 @@ interface SidebarProps {
   onEditProject: (project: Project) => void;
   onDeleteProject: (project: Project) => void;
   onMoveProject: (project: Project) => void;
-  /** Under the open project's row: its goals. */
+  /** Under the open project's row: its goals, as a list or, in the rail, a menu. */
   projectExtra?: ReactNode;
   /** The workspace switcher, above everything else. */
   workspace?: ReactNode;
@@ -210,7 +210,7 @@ export function Sidebar({
                 selected={open}
                 onClick={() => onNavigate({ kind: "project", id: project.id })}
               />
-              {open && !rail && projectExtra}
+              {open && projectExtra}
             </Fragment>
           );
         })}
@@ -504,6 +504,10 @@ export interface MenuItem {
   leading?: ReactNode;
   /** The current choice among the rows: a check at the end. */
   checked?: boolean;
+  /** Shows `checked` as a blue row instead of the check, for lists of named things like goals. */
+  highlight?: boolean;
+  /** A short label after the name, such as a goal's version. */
+  tag?: string;
   /** A shortcut or gesture that does the same, shown at the end. */
   hint?: string;
   danger?: boolean;
@@ -513,8 +517,16 @@ export interface MenuItem {
   separated?: boolean;
   /** Names the group it starts, above its first row. */
   section?: string;
+  /** Kept below the rows, outside their scroll and the search. */
+  pinned?: boolean;
   onSelect: () => void;
 }
+
+const fold = (text: string) =>
+  text
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase(locale);
 
 /**
  * Menu opened by a right click, at the pointer and kept inside the window. Arrows move, Enter
@@ -529,6 +541,7 @@ export function ContextMenu({
   anchor,
   heading,
   width,
+  search,
   className = "",
 }: {
   x: number;
@@ -541,14 +554,29 @@ export function ContextMenu({
   /** A quiet title above the rows. */
   heading?: string;
   width?: number;
+  /** A field above the rows that narrows them by name, with what to say when none is left. */
+  search?: { label: string; empty: (query: string) => string };
   className?: string;
 }) {
   const leaving = useContext(SidebarLeaving);
   const ref = useRef<HTMLDivElement>(null);
+  const field = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState("");
+  const needle = fold(query.trim());
+  // Narrowed, the rows lose their groups: a heading or line would stand for rows left out.
+  const rows = needle
+    ? items
+        .filter((item) => !item.pinned && fold(item.label).includes(needle))
+        .map((item) => ({ ...item, separated: false, section: undefined }))
+    : items.filter((item) => !item.pinned);
+  const pinned = items.filter((item) => item.pinned);
   const [position, setPosition] = useState({ left: x, top: y });
+  // With a search, the width found on opening stays, so narrowing the rows doesn't shrink it.
+  const [opened, setOpened] = useState<number>();
   useLayoutEffect(() => {
     const menu = ref.current;
     if (!menu) return;
+    if (search) setOpened(menu.offsetWidth);
     const margin = 8;
     setPosition({
       left: Math.max(
@@ -560,8 +588,11 @@ export function ContextMenu({
         Math.min(y, window.innerHeight - menu.offsetHeight - margin),
       ),
     });
+    const checked = menu.querySelector<HTMLElement>("[aria-checked=true]");
+    checked?.scrollIntoView({ block: "nearest" });
     (
-      menu.querySelector<HTMLElement>("[aria-checked=true]") ??
+      field.current ??
+      checked ??
       menu.querySelector<HTMLElement>("[role^=menuitem]")
     )?.focus({ preventScroll: true });
   }, [x, y]);
@@ -594,7 +625,21 @@ export function ContextMenu({
       event.preventDefault();
       options[(next + options.length) % options.length]?.focus();
     };
-    if (event.key === "ArrowDown") move(index + 1);
+    const typing = event.target === field.current;
+    if (typing && event.key === "Enter") {
+      event.preventDefault();
+      options[0]?.click();
+    } else if (
+      field.current &&
+      !typing &&
+      event.key.length === 1 &&
+      !event.metaKey &&
+      !event.ctrlKey
+    )
+      // Typing on a row goes on in the field, which takes the letter.
+      field.current.focus();
+    else if (typing && (event.key === "Home" || event.key === "End")) return;
+    else if (event.key === "ArrowDown") move(index + 1);
     else if (event.key === "ArrowUp") move(index - 1);
     else if (event.key === "Home") move(0);
     else if (event.key === "End") move(options.length - 1);
@@ -607,13 +652,58 @@ export function ContextMenu({
       onClose(true);
     }
   }
+  const row = (item: MenuItem, index: number) => [
+    item.separated && index > 0 && (
+      <div
+        key={`${item.label}-line`}
+        role="separator"
+        className="menu-separator"
+      />
+    ),
+    item.section && (
+      <div
+        key={`${item.label}-section`}
+        className="menu-heading"
+        aria-hidden="true"
+      >
+        {item.section}
+      </div>
+    ),
+    <button
+      key={item.label}
+      type="button"
+      role={item.checked === undefined ? "menuitem" : "menuitemradio"}
+      aria-checked={item.checked}
+      tabIndex={-1}
+      className={`popover-option ${item.danger ? "danger" : ""} ${item.muted ? "muted" : ""} ${item.highlight && item.checked ? "current" : ""}`}
+      onClick={() => {
+        onClose(false);
+        item.onSelect();
+      }}
+    >
+      {item.leading ??
+        (item.icon ? (
+          <Icon name={item.icon} size={14} />
+        ) : (
+          <span className="menu-icon-space" aria-hidden="true" />
+        ))}
+      <span className="popover-label">{item.label}</span>
+      {item.tag && <span className="version-tag">{item.tag}</span>}
+      {item.hint && <kbd className="popover-hint">{item.hint}</kbd>}
+      {item.checked && !item.highlight && (
+        <span className="menu-check" aria-hidden="true">
+          <Icon name="check" size={14} />
+        </span>
+      )}
+    </button>,
+  ];
   return createPortal(
     <div
       ref={ref}
       role="menu"
       aria-label={label}
       className={`popover-list context-menu ${leaving ? "leaving" : ""} ${className}`}
-      style={{ position: "fixed", ...position, width }}
+      style={{ position: "fixed", ...position, width: width ?? opened }}
       onKeyDown={keyDown}
       onContextMenu={(event) => event.preventDefault()}
     >
@@ -622,50 +712,32 @@ export function ContextMenu({
           {heading}
         </div>
       )}
-      {items.map((item, index) => [
-        item.separated && index > 0 && (
-          <div
-            key={`${item.label}-line`}
-            role="separator"
-            className="menu-separator"
+      {search && (
+        <div className="menu-search">
+          <Icon name="search" size={13} />
+          <input
+            ref={field}
+            aria-label={search.label}
+            placeholder={search.label}
+            autoComplete="off"
+            spellCheck={false}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
           />
-        ),
-        item.section && (
-          <div
-            key={`${item.label}-section`}
-            className="menu-heading"
-            aria-hidden="true"
-          >
-            {item.section}
-          </div>
-        ),
-        <button
-          key={item.label}
-          type="button"
-          role={item.checked === undefined ? "menuitem" : "menuitemradio"}
-          aria-checked={item.checked}
-          tabIndex={-1}
-          className={`popover-option ${item.danger ? "danger" : ""} ${item.muted ? "muted" : ""}`}
-          onClick={() => {
-            onClose(false);
-            item.onSelect();
-          }}
-        >
-          {item.leading ??
-            (item.icon ? (
-              <Icon name={item.icon} size={14} />
-            ) : (
-              <span className="menu-icon-space" aria-hidden="true" />
-            ))}
-          <span className="popover-label">{item.label}</span>
-          {item.hint && <kbd className="popover-hint">{item.hint}</kbd>}
-          {item.checked && (
-            <span className="menu-check" aria-hidden="true">
-              <Icon name="check" size={14} />
-            </span>
-          )}
-        </button>,
-      ])}
+        </div>
+      )}
+      <div className="menu-rows">
+        {rows.map(row)}
+        {rows.length === 0 && search && (
+          <p className="menu-empty">{search.empty(query.trim())}</p>
+        )}
+      </div>
+      {pinned.length > 0 && (
+        <>
+          <div role="separator" className="menu-separator" />
+          {pinned.map(row)}
+        </>
+      )}
     </div>,
     document.body,
   );

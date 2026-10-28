@@ -89,6 +89,7 @@ export const shortcuts = {
   git: [tab, "3"],
   projectNotes: [tab, "4"],
   boardView: ["shift", "mod", "l"],
+  doneColumn: ["alt", "mod", "b"],
   switchProject: ["mod", "t"],
   sidebar: ["mod", "b"],
   back: ["mod", "["],
@@ -106,6 +107,8 @@ export const projectShortcut = (index: number): Key[] | undefined =>
 
 export interface ShortcutGroup {
   title: string;
+  /** In the sheet's second column; the rest stack in the first. */
+  second?: boolean;
   items: { label: string; keys: Key[][] }[];
 }
 
@@ -124,6 +127,7 @@ export const shortcutGroups: ShortcutGroup[] = [
   },
   {
     title: t("Navigation"),
+    second: true,
     items: [
       { label: t("Overview"), keys: [shortcuts.overview] },
       { label: t("Archive"), keys: [shortcuts.archive] },
@@ -165,14 +169,11 @@ export const shortcutGroups: ShortcutGroup[] = [
         label: t("Switch between kanban and list"),
         keys: [shortcuts.boardView],
       },
-      { label: t("Open card details"), keys: [["enter"]] },
-      { label: t("Pick up or drop the card"), keys: [["space"]] },
-      { label: t("Choose the column"), keys: [["left"], ["right"]] },
       {
-        label: t("Choose the position in the column"),
-        keys: [["up"], ["down"]],
+        label: t("Expand or fold Done"),
+        keys: [shortcuts.doneColumn],
       },
-      { label: t("Cancel the move"), keys: [["escape"]] },
+      { label: t("Open card details"), keys: [["enter"]] },
     ],
   },
   {
@@ -184,6 +185,7 @@ export const shortcutGroups: ShortcutGroup[] = [
   },
   {
     title: t("Git and changes"),
+    second: true,
     items: [
       { label: t("Step through commits"), keys: [["up"], ["down"]] },
       { label: t("Open the commit's changes"), keys: [["enter"]] },

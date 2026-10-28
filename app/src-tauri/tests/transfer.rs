@@ -16,7 +16,14 @@ fn seeded(store: &Store, folder: &Path) -> (String, String) {
         )
         .unwrap();
     let goal = store
-        .save_goal(None, &p.id, "Synthetic goal", "Outcome", Some("2027-01-01"))
+        .save_goal(
+            None,
+            &p.id,
+            "Synthetic goal",
+            "Outcome",
+            Some("2027-01-01"),
+            None,
+        )
         .unwrap();
     let t = task(store, &p.id, "Transferred task", "todo");
     store

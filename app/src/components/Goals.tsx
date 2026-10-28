@@ -1,8 +1,33 @@
-import { useState, type FormEvent } from "react";
-import { completeGoal, deleteGoal, errorMessage, saveGoal } from "../lib/api";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useDraggable,
+  useSensor,
+  useSensors,
+  type DragMoveEvent,
+} from "@dnd-kit/core";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
+import {
+  completeGoal,
+  deleteGoal,
+  errorMessage,
+  moveTask,
+  saveGoal,
+} from "../lib/api";
 import { goalProgress, type Goal, type Task } from "../lib/types";
 import { DatePicker, daysUntil, relativeDay } from "./DatePicker";
-import { Field } from "./Field";
+import { AutoTextarea } from "./AutoTextarea";
 import { Icon } from "./Icon";
 import { Modal } from "./Modal";
 import { ContextMenu, type MenuItem } from "./Sidebar";
@@ -29,17 +54,6 @@ const overdue = (goal: Goal) =>
 const complete = ({ total, done }: { total: number; done: number }) =>
   total > 0 && done === total;
 
-function GoalBar({ done, total }: { done: number; total: number }) {
-  return (
-    <span
-      className={`goal-bar ${total > 0 && done === total ? "full" : ""}`}
-      aria-hidden="true"
-    >
-      <span style={{ width: total ? `${(done / total) * 100}%` : 0 }} />
-    </span>
-  );
-}
-
 /** The goal's tasks by status, in the order they finish. */
 const progressOrder = [
   "done",
@@ -54,7 +68,13 @@ const maxDots = 12;
  * The goal's tasks colored by status: a dot each up to `maxDots`, then a bar as wide as that many
  * dots, so the title stays one line.
  */
-function GoalProgressBar({ goal, tasks }: { goal: Goal; tasks: Task[] }) {
+export function GoalProgressBar({
+  goal,
+  tasks,
+}: {
+  goal: Goal;
+  tasks: Task[];
+}) {
   const counts = { done: 0, review: 0, inProgress: 0, todo: 0, backlog: 0 };
   for (const task of tasks)
     if (task.goalId === goal.id && task.status in counts)
@@ -87,7 +107,7 @@ function GoalProgressBar({ goal, tasks }: { goal: Goal; tasks: Task[] }) {
 }
 
 /** When a goal was concluded, e.g. "8 de out.", with the year when it isn't this one. */
-function concludedDay(seconds: number) {
+export function concludedDay(seconds: number) {
   const date = new Date(seconds * 1000);
   return date.toLocaleDateString(locale, {
     day: "numeric",
@@ -97,16 +117,83 @@ function concludedDay(seconds: number) {
   });
 }
 
+/** Where a goal stands: concluded, started once a task moved past To do, or not started. */
+export type GoalStage = "started" | "waiting" | "concluded";
+export function goalStage(goal: Goal, tasks: Task[]): GoalStage {
+  if (goal.completedAt !== null) return "concluded";
+  return tasks.some(
+    (task) =>
+      task.goalId === goal.id &&
+      (task.status === "done" ||
+        task.status === "review" ||
+        task.status === "inProgress"),
+  )
+    ? "started"
+    : "waiting";
+}
+const stageRank: Record<GoalStage, number> = {
+  started: 0,
+  waiting: 1,
+  concluded: 2,
+};
+
+/**
+ * The goals as the project page and the sidebar list them: the started ones, then those not
+ * started, then the concluded, the latest first. By progress, the started ones closest to done
+ * lead and move as their tasks do. `manual` keeps, inside each group, the order they were dragged to.
+ */
+export function orderGoals(goals: Goal[], tasks: Task[], manual: boolean) {
+  const facts = new Map(
+    goals.map((goal) => {
+      const own = tasks.filter((task) => task.goalId === goal.id);
+      const total = own.length || 1;
+      const done = own.filter((task) => task.status === "done").length;
+      const review = own.filter((task) => task.status === "review").length;
+      return [
+        goal.id,
+        {
+          stage: goalStage(goal, tasks),
+          done: done / total,
+          near: (done + review) / total,
+        },
+      ];
+    }),
+  );
+  return [...goals].sort((a, b) => {
+    const x = facts.get(a.id)!;
+    const y = facts.get(b.id)!;
+    if (x.stage !== y.stage) return stageRank[x.stage] - stageRank[y.stage];
+    if (x.stage === "concluded") return b.completedAt! - a.completedAt!;
+    if (
+      !manual &&
+      x.stage === "started" &&
+      (y.done !== x.done || y.near !== x.near)
+    )
+      return y.done - x.done || y.near - x.near;
+    return a.position - b.position;
+  });
+}
+
 /** The concluded goals, the most recently concluded first. */
 const byConcluded = (goals: Goal[]) =>
   goals
     .filter((g) => g.completedAt !== null)
     .sort((a, b) => b.completedAt! - a.completedAt!);
 
+/** The open goals: those with a version first, the lowest first, then the rest in their order. */
+const byVersion = (goals: Goal[]) =>
+  goals
+    .filter((g) => g.completedAt === null)
+    .sort((a, b) =>
+      a.version && b.version
+        ? a.version.localeCompare(b.version, undefined, { numeric: true })
+        : Number(!a.version) - Number(!b.version),
+    );
+
 /**
- * The project's goals as menu rows to open one: the open ones, then the `recent` most recently
+ * The project's goals as menu rows to open one: the open ones by version, then the `recent` most recently
  * concluded grayed in their own group, with their day, and a row to see them all when more wait.
- * With `onNew`, a row to create one follows the open goals.
+ * With `onNew`, a row to create one. That row and "see all" stay below the scrolling goals.
  * `currentId` gets the check.
  */
 export function goalChoices(
@@ -119,13 +206,15 @@ export function goalChoices(
     onNew,
   }: { recent: number; onShowAll: () => void; onNew?: () => void },
 ): MenuItem[] {
-  const open = goals.filter((g) => g.completedAt === null);
+  const open = byVersion(goals);
   const concluded = byConcluded(goals);
   const items: MenuItem[] = [
     ...open.map((g) => ({
       label: g.name,
+      tag: g.version ?? undefined,
       icon: "target" as const,
       checked: currentId === null ? undefined : g.id === currentId,
+      highlight: true,
       onSelect: () => onPick(g.id),
     })),
     ...(onNew
@@ -133,16 +222,19 @@ export function goalChoices(
           {
             label: t("New goal"),
             icon: "plus" as const,
+            pinned: true,
             onSelect: onNew,
           },
         ]
       : []),
     ...concluded.slice(0, recent).map((g, index) => ({
       label: g.name,
+      tag: g.version ?? undefined,
       icon: "check" as const,
       muted: true,
       hint: concludedDay(g.completedAt!),
       checked: currentId === null ? undefined : g.id === currentId,
+      highlight: true,
       separated: index === 0 && open.length > 0,
       section: index === 0 ? t("Concluded") : undefined,
       onSelect: () => onPick(g.id),
@@ -151,29 +243,95 @@ export function goalChoices(
   if (concluded.length > recent)
     items.push({
       label: t("See all {0}…", [concluded.length]),
-      separated: !onNew,
+      pinned: true,
       onSelect: onShowAll,
     });
   return items;
 }
 
-/** The day beside a goal in the sidebar: only once it is near, a week away or less, or passed. */
-function nearDay(goal: Goal) {
-  if (!goal.targetDate || goal.completedAt !== null) return null;
-  if (overdue(goal)) return { text: t("late|goal"), late: true };
-  return daysUntil(goal.targetDate) <= 7
-    ? { text: relativeDay(goal.targetDate), late: false }
-    : null;
+/** Past this many open goals, their menus get a field to find one by name. */
+export const goalSearch = (goals: Goal[]) =>
+  goals.filter((g) => g.completedAt === null).length > 10
+    ? {
+        label: t("Search goals"),
+        empty: (query: string) => t("No goal matches “{0}”.", [query]),
+      }
+    : undefined;
+
+/**
+ * The rail's stand-in for `SidebarGoals`: a target under the open project's mark that opens its
+ * goals in a menu, as the board's goal picker does. Nothing shows while the project has no goals.
+ */
+export function RailGoals({
+  goals,
+  activeId,
+  onSelect,
+  onNew,
+  onShowConcluded,
+}: {
+  goals: Goal[];
+  activeId: string | null;
+  onSelect: (goalId: string) => void;
+  onNew: () => void;
+  onShowConcluded: () => void;
+}) {
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  if (goals.length === 0) return null;
+  return (
+    <>
+      <button
+        ref={trigger}
+        type="button"
+        className={`nav-item ${menu ? "menu-open" : ""}`}
+        aria-label={t("Goals")}
+        aria-haspopup="menu"
+        aria-expanded={!!menu}
+        data-tooltip={menu ? undefined : t("Goals")}
+        data-tooltip-side="right"
+        onClick={() => {
+          if (menu) return setMenu(null);
+          const rect = trigger.current!.getBoundingClientRect();
+          setMenu({ x: rect.right + 6, y: rect.top });
+        }}
+      >
+        <span className="nav-leading">
+          <Icon name="target" size={15} />
+        </span>
+      </button>
+      {menu && (
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          anchor={trigger}
+          label={t("Goals")}
+          className="goal-menu"
+          search={goalSearch(goals)}
+          items={goalChoices(goals, activeId ?? "", onSelect, {
+            recent: 3,
+            onShowAll: onShowConcluded,
+            onNew,
+          })}
+          onClose={(restoreFocus) => {
+            if (restoreFocus) trigger.current?.focus();
+            setMenu(null);
+          }}
+        />
+      )}
+    </>
+  );
 }
 
 /**
- * The open project's goals under its row in the sidebar, joined to it by a line, each with its
- * progress. Choosing one filters the board by it; the recently concluded wait in a menu behind one
- * line, and the rest in `ConcludedGoals`.
+ * The open project's goals under its row in the sidebar, beside a stripe in the project's color,
+ * one line each: the row fills as its tasks get done, and its name turns red once its target date
+ * passed. Choosing one filters the board by it; the concluded ones are counted beside "New goal",
+ * which opens them on the project page.
  */
 export function SidebarGoals({
   goals,
   tasks,
+  color,
   activeId,
   onSelect,
   onNew,
@@ -181,10 +339,13 @@ export function SidebarGoals({
   onComplete,
   onReopen,
   onDelete,
+  onMove,
   onShowConcluded,
 }: {
   goals: Goal[];
   tasks: Task[];
+  /** The project's color, for the stripe beside its goals. */
+  color: string;
   activeId: string | null;
   onSelect: (goalId: string | null) => void;
   onNew: () => void;
@@ -193,6 +354,8 @@ export function SidebarGoals({
   onComplete: (goal: Goal) => void;
   onReopen: (goal: Goal) => void;
   onDelete: (goal: Goal) => void;
+  /** Saves a new place for the goal, right after `afterId` or at the top. */
+  onMove: (goal: Goal, afterId: string | null) => void;
 }) {
   const [menu, setMenu] = useState<{
     goal: Goal;
@@ -200,34 +363,107 @@ export function SidebarGoals({
     y: number;
     trigger: HTMLElement;
   } | null>(null);
-  const open = goals.filter((g) => g.completedAt === null);
+  // The order just dropped, shown until the saved one comes back with the goals.
+  const [order, setOrder] = useState<string[] | null>(null);
+  useEffect(() => setOrder(null), [goals]);
+  const listed = goals.filter((g) => g.completedAt === null);
+  const open = order
+    ? order.flatMap((id) => listed.filter((g) => g.id === id))
+    : listed;
   const concluded = goals.filter((g) => g.completedAt !== null);
-  const [concludedMenu, setConcludedMenu] = useState<{
-    x: number;
-    y: number;
-    trigger: HTMLElement;
-  } | null>(null);
-  const row = (goal: Goal) => {
+  const [dragged, setDragged] = useState<Goal | null>(null);
+  // Where the dragged goal would land, counted among the other open goals.
+  const [drop, setDrop] = useState<number | null>(null);
+  const rows = useRef(new Map<string, HTMLElement>());
+  const lastDrop = useRef(0);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+  const others = open.filter((g) => g.id !== dragged?.id);
+  const origin = dragged ? open.indexOf(dragged) : -1;
+  const track = ({ activatorEvent, delta }: DragMoveEvent) => {
+    const y = (activatorEvent as PointerEvent).clientY + delta.y;
+    setDrop(
+      others.filter((g) => {
+        const rect = rows.current.get(g.id)?.getBoundingClientRect();
+        return rect && rect.top + rect.height / 2 < y;
+      }).length,
+    );
+  };
+  /** Puts the goal at `index` among the other open goals and saves it. */
+  const place = (goal: Goal, index: number) => {
+    const rest = open.filter((g) => g.id !== goal.id);
+    if (index < 0 || index > rest.length || index === open.indexOf(goal))
+      return;
+    setOrder(
+      [...rest.slice(0, index), goal, ...rest.slice(index)].map((g) => g.id),
+    );
+    onMove(goal, index === 0 ? null : rest[index - 1].id);
+  };
+  // The concluded ones show only their count beside "New goal": the words go in the label.
+  const concludedLabel =
+    concluded.length === 1
+      ? t("1 concluded")
+      : t("{0} concluded", [concluded.length]);
+  const row = (goal: Goal, overlay = false) => {
     const progress = goalProgress(goal, tasks);
     const active = goal.id === activeId;
-    const day = nearDay(goal);
-    const ready = goal.completedAt === null && complete(progress);
+    const late = overdue(goal);
+    const percent = progress.total
+      ? Math.round((progress.done / progress.total) * 100)
+      : null;
+    const fill = { "--progress": `${percent ?? 0}%` } as CSSProperties;
+    const className = `goal-item ${active ? "selected" : ""} ${menu?.goal.id === goal.id ? "menu-open" : ""} ${late ? "late" : ""}`;
+    const content = (
+      <>
+        <span
+          className="goal-name truncate"
+          title={late ? t("The target date passed") : undefined}
+        >
+          {goal.name}
+        </span>
+        {percent !== null && (
+          <span className="goal-percent" aria-hidden="true">
+            {percent}%
+          </span>
+        )}
+      </>
+    );
+    // The copy that follows the pointer while the goal is dragged.
+    if (overlay)
+      return (
+        <div className={`${className} drag-overlay`} style={fill}>
+          {content}
+        </div>
+      );
     return (
-      <button
+      <SidebarGoalRow
         key={goal.id}
-        type="button"
-        className={`goal-item ${active ? "selected" : ""} ${menu?.goal.id === goal.id ? "menu-open" : ""} ${goal.completedAt !== null ? "concluded" : ""}`}
-        aria-pressed={active}
-        aria-label={t("{0}, {1} of {2} done", [
+        id={goal.id}
+        style={fill}
+        rowRef={(node) => {
+          if (node) rows.current.set(goal.id, node);
+          else rows.current.delete(goal.id);
+        }}
+        className={`${className} ${dragged?.id === goal.id ? "dragging" : ""}`}
+        pressed={active}
+        label={t("{0}, {1} of {2} done", [
           goal.name,
           progress.done,
           progress.total,
         ])}
-        onClick={() => onSelect(active ? null : goal.id)}
+        onClick={() => {
+          // A pointer released over the row right after a drag must not open it.
+          if (performance.now() - lastDrop.current < 250) return;
+          onSelect(active ? null : goal.id);
+        }}
         onContextMenu={(event) => {
           event.preventDefault();
           const rect = event.currentTarget.getBoundingClientRect();
-          const keyboard = event.clientX === 0 && event.clientY === 0;
+          // Shift+F10 and the menu key report no pointer position: open under the row then.
+          const keyboard =
+            !("clientX" in event) ||
+            (event.clientX === 0 && event.clientY === 0);
           setMenu({
             goal,
             x: keyboard ? rect.left + 12 : event.clientX,
@@ -236,25 +472,8 @@ export function SidebarGoals({
           });
         }}
       >
-        <span className="goal-line">
-          <span className="goal-name truncate">{goal.name}</span>
-          {day && (
-            <span className={`goal-near ${day.late ? "late" : ""}`}>
-              {day.text}
-            </span>
-          )}
-          {ready ? (
-            <span className="goal-ready">
-              <Icon name="check" size={12} />
-            </span>
-          ) : (
-            <span className="goal-count">
-              {progress.done}/{progress.total}
-            </span>
-          )}
-        </span>
-        <GoalBar {...progress} />
-      </button>
+        {content}
+      </SidebarGoalRow>
     );
   };
   const menuItems = (goal: Goal): MenuItem[] => {
@@ -265,6 +484,19 @@ export function SidebarGoals({
         onSelect: () => onEdit(goal),
       },
     ];
+    const index = open.indexOf(goal);
+    if (index > 0)
+      items.push({
+        label: t("Move up"),
+        icon: "arrowUp",
+        onSelect: () => place(goal, index - 1),
+      });
+    if (index >= 0 && index < open.length - 1)
+      items.push({
+        label: t("Move down"),
+        icon: "arrowDown",
+        onSelect: () => place(goal, index + 1),
+      });
     if (goal.completedAt !== null)
       items.push({
         label: t("Reopen goal"),
@@ -288,53 +520,68 @@ export function SidebarGoals({
   };
   return (
     <>
-      <div className="sidebar-goals" role="group" aria-label={t("Goals")}>
-        {open.map(row)}
-        <button type="button" className="goal-new" onClick={onNew}>
-          <Icon name="plus" size={12} />
-          {t("New goal")}
-        </button>
-        {concluded.length > 0 && (
-          <button
-            type="button"
-            className={`goal-concluded ${concluded.some((g) => g.id === activeId) ? "selected" : ""}`}
-            aria-haspopup="menu"
-            aria-expanded={!!concludedMenu}
-            onClick={(event) => {
-              if (concludedMenu) return setConcludedMenu(null);
-              const rect = event.currentTarget.getBoundingClientRect();
-              // Opens to the side, so it doesn't cover the projects below.
-              setConcludedMenu({
-                x: rect.right + 4,
-                y: rect.top,
-                trigger: event.currentTarget,
-              });
-            }}
-          >
-            <Icon name="check" size={12} />
-            {concluded.length === 1
-              ? t("1 concluded")
-              : t("{0} concluded", [concluded.length])}
-            <Icon name="chevronRight" size={12} />
-          </button>
-        )}
-      </div>
-      {concludedMenu && (
-        <ContextMenu
-          x={concludedMenu.x}
-          y={concludedMenu.y}
-          label={t("Concluded")}
-          anchor={{ current: concludedMenu.trigger }}
-          items={goalChoices(concluded, activeId ?? "", onSelect, {
-            recent: 3,
-            onShowAll: onShowConcluded,
-          })}
-          onClose={(restoreFocus) => {
-            if (restoreFocus) concludedMenu.trigger.focus();
-            setConcludedMenu(null);
+      <div
+        className="sidebar-goals"
+        role="group"
+        aria-label={t("Goals")}
+        style={{ "--goal-stripe": color } as CSSProperties}
+      >
+        <DndContext
+          sensors={sensors}
+          onDragStart={({ active }) => {
+            setDragged(open.find((g) => g.id === active.id) ?? null);
+            setDrop(null);
           }}
-        />
-      )}
+          onDragMove={track}
+          onDragCancel={() => {
+            setDragged(null);
+            setDrop(null);
+          }}
+          onDragEnd={() => {
+            lastDrop.current = performance.now();
+            if (dragged && drop !== null) place(dragged, drop);
+            setDragged(null);
+            setDrop(null);
+          }}
+        >
+          {open.map((goal) => {
+            const line =
+              dragged &&
+              drop !== null &&
+              drop !== origin &&
+              goal.id !== dragged.id &&
+              others.indexOf(goal) === drop;
+            return [
+              line && <span key="drop" className="goal-drop" />,
+              row(goal),
+            ];
+          })}
+          {dragged && drop === others.length && drop !== origin && (
+            <span className="goal-drop" />
+          )}
+          <DragOverlay dropAnimation={null}>
+            {dragged && row(dragged, true)}
+          </DragOverlay>
+        </DndContext>
+        <div className="goal-footer">
+          <button type="button" className="goal-new" onClick={onNew}>
+            <Icon name="plus" size={12} />
+            {t("New goal")}
+          </button>
+          {concluded.length > 0 && (
+            <button
+              type="button"
+              className={`goal-concluded ${concluded.some((g) => g.id === activeId) ? "selected" : ""}`}
+              aria-label={concludedLabel}
+              title={concludedLabel}
+              onClick={onShowConcluded}
+            >
+              <Icon name="check" size={12} />
+              {concluded.length}
+            </button>
+          )}
+        </div>
+      </div>
       {menu && (
         <ContextMenu
           x={menu.x}
@@ -419,139 +666,29 @@ export function GoalActions({
   );
 }
 
-/**
- * Every concluded goal of the project, grouped by the month it was concluded, to find one by name,
- * open it on the board, reopen it or delete it.
- */
-export function ConcludedGoals({
-  goals,
-  tasks,
-  onOpen,
-  onReopen,
-  onDelete,
-  onClose,
-}: {
-  goals: Goal[];
-  tasks: Task[];
-  onOpen: (goal: Goal) => void;
-  onReopen: (goal: Goal) => void;
-  onDelete: (goal: Goal) => void;
-  onClose: () => void;
-}) {
-  const [query, setQuery] = useState("");
-  const concluded = byConcluded(goals);
-  const needle = query.trim().toLocaleLowerCase(locale);
-  const found = concluded.filter((g) =>
-    g.name.toLocaleLowerCase(locale).includes(needle),
-  );
-  const thisYear = new Date().getFullYear();
-  const months: { label: string; goals: Goal[] }[] = [];
-  for (const goal of found) {
-    const date = new Date(goal.completedAt! * 1000);
-    const label = date.toLocaleDateString(locale, {
-      month: "long",
-      year: date.getFullYear() === thisYear ? undefined : "numeric",
-    });
-    const last = months[months.length - 1];
-    if (last?.label === label) last.goals.push(goal);
-    else months.push({ label, goals: [goal] });
-  }
-  return (
-    <Modal
-      title={t("Concluded goals")}
-      onClose={onClose}
-      className="concluded-modal"
-    >
-      <div className="modal-body concluded-body">
-        <div className="concluded-search">
-          <Icon name="search" size={14} />
-          <input
-            data-autofocus
-            aria-label={t("Search goals")}
-            placeholder={t("Search goals")}
-            autoComplete="off"
-            spellCheck={false}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-        <div className="concluded-list scroll">
-          {months.length === 0 && (
-            <p className="concluded-empty">
-              {concluded.length === 0
-                ? t("No concluded goals.")
-                : t("No goal matches “{0}”.", [query.trim()])}
-            </p>
-          )}
-          {months.map((month) => (
-            <section key={month.label} aria-label={month.label}>
-              <h3 className="concluded-month">{month.label}</h3>
-              {month.goals.map((goal) => {
-                const { total } = goalProgress(goal, tasks);
-                return (
-                  <div key={goal.id} className="concluded-row">
-                    <button
-                      type="button"
-                      className="concluded-open"
-                      onClick={() => onOpen(goal)}
-                    >
-                      <span className="truncate">{goal.name}</span>
-                      <span className="concluded-meta">
-                        {total === 1
-                          ? t("Concluded on {0} · 1 task", [
-                              concludedDay(goal.completedAt!),
-                            ])
-                          : t("Concluded on {0} · {1} tasks", [
-                              concludedDay(goal.completedAt!),
-                              total,
-                            ])}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      className="button small"
-                      onClick={() => onReopen(goal)}
-                    >
-                      {t("Reopen")}
-                    </button>
-                    <button
-                      type="button"
-                      className="icon-button small danger-hover"
-                      aria-label={t("Delete goal {0}…", [goal.name])}
-                      data-tooltip={t("Delete goal…")}
-                      data-tooltip-align="end"
-                      onClick={() => onDelete(goal)}
-                    >
-                      <Icon name="trash" size={14} />
-                    </button>
-                  </div>
-                );
-              })}
-            </section>
-          ))}
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
 /** Creates a goal in a project, or edits one. */
 export function GoalComposer({
   projectId,
   goal,
+  versions,
   onClose,
   onSaved,
 }: {
   projectId: string;
   goal?: Goal;
+  /** The versions the project's goals already use, suggested as the person types. */
+  versions: string[];
   onClose: () => void;
   onSaved: (goal: Goal) => void;
 }) {
   const [name, setName] = useState(goal?.name ?? "");
   const [description, setDescription] = useState(goal?.description ?? "");
   const [targetDate, setTargetDate] = useState(goal?.targetDate ?? "");
+  const [version, setVersion] = useState(goal?.version ?? "");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const versionsId = useId();
+  const dateLabelId = useId();
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
@@ -564,6 +701,7 @@ export function GoalComposer({
           name,
           description,
           targetDate || null,
+          version.trim() || null,
           goal?.id ?? null,
         ),
       );
@@ -573,52 +711,62 @@ export function GoalComposer({
     }
   }
   return (
-    <Modal
-      title={goal ? t("Edit goal") : t("New goal")}
-      onClose={onClose}
-      className="goal-modal"
-    >
+    <Modal title={goal ? t("Edit goal") : t("New goal")} onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
-        <div className="modal-body">
-          <Field label={t("Name")}>
-            {({ id }) => (
+        <div className="modal-body goal-form">
+          <AutoTextarea
+            data-autofocus
+            required
+            maxLength={80}
+            maxRows={3}
+            submitOnEnter
+            className="sheet-title"
+            aria-label={t("Name")}
+            value={name}
+            onChange={(e) => setName(e.target.value.replace(/\n/g, " "))}
+            placeholder={t("E.g. Release 1")}
+          />
+          <div className="prop-chips">
+            <label className="prop-chip goal-version-chip">
+              <Icon name="package" size={12} />
               <input
-                id={id}
-                data-autofocus
-                required
-                maxLength={80}
+                list={`${versionsId}-versions`}
+                maxLength={24}
+                style={{
+                  width: `${(version || t("Version")).length + 1}ch`,
+                }}
                 autoComplete="off"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t("E.g. Release 1")}
+                spellCheck={false}
+                aria-label={t("Version, optional")}
+                value={version}
+                onChange={(e) => setVersion(e.target.value)}
+                placeholder={t("Version")}
               />
-            )}
-          </Field>
-          <Field
-            label={t("Description, optional")}
-            hint={t("What the goal delivers when its tasks are done.")}
-          >
-            {({ id, describedBy }) => (
-              <textarea
-                id={id}
-                aria-describedby={describedBy}
-                className="text-area short"
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            )}
-          </Field>
-          <Field label={t("Target date, optional")}>
-            {({ id, labelId }) => (
-              <DatePicker
-                id={id}
-                labelledBy={`${labelId} ${id}`}
-                value={targetDate}
-                onChange={setTargetDate}
-              />
-            )}
-          </Field>
+              <datalist id={`${versionsId}-versions`}>
+                {versions.map((v) => (
+                  <option key={v} value={v} />
+                ))}
+              </datalist>
+            </label>
+            <DatePicker
+              chip
+              labelledBy={dateLabelId}
+              value={targetDate}
+              onChange={setTargetDate}
+            />
+            <span id={dateLabelId} hidden>
+              {t("Target date, optional")}
+            </span>
+          </div>
+          <AutoTextarea
+            className="goal-description"
+            minRows={8}
+            maxRows={18}
+            aria-label={t("Description, optional")}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={t("What the goal delivers when its tasks are done.")}
+          />
           {error && (
             <p className="form-error" role="alert">
               {error}
@@ -698,6 +846,98 @@ export function GoalComplete({
   );
 }
 
+/**
+ * Reopens a concluded goal. Its done tasks can stay done or go back to In review,
+ * the latest one on top, each still with whoever had it.
+ */
+export function GoalReopen({
+  goal,
+  done,
+  onClose,
+  onReopened,
+}: {
+  goal: Goal;
+  /** The goal's done tasks. */
+  done: Task[];
+  onClose: () => void;
+  onReopened: (goal: Goal, reviewed: number) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const reopen = async (review: boolean) => {
+    setBusy(true);
+    try {
+      await completeGoal(goal, false);
+      if (review) {
+        const latest = [...done].sort(
+          (a, b) =>
+            (b.archivedAt ?? b.updatedAt) - (a.archivedAt ?? a.updatedAt),
+        );
+        let after: string | null = null;
+        for (const task of latest) {
+          await moveTask(task, "review", after);
+          after = task.id;
+        }
+      }
+      onReopened(goal, review ? done.length : 0);
+    } catch (e) {
+      setError(errorMessage(e));
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal
+      title={t("Reopen goal?")}
+      className="confirm-modal"
+      onClose={onClose}
+    >
+      <div className="modal-body">
+        <p className="modal-text">
+          {done.length === 1
+            ? t(
+                "“{0}” goes back to the open goals. Its task can stay done or go back to In review.",
+                [goal.name],
+              )
+            : t(
+                "“{0}” goes back to the open goals. Its {1} tasks can stay done or go back to In review.",
+                [goal.name, done.length],
+              )}
+        </p>
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+      </div>
+      <footer className="modal-footer">
+        <span className="footer-hint" />
+        <button type="button" className="button" onClick={onClose}>
+          {t("Cancel")}
+        </button>
+        <button
+          type="button"
+          className="button"
+          disabled={busy}
+          onClick={() => void reopen(false)}
+        >
+          {t("Just reopen")}
+        </button>
+        <button
+          type="button"
+          className="button primary"
+          disabled={busy}
+          aria-busy={busy}
+          onClick={() => void reopen(true)}
+        >
+          {done.length === 1
+            ? t("Reopen and review it")
+            : t("Reopen and review the {0}", [done.length])}
+        </button>
+      </footer>
+    </Modal>
+  );
+}
+
 /** Deletes a goal after confirming; its tasks stay on the board without one. */
 export function GoalDelete({
   goal,
@@ -762,5 +1002,53 @@ export function GoalDelete({
         </button>
       </footer>
     </Modal>
+  );
+}
+
+/** One open goal in the sidebar, dragged to change its place in the list. */
+function SidebarGoalRow({
+  id,
+  rowRef,
+  style,
+  className,
+  pressed,
+  label,
+  onClick,
+  onContextMenu,
+  children,
+}: {
+  id: string;
+  rowRef: (node: HTMLElement | null) => void;
+  style: CSSProperties;
+  className: string;
+  pressed: boolean;
+  label: string;
+  onClick: () => void;
+  onContextMenu: (
+    event: MouseEvent<HTMLButtonElement> | KeyboardEvent<HTMLButtonElement>,
+  ) => void;
+  children: ReactNode;
+}) {
+  const { listeners, setNodeRef } = useDraggable({ id });
+  return (
+    <button
+      ref={(node) => {
+        setNodeRef(node);
+        rowRef(node);
+      }}
+      type="button"
+      className={className}
+      style={style}
+      aria-pressed={pressed}
+      aria-label={label}
+      onClick={onClick}
+      onContextMenu={onContextMenu}
+      onKeyDown={(event) => {
+        if (event.shiftKey && event.key === "F10") onContextMenu(event);
+      }}
+      {...listeners}
+    >
+      {children}
+    </button>
   );
 }
