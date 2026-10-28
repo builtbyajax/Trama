@@ -8,7 +8,7 @@ use trama_lib::{
     store::{Store, SCHEMA_VERSION},
 };
 
-const FIXTURES: [&str; 12] = [
+const FIXTURES: [&str; 13] = [
     include_str!("fixtures/schema-v1.sql"),
     include_str!("fixtures/schema-v2.sql"),
     include_str!("fixtures/schema-v3.sql"),
@@ -21,6 +21,7 @@ const FIXTURES: [&str; 12] = [
     include_str!("fixtures/schema-v10.sql"),
     include_str!("fixtures/schema-v11.sql"),
     include_str!("fixtures/schema-v12.sql"),
+    include_str!("fixtures/schema-v13.sql"),
 ];
 const V11: &str = include_str!("fixtures/schema-v11.sql");
 
@@ -711,5 +712,28 @@ fn agent_tasks_become_any_agent_keeping_their_assignee_and_history() {
         ["0"]
     );
     assert!(strings(&store.db, "PRAGMA foreign_key_check").is_empty());
+    assert!(strings(&store.db, "PRAGMA integrity_check") == ["ok"]);
+}
+
+#[test]
+fn goals_take_their_version_from_the_name_and_keep_the_name() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("v13.sqlite");
+    let db = Connection::open(&path).unwrap();
+    db.execute_batch(include_str!("fixtures/schema-v13.sql"))
+        .unwrap();
+    drop(db);
+    let store = Store::open(&path).unwrap();
+    assert_eq!(
+        strings(
+            &store.db,
+            "SELECT name||'|'||COALESCE(version,'none')||'|'||position FROM goals ORDER BY position"
+        ),
+        [
+            "Released goal (v0.4.0)|0.4.0|0",
+            "Fixture goal|none|1",
+            "Not a version (draft)|none|2"
+        ]
+    );
     assert!(strings(&store.db, "PRAGMA integrity_check") == ["ok"]);
 }

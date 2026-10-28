@@ -23,7 +23,7 @@ use unicode_normalization::{char::is_combining_mark, UnicodeNormalization};
 
 pub type Result<T> = std::result::Result<T, String>;
 /// Latest database schema supported by this build, also advertised through MCP.
-pub const SCHEMA_VERSION: i64 = 13;
+pub const SCHEMA_VERSION: i64 = 14;
 /// In board order: Pendências, To do, Working, In review, then the Archive.
 pub const STATUSES: [&str; 5] = ["backlog", "todo", "inProgress", "review", "done"];
 const TASK_COLUMNS: &str = "t.id,t.project_id,t.title,t.details,t.category,t.assignee,t.status,t.position,t.agent_summary,t.repository_branch,t.commit_hash,t.pull_request_url,t.pull_request_number,t.created_at,t.updated_at,(SELECT COUNT(*) FROM task_checks c WHERE c.task_id=t.id),(SELECT COUNT(*) FROM task_checks c WHERE c.task_id=t.id AND c.is_complete=1),(SELECT COUNT(*) FROM task_messages m WHERE m.task_id=t.id),(SELECT COUNT(*) FROM task_documents d WHERE d.task_id=t.id),t.archived_at,t.goal_id,t.agent_profile_id";
@@ -182,6 +182,10 @@ pub struct Goal {
     pub description: String,
     /// A day, `YYYY-MM-DD`.
     pub target_date: Option<String>,
+    /// The release it belongs to, as typed, such as `0.4.1`.
+    pub version: Option<String>,
+    /// Its place in the project's list of goals, top first.
+    pub position: i64,
     /// When the person concluded it; concluded goals leave the sidebar's list.
     pub completed_at: Option<f64>,
     pub created_at: f64,

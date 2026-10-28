@@ -20,7 +20,7 @@ pub(super) fn check_version(db: &Connection) -> Result<i64> {
 pub(super) fn migrate(tx: &Transaction) -> Result<()> {
     let version = check_version(tx)?;
     let steps: [fn(&Transaction) -> Result<()>; LATEST as usize] =
-        [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13];
+        [v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14];
     for step in &steps[version as usize..] {
         step(tx)?;
     }
@@ -256,6 +256,40 @@ ALTER TABLE task_events ADD COLUMN agent_profile_id TEXT REFERENCES agent_profil
 CREATE INDEX tasks_agent_profile ON tasks(agent_profile_id);
 PRAGMA user_version=13;"))?;
     Ok(())
+}
+
+fn v14(tx: &Transaction) -> Result<()> {
+    // Goals gain a version and a place in the sidebar's order. The version comes from the
+    // "(vX.Y.Z)" at the end of the name, which stays as it is; the order is the creation one.
+    sql(tx.execute_batch("ALTER TABLE goals ADD COLUMN version TEXT;
+ALTER TABLE goals ADD COLUMN position INTEGER NOT NULL DEFAULT 0;
+UPDATE goals SET position=(SELECT COUNT(*) FROM goals o WHERE o.project_id=goals.project_id AND (o.created_at<goals.created_at OR (o.created_at=goals.created_at AND o.id<goals.id)));"))?;
+    let names: Vec<(String, String)> = {
+        let mut stmt = sql(tx.prepare("SELECT id,name FROM goals"))?;
+        let rows = sql(stmt
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+            .and_then(|rows| rows.collect()));
+        rows?
+    };
+    for (goal, name) in names {
+        if let Some(version) = version_in_name(&name) {
+            sql(tx.execute(
+                "UPDATE goals SET version=? WHERE id=?",
+                params![version, goal],
+            ))?;
+        }
+    }
+    sql(tx.execute_batch("PRAGMA user_version=14;"))?;
+    Ok(())
+}
+
+/// The `X.Y.Z` of a name ending in "(vX.Y.Z)".
+fn version_in_name(name: &str) -> Option<&str> {
+    let inner = name.trim_end().strip_suffix(')')?;
+    let version = &inner[inner.rfind("(v")? + 2..];
+    let parts: Vec<&str> = version.split('.').collect();
+    let numeric = |p: &&str| !p.is_empty() && p.chars().all(|c| c.is_ascii_digit());
+    (parts.len() >= 2 && parts.iter().all(numeric)).then_some(version)
 }
 
 /// Where `check` is in the table's schema text, compared without spaces: databases created by the
