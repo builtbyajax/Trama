@@ -77,6 +77,14 @@ Each connection is its own agent profile. The person sees it on the tasks it hol
    - Then use `move_task` with `status: "review"`.
 7. **Stop there.** Move a task to `done` (which concludes it and sends it to the Archive), move tasks out of `backlog`, change `assignee` to `user`, reorder or delete only when the person asks. When they do ask, do it.
 
+## Keep the board in step with the work
+
+The board is how the person follows what you do, so work that isn't on it is invisible to them.
+
+- **A request without a task gets one.** When the person asks for work during the conversation and no task covers it, create the task (with `goal_id` if it belongs to a goal), move it to `inProgress`, do the work and deliver it as usual. Don't just do it and move on. If the request is a small adjustment to a task you're on, add it to that task's **Done when** instead.
+- **Changes after delivery update the task.** When you change work that is already in review, whether the person asked for it or you found something to fix, rewrite that task's summary for its current state and tick or add its **Done when** items. Don't leave a summary that describes an older version.
+- **One change, one place.** If a change belongs to another task than the one you're on, update that task, not the current one.
+
 ## Writing for the person
 
 Each field answers one question. If a piece of information doesn't answer that field's question, it doesn't go in it.
@@ -113,10 +121,14 @@ Notices appear at the bottom and cover the conclude bar.
 - A queue of several notices
 ```
 
-- **First line:** the problem or the goal in one sentence, without a label. Not a restatement of the title.
-- **What to do:** the expected result, not the implementation.
-- **Done when:** checks that can be confirmed in the product. They are the checklist the person and you tick.
+- **Stands on its own.** Someone who wasn't in the conversation, another agent or the person a week later, can do the task without asking anything.
+- **First line:** what happens today and why it's a problem, or the goal, in one sentence without a label. Say where in the app, with the names the screen shows. Not a restatement of the title.
+- **What to do:** the expected result, concrete: what the person will see afterwards, not "improve X". Not the implementation.
+- **Done when:** checks that can be confirmed in the product, each a situation and what's observed in it ("with two projects that have goals, opening one shows only its goals"), not "check the behavior". They are the checklist the person and you tick.
+- **Decided and open:** record what was already decided with the person. What's still open goes as questions under **Open**, not as guesses.
 - **Out of scope:** only when the work could otherwise grow.
+
+If you don't have the context to write it this way, ask the person before creating the task instead of filling the briefing with vague text.
 
 The briefing belongs to the person once it exists. Write it when you create the task; afterwards don't rewrite their text. To tick a checklist item, change only `- [ ]` to `- [x]` and send the whole `details` back. To add a small adjustment the person asked for within the same delivery, append an item to **Done when** instead of creating a task.
 
@@ -151,7 +163,7 @@ When a task comes back from review and you deliver again, rewrite the summary fo
 
 - **Only what was asked.** Create a task when the person asks for the work or asks you to record it. An idea they only mention, or something you notice, goes in `backlog` if they want it recorded; never start implementing it on your own.
 - **No duplicates.** Search with `search_tasks` first; if a task already covers it, update that one or tell the person.
-- **One deliverable per task.** A separate outcome is a separate task; a small adjustment to work under way is a **Done when** item in its task.
+- **Small adjustments.** An adjustment to work under way is a **Done when** item in its task, not a new task. To split larger work, see the `trama-planning` skill when it's installed.
 - **Defaults.** `create_task` defaults to `assignee=agent`, `status=todo` and the category "Feature" (or "Funcionalidade" in older projects). Pick the category by the main deliverable; read [categories.md](categories.md) when it isn't obvious.
 - **Goal.** If the task belongs to a goal, set `goal_id` on creation.
 
@@ -159,8 +171,8 @@ When a task comes back from review and you deliver again, rewrite the summary fo
 
 Goals group a project's tasks around one outcome, such as a version or a front of work.
 
-- **When to create.** For an outcome that takes several tasks, when the person asks or agrees. Not for a single task. Check `list_goals` first: reuse a goal that already covers the outcome.
-- **Name.** The outcome, short, in the person's language: "v0.3: Archive and backlog" or "Automatic updates", not "Improvements" or "Sprint 2". Put what's included in the description, and the target date (`YYYY-MM-DD`) when there is one.
+- **When to create.** Only when the person asks or agrees. Check `list_goals` first: reuse a goal that already covers the outcome. How to scope and name one is in the `trama-planning` skill.
+- **Version.** When the goal is a release, put its number in `version` (such as `0.4.1`, without the "v"), not in the name. The app shows it beside the name. Reuse the format of the versions in `list_goals`.
 - **Tasks.** `goal_id` is set with `create_task` or `update_task`; the goal must be in the same project, a task has at most one goal, and `null` removes it.
 - **Progress** counts every task in the goal, backlog and Archive included: done tasks over the total. Finishing every task doesn't conclude the goal, and the MCP can't conclude or reopen goals: that's done in the app. When all of a goal's tasks are in review or done, you can tell the person.
 - **Not an authorization.** A goal doesn't mean you should implement all its tasks. Follow the person's request and the workflow.
