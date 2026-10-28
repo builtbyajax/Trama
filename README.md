@@ -73,7 +73,7 @@ Connect a folder of Markdown files to a project. Browse and search the notes, op
 
 Your notes stay ordinary `.md` files in the folder you choose. Trama checks for external changes before saving.
 
-![Trama's notes workspace with a file tree, linked tasks, and a rendered Markdown project brief](docs/images/en/notes.png)
+![Trama's notes workspace with a file tree and the Crystal Warden boss note open](docs/images/en/notes.png)
 
 ## Your data stays on your computer
 

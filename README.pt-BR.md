@@ -73,7 +73,7 @@ Conecte uma pasta de arquivos Markdown ao projeto. Navegue e busque nas notas, a
 
 Suas notas continuam como arquivos `.md` comuns, na pasta que você escolheu. O Trama verifica alterações externas antes de salvar.
 
-![Notas do Trama com árvore de arquivos, tarefas vinculadas e briefing em Markdown renderizado](docs/images/pt-BR/notes.png)
+![Notas do Trama com árvore de arquivos e a nota Crystal Warden boss aberta](docs/images/pt-BR/notes.png)
 
 ## Seus dados ficam no seu computador
 
