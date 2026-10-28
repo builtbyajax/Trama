@@ -296,6 +296,51 @@ kbd {
   max-height: calc(100vh - 16px);
   display: flex;
   flex-direction: column;
+  overflow-y: hidden;
+}
+/* Only the rows scroll: the search above them and the pinned actions below stay in view. */
+.menu-rows {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.menu-search {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 4px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--line-subtle);
+  color: var(--ink-3);
+}
+/* Above the field rules further down, which would give it a border and a focus ring. */
+.context-menu .menu-search input,
+.context-menu .menu-search input:is(:hover, :focus-visible) {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-md);
+  outline: none;
+}
+.menu-search input::placeholder {
+  color: var(--ink-3);
+}
+.menu-empty {
+  margin: 0;
+  padding: 8px;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
 }
 .context-menu .popover-option {
   width: 100%;
@@ -330,6 +375,24 @@ kbd {
   margin: 4px 6px;
   background: var(--line-subtle);
 }
+/* A goal's version beside its name, in the menus, the project page and the board's title. */
+.version-tag {
+  flex: none;
+  padding: 0 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  line-height: 16px;
+  white-space: nowrap;
+}
+.popover-option .version-tag {
+  margin-left: 12px;
+}
+.page-goal-switch .version-tag {
+  margin-left: 4px;
+}
 .popover-hint {
   flex: none;
   margin-left: 12px;
@@ -345,6 +408,31 @@ kbd {
 }
 .context-menu .popover-option.muted {
   color: var(--ink-3);
+}
+/* The open goal in a goal menu: blue, in place of a check. */
+.context-menu .popover-option.current {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.context-menu .popover-option.current > .icon {
+  color: var(--accent-text);
+}
+/* Goal menus: rows a little apart, and the gray hover of the sidebar, so the blue stays the open
+   goal's. */
+.context-menu.goal-menu {
+  gap: 2px;
+}
+/* About twelve goals, then they scroll. */
+.context-menu.goal-menu .menu-rows {
+  max-height: 380px;
+}
+.context-menu.goal-menu .popover-option:not(.current, .danger):hover,
+.context-menu.goal-menu .popover-option:not(.current, .danger):focus-visible {
+  background: var(--hover);
+}
+.popover-option.current .version-tag {
+  border-color: var(--accent-line);
+  color: var(--accent-text);
 }
 .context-menu .popover-option.danger,
 .context-menu .popover-option.danger > .icon {

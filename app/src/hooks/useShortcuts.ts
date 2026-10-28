@@ -17,6 +17,7 @@ export type WorkspaceAction =
   | "git"
   | "project_notes"
   | "board_view"
+  | "toggle_done"
   | "switch_project"
   | `project_${number}`
   | "close_details"
@@ -42,6 +43,7 @@ const menuActions = new Set<WorkspaceAction>([
   "git",
   "project_notes",
   "board_view",
+  "toggle_done",
   "switch_project",
   "back",
   "forward",
@@ -72,6 +74,7 @@ function actionFor(event: KeyboardEvent): WorkspaceAction | undefined {
     if (digit === "1") return "overview";
     if (digit === "2") return "archive";
     if (digit === "3") return "notes";
+    if (event.code === "KeyB") return "toggle_done";
     return undefined;
   }
   if (event.shiftKey) {

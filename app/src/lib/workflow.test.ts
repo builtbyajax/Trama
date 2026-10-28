@@ -36,6 +36,8 @@ describe("board lifecycle", () => {
       name: "Goal",
       description: "",
       targetDate: null,
+      version: null,
+      position: 0,
       completedAt: null,
       createdAt: 1,
     };

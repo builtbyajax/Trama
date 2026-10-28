@@ -34,7 +34,11 @@ import {
 } from "./components/ArchivePage";
 import { AgentsPage } from "./components/AgentsPage";
 import { BoardList, listOrder } from "./components/BoardList";
-import { ProjectPage } from "./components/ProjectPage";
+import {
+  ProjectPage,
+  ProjectPulse,
+  type GoalStageFilter,
+} from "./components/ProjectPage";
 import { useStoredState } from "./hooks/useStoredState";
 import { Overview } from "./components/Overview";
 import {
@@ -61,11 +65,14 @@ import {
   GoalComplete,
   GoalComposer,
   GoalActions,
-  ConcludedGoals,
   GoalDelete,
+  GoalReopen,
   GoalSummary,
+  orderGoals,
+  RailGoals,
   SidebarGoals,
 } from "./components/Goals";
+import { GoalRecap } from "./components/GoalRecap";
 import {
   WorkspaceButton,
   WorkspaceComposer,
@@ -76,6 +83,7 @@ import {
 } from "./components/Workspaces";
 import {
   completeGoal,
+  moveGoal,
   createWorkspace,
   dismissOrganized,
   editWorkspace,
@@ -130,6 +138,8 @@ export function App() {
     [snapshot?.agentProfiles],
   );
   const [filters, setFilters] = useState<Record<string, BoardFilter>>({});
+  // Whether the board's done column is open, per project and goal; unset follows the goal.
+  const [doneOpenFor, setDoneOpenFor] = useState<Record<string, boolean>>({});
   const [selected, setSelected] = useState<{ id: string } | null>(null);
   const [sheetMode, setSheetMode] = useState<SheetMode>("sheet");
   const closeGuard = useRef<(() => boolean) | null>(null);
@@ -166,7 +176,25 @@ export function App() {
   } | null>(null);
   const [goalComplete, setGoalComplete] = useState<Goal | null>(null);
   const [goalDelete, setGoalDelete] = useState<Goal | null>(null);
-  const [concludedOpen, setConcludedOpen] = useState(false);
+  const [goalReopen, setGoalReopen] = useState<Goal | null>(null);
+  // Which goals each project's page lists, and the projects whose goals keep a dragged order.
+  const [goalStages, setGoalStages] = useState<Record<string, GoalStageFilter>>(
+    {},
+  );
+  const [manualGoals, setManualGoals] = useStoredState<string[]>(
+    "trama.manualGoalOrder",
+    (saved) => {
+      try {
+        const ids: unknown = JSON.parse(saved ?? "[]");
+        return Array.isArray(ids)
+          ? ids.filter((id) => typeof id === "string")
+          : [];
+      } catch {
+        return [];
+      }
+    },
+    (ids) => JSON.stringify(ids),
+  );
   const edited = workspaces.composer?.workspace;
   const [workspaceLeave, setWorkspaceLeave] = useState<{
     workspace: Workspace;
@@ -292,6 +320,14 @@ export function App() {
       setBoardView((view) => (view === "list" ? "kanban" : "list"));
       // On another tab of a project, show the board that just changed.
       if (project && mode !== "board") setProjectMode("board");
+    },
+    toggleDone: () => {
+      if (!project) return;
+      // From another tab of the project, it brings the board with Done open.
+      if (mode !== "board") {
+        setProjectMode("board");
+        setDoneOpen(true);
+      } else setDoneOpen(!doneOpen);
     },
     openShortcuts: () => setShortcutsOpen(true),
     openSearch: () => setSearch(true),
@@ -455,60 +491,134 @@ export function App() {
   const storedFilter = project
     ? { ...defaultFilter, ...filters[project.id] }
     : defaultFilter;
+  const manualOrder = !!project && manualGoals.includes(project.id);
   const projectGoals = project
-    ? data.goals.filter((g) => g.projectId === project.id)
+    ? orderGoals(
+        data.goals.filter((g) => g.projectId === project.id),
+        data.tasks,
+        manualOrder,
+      )
     : [];
   // Done tasks leave the board for the Archive.
   const projectTasks = boardTasks.filter((t) => t.status !== "done");
-  // A category or branch no task uses anymore no longer filters anything.
+  // A deleted goal no longer filters anything.
+  const activeGoal = projectGoals.find((g) => g.id === storedFilter.goal);
+  // The tasks the filters offer: the project's open ones or, with a goal open, only that goal's,
+  // its done ones once it is concluded, as its recap shows them.
+  const filterTasks = activeGoal
+    ? boardTasks.filter(
+        (t) =>
+          t.goalId === activeGoal.id &&
+          (t.status === "done") === (activeGoal.completedAt != null),
+      )
+    : projectTasks;
+  // A category, branch or profile none of those tasks has doesn't filter anything there. It is
+  // kept, and filters again back where a task has it.
   const filter = {
     ...storedFilter,
     category:
       storedFilter.category === "*" ||
-      projectTasks.some((t) => t.category === storedFilter.category)
+      filterTasks.some((t) => t.category === storedFilter.category)
         ? storedFilter.category
         : "*",
     branch:
       storedFilter.branch === "*" ||
-      projectTasks.some(
+      filterTasks.some(
         (t) => (t.repositoryBranch ?? "") === storedFilter.branch,
       )
         ? storedFilter.branch
         : "*",
-    // A deleted goal no longer filters anything.
-    goal:
-      storedFilter.goal === "*" ||
-      projectGoals.some((g) => g.id === storedFilter.goal)
-        ? storedFilter.goal
-        : "*",
+    goal: activeGoal ? storedFilter.goal : "*",
   };
-  // A profile no task has anymore no longer filters anything.
   if (
     filter.agent !== "*" &&
     filter.agent !== "" &&
-    !projectTasks.some((t) => t.agentProfileId === filter.agent)
+    !filterTasks.some((t) => t.agentProfileId === filter.agent)
   )
     filter.agent = "*";
-  const activeGoal = projectGoals.find((g) => g.id === filter.goal);
-  const visibleTasks = projectTasks.filter(
-    (t) =>
-      (filter.assignee === "all" || t.assignee === filter.assignee) &&
-      (filter.assignee !== "agent" ||
-        filter.agent === "*" ||
-        (t.assignee === "agent" &&
-          (t.agentProfileId ?? "") === filter.agent)) &&
-      (filter.category === "*" || t.category === filter.category) &&
-      (filter.branch === "*" || (t.repositoryBranch ?? "") === filter.branch) &&
-      (filter.goal === "*" || (t.goalId ?? "") === filter.goal),
-  );
-  const reopenGoal = (goal: Goal) =>
+  const matches = (t: Task) =>
+    (filter.assignee === "all" || t.assignee === filter.assignee) &&
+    (filter.assignee !== "agent" ||
+      filter.agent === "*" ||
+      (t.assignee === "agent" && (t.agentProfileId ?? "") === filter.agent)) &&
+    (filter.category === "*" || t.category === filter.category) &&
+    (filter.branch === "*" || (t.repositoryBranch ?? "") === filter.branch) &&
+    (filter.goal === "*" || (t.goalId ?? "") === filter.goal);
+  const visibleTasks = projectTasks.filter(matches);
+  const concludedTasks = boardTasks
+    .filter((t) => t.status === "done" && matches(t))
+    .sort(
+      (a, b) => (b.archivedAt ?? b.updatedAt) - (a.archivedAt ?? a.updatedAt),
+    );
+  // A concluded goal has only done tasks, so its board opens on them.
+  const doneKey = `${project?.id}:${filter.goal}`;
+  const doneOpen = doneOpenFor[doneKey] ?? Boolean(activeGoal?.completedAt);
+  // A concluded goal with nothing left open shows its recap instead of empty columns. It is
+  // judged on the whole goal, so narrowing the filters narrows the recap, not swaps it out.
+  const inGoal = (t: Task) => t.goalId === activeGoal?.id;
+  const recapGoal =
+    activeGoal?.completedAt != null &&
+    !projectTasks.some(inGoal) &&
+    boardTasks.some(inGoal)
+      ? { ...activeGoal, completedAt: activeGoal.completedAt }
+      : null;
+  const setDoneOpen = (open: boolean) =>
+    setDoneOpenFor((v) => ({ ...v, [doneKey]: open }));
+  /** Reopens a goal, asking first what happens to its done tasks when it has any. */
+  const reopenGoal = (goal: Goal) => {
+    if (data.tasks.some((t) => t.goalId === goal.id && t.status === "done"))
+      return setGoalReopen(goal);
     void completeGoal(goal, false)
       .then(() => refresh())
       .then(() => notify(t("Goal “{0}” reopened.", [goal.name])))
       .catch((e) => notify(errorMessage(e), true));
-  const changeFilter = (patch: Partial<BoardFilter>) =>
-    project &&
+  };
+  /** The project's page, listing only its concluded goals. */
+  const showConcluded = () => {
+    if (!project) return;
+    setGoalStages((v) => ({ ...v, [project.id]: "concluded" }));
+    setProjectMode("project");
+  };
+  /** The project's tasks in the Archive, the latest first. */
+  const openProjectArchive = (projectId: string) => {
+    setArchiveView({ query: "", projectId, group: "month" });
+    navigate({ kind: "archive" });
+  };
+  /**
+   * Saves a dragged goal's new place. The first drag keeps the order on screen, by progress,
+   * and from then on the project's goals stay where they are dragged.
+   */
+  const placeGoal = async (goal: Goal, afterId: string | null) => {
+    if (!project) return;
+    try {
+      if (manualOrder) await moveGoal(goal, afterId);
+      else {
+        const rest = projectGoals.filter(
+          (g) => g.completedAt === null && g.id !== goal.id,
+        );
+        const at = afterId ? rest.findIndex((g) => g.id === afterId) + 1 : 0;
+        const next = [...rest.slice(0, at), goal, ...rest.slice(at)];
+        for (const [index, g] of next.entries())
+          await moveGoal(g, index === 0 ? null : next[index - 1].id);
+        setManualGoals((ids) => [...ids, project.id]);
+      }
+    } catch (e) {
+      notify(errorMessage(e), true);
+    } finally {
+      void refresh();
+    }
+  };
+  /** Another goal closes the open task first, and keeps it when it has unsaved edits. */
+  const changeFilter = (patch: Partial<BoardFilter>) => {
+    if (!project) return;
+    if (
+      patch.goal !== undefined &&
+      patch.goal !== filter.goal &&
+      !closeDetails()
+    )
+      return;
     setFilters((v) => ({ ...v, [project.id]: { ...filter, ...patch } }));
+  };
   // Order the sheet steps through: the visible board, column by column, or the Archive.
   const sequence = project
     ? (boardView === "list" ? listOrder : boardStatuses).flatMap((status) =>
@@ -659,11 +769,24 @@ export function App() {
                 onDeleteProject={setProjectDelete}
                 onMoveProject={setProjectMove}
                 projectExtra={
-                  project && (
+                  project &&
+                  (panel ? (
+                    <RailGoals
+                      goals={projectGoals}
+                      activeId={activeGoal?.id ?? null}
+                      onSelect={(goalId) => {
+                        setProjectMode("board");
+                        changeFilter({ goal: goalId });
+                      }}
+                      onNew={() => setGoalComposer({ projectId: project.id })}
+                      onShowConcluded={showConcluded}
+                    />
+                  ) : (
                     <SidebarGoals
                       key={project.id}
                       goals={projectGoals}
                       tasks={data.tasks}
+                      color={projectColor(project)}
                       activeId={activeGoal?.id ?? null}
                       onSelect={(goalId) => {
                         if (mode !== "board") setProjectMode("board");
@@ -676,9 +799,14 @@ export function App() {
                       onComplete={setGoalComplete}
                       onReopen={reopenGoal}
                       onDelete={setGoalDelete}
-                      onShowConcluded={() => setConcludedOpen(true)}
+                      onMove={(goal, afterId) => void placeGoal(goal, afterId)}
+                      onShowConcluded={() => {
+                        // The floating sidebar would cover the page it opens.
+                        closePeek();
+                        showConcluded();
+                      }}
                     />
-                  )
+                  ))
                 }
                 workspace={
                   workspaces.list && (
@@ -743,13 +871,15 @@ export function App() {
               <ProjectHeader
                 project={project}
                 color={projectColor(project)}
-                tasks={projectTasks}
+                tasks={filterTasks}
+                allTasks={boardTasks}
                 goals={projectGoals}
                 goal={
                   mode === "board" && activeGoal
                     ? {
                         id: activeGoal.id,
                         name: activeGoal.name,
+                        version: activeGoal.version,
                         description: activeGoal.description,
                         onEdit: () =>
                           setGoalComposer({
@@ -776,8 +906,25 @@ export function App() {
                 filter={filter}
                 onMode={setProjectMode}
                 onFilter={changeFilter}
-                onShowConcluded={() => setConcludedOpen(true)}
+                onShowConcluded={showConcluded}
                 onNewGoal={() => setGoalComposer({ projectId: project.id })}
+                pulse={
+                  mode === "project" ? (
+                    <ProjectPulse
+                      tasks={boardTasks}
+                      onReview={() => {
+                        setProjectMode("board");
+                        changeFilter({ goal: "*" });
+                      }}
+                      onOpenTask={openTask}
+                      onWorking={() => {
+                        setProjectMode("board");
+                        changeFilter({ goal: "*" });
+                      }}
+                      onDone={() => openProjectArchive(project.id)}
+                    />
+                  ) : undefined
+                }
                 onManageCategories={() => setCategoriesOpen(true)}
                 onReveal={(path) =>
                   void revealPath(path).catch((e) =>
@@ -823,12 +970,28 @@ export function App() {
                     key={project.id}
                     tasks={boardTasks}
                     goals={projectGoals}
+                    stage={goalStages[project.id] ?? "all"}
+                    manual={manualOrder}
+                    onStage={(stage) =>
+                      setGoalStages((v) => ({ ...v, [project.id]: stage }))
+                    }
+                    onAutoOrder={() =>
+                      setManualGoals((ids) =>
+                        ids.filter((id) => id !== project.id),
+                      )
+                    }
                     onOpenTask={openTask}
                     onOpenGoal={(goalId) => {
                       setProjectMode("board");
                       changeFilter({ goal: goalId });
                     }}
-                    onShowConcluded={() => setConcludedOpen(true)}
+                    onEditGoal={(goal) =>
+                      setGoalComposer({ projectId: project.id, goal })
+                    }
+                    onCompleteGoal={setGoalComplete}
+                    onReopenGoal={reopenGoal}
+                    onDeleteGoal={setGoalDelete}
+                    onArchive={() => openProjectArchive(project.id)}
                   />
                 ) : mode === "git" ? (
                   <GitProject
@@ -846,6 +1009,15 @@ export function App() {
                     onOpenTask={openTask}
                     onRefresh={() => void refresh()}
                   />
+                ) : recapGoal ? (
+                  <GoalRecap
+                    goal={recapGoal}
+                    tasks={concludedTasks}
+                    filter={filter}
+                    onOpen={openTask}
+                    onArchive={() => navigate({ kind: "archive" })}
+                    onFilter={changeFilter}
+                  />
                 ) : boardView === "list" ? (
                   <BoardList
                     tasks={visibleTasks}
@@ -858,6 +1030,10 @@ export function App() {
                     menuId={taskMenu?.task.id}
                     onMenu={setTaskMenu}
                     onOpen={openTask}
+                    concluded={concludedTasks}
+                    doneOpen={doneOpen}
+                    onDoneOpen={setDoneOpen}
+                    onArchive={() => navigate({ kind: "archive" })}
                   />
                 ) : (
                   <Board
@@ -872,6 +1048,10 @@ export function App() {
                       void move(id, status, afterId)
                     }
                     onOpen={openTask}
+                    concluded={concludedTasks}
+                    doneOpen={doneOpen}
+                    onDoneOpen={setDoneOpen}
+                    onArchive={() => navigate({ kind: "archive" })}
                   />
                 )
               ) : destination.kind === "archive" ? (
@@ -1204,6 +1384,15 @@ export function App() {
         {goalComposer && (
           <GoalComposer
             {...goalComposer}
+            versions={[
+              ...new Set(
+                data!.goals.flatMap((g) =>
+                  g.projectId === goalComposer.projectId && g.version
+                    ? [g.version]
+                    : [],
+                ),
+              ),
+            ]}
             onClose={() => setGoalComposer(null)}
             onSaved={(goal) => {
               const created = !goalComposer.goal;
@@ -1230,18 +1419,29 @@ export function App() {
             }}
           />
         )}
-        {concludedOpen && project && (
-          <ConcludedGoals
-            goals={projectGoals}
-            tasks={data.tasks}
-            onOpen={(goal) => {
-              setConcludedOpen(false);
-              if (mode !== "board") setProjectMode("board");
-              changeFilter({ goal: goal.id });
+        {goalReopen && (
+          <GoalReopen
+            goal={goalReopen}
+            done={data.tasks.filter(
+              (t) => t.goalId === goalReopen.id && t.status === "done",
+            )}
+            onClose={() => setGoalReopen(null)}
+            onReopened={(goal, reviewed) => {
+              setGoalReopen(null);
+              notify(
+                reviewed === 0
+                  ? t("Goal “{0}” reopened.", [goal.name])
+                  : reviewed === 1
+                    ? t("Goal “{0}” reopened, its task back in review.", [
+                        goal.name,
+                      ])
+                    : t("Goal “{0}” reopened, {1} tasks back in review.", [
+                        goal.name,
+                        reviewed,
+                      ]),
+              );
+              void refresh();
             }}
-            onReopen={reopenGoal}
-            onDelete={setGoalDelete}
-            onClose={() => setConcludedOpen(false)}
           />
         )}
         {goalDelete && (

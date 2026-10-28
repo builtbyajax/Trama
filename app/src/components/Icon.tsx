@@ -143,6 +143,11 @@ export function StatusIcon({
           <path d="M1.5 7s2-3.75 5.5-3.75S12.5 7 12.5 7 10.5 10.75 7 10.75 1.5 7 1.5 7z" />
           <circle cx="7" cy="7" r="1.6" />
         </>
+      ) : status === "done" ? (
+        <>
+          <circle cx="7" cy="7" r="5.5" />
+          <path d="M4.6 7.2l1.7 1.7 3.1-3.6" />
+        </>
       ) : (
         <>
           <circle cx="7" cy="7" r="5.5" />

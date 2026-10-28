@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/core";
 import { useBoardKeyboard, type BoardColumns } from "../hooks/useBoardKeyboard";
 import { useReducedMotion } from "../hooks/useReducedMotion";
-import type { KeyboardEvent, ReactNode, RefObject } from "react";
+import type { CSSProperties, KeyboardEvent, ReactNode, RefObject } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   boardStatuses,
@@ -24,7 +24,7 @@ import {
   type Task,
   type TaskStatus,
 } from "../lib/types";
-import { StatusIcon } from "./Icon";
+import { Icon, StatusIcon } from "./Icon";
 import {
   BranchesContext,
   GoalNamesContext,
@@ -50,6 +50,11 @@ interface BoardProps {
   /** `afterId` is the visible card the task goes after, or null for the top of the column. */
   onMove: (taskId: string, status: TaskStatus, afterId: string | null) => void;
   onOpen: (task: Task) => void;
+  /** Concluded tasks under the same filters, the latest first: a column at the end, closed or open. */
+  concluded?: Task[];
+  doneOpen?: boolean;
+  onDoneOpen?: (open: boolean) => void;
+  onArchive?: () => void;
 }
 
 /** Where a dragged card would land: a column and an index among the other cards in it. */
@@ -100,6 +105,9 @@ const returnAnimation: DropAnimation = {
 };
 const cardGap = 8;
 const edge = 56;
+/** A stage's colour for what it holds, the accent when there is none. */
+export const laneOf = (status: TaskStatus | undefined) =>
+  status ? ({ "--lane": `var(--s-${status})` } as CSSProperties) : undefined;
 // The bar to conclude appears when the drag starts, so rects are measured during the drag.
 const measuring = { droppable: { strategy: MeasuringStrategy.Always } };
 
@@ -119,6 +127,10 @@ export function Board({
   onMenu,
   onMove,
   onOpen,
+  concluded,
+  doneOpen = false,
+  onDoneOpen,
+  onArchive,
 }: BoardProps) {
   const goalNames = useMemo(
     () => new Map(goals.map((goal) => [goal.id, goal.name])),
@@ -150,14 +162,17 @@ export function Board({
     return result;
   }, [tasks]);
   const keyboard = useBoardKeyboard(columns, onMove);
-  const origin = drag
-    ? {
-        status: drag.task.status,
-        index: columns[drag.task.status].findIndex(
-          (t) => t.id === drag.task.id,
-        ),
-      }
-    : null;
+  // A concluded card dragged out of the done column is reopened where it lands.
+  const origin = !drag
+    ? null
+    : drag.task.status === "done"
+      ? { status: drag.task.status, index: 0 }
+      : {
+          status: drag.task.status,
+          index: columns[drag.task.status].findIndex(
+            (t) => t.id === drag.task.id,
+          ),
+        };
   const atOrigin =
     !drop ||
     !origin ||
@@ -264,8 +279,10 @@ export function Board({
     setLanding(moved);
     if (!task || !target || !moved) return;
     if (target.status === "done") {
+      // Into the box of the bar; the done column takes the card in place instead.
       const overlay = document.querySelector(".card.drag-overlay");
-      if (overlay) setFlight({ task, rect: overlay.getBoundingClientRect() });
+      if (overlay && !concluded)
+        setFlight({ task, rect: overlay.getBoundingClientRect() });
       onMove(task.id, "done", null);
       return;
     }
@@ -296,16 +313,24 @@ export function Board({
           onDragStart={({ active }) => {
             keyboard.cancel();
             setLanding(false);
-            const task = tasks.find((item) => item.id === active.id);
+            const task =
+              tasks.find((item) => item.id === active.id) ??
+              concluded?.find((item) => item.id === active.id);
             if (!task) return;
             setDrag({
               task,
               height: active.rect.current.initial?.height ?? 64,
             });
-            setDropTo({
-              status: task.status,
-              index: columns[task.status].findIndex((t) => t.id === task.id),
-            });
+            setDropTo(
+              task.status === "done"
+                ? { status: "done", index: 0 }
+                : {
+                    status: task.status,
+                    index: columns[task.status].findIndex(
+                      (t) => t.id === task.id,
+                    ),
+                  },
+            );
           }}
           onDragMove={track}
           onDragOver={track}
@@ -313,7 +338,9 @@ export function Board({
           onDragEnd={end}
         >
           <div className="board-area">
-            <div className={`board scroll ${drag ? "dragging" : ""}`}>
+            <div
+              className={`board scroll ${drag ? "dragging" : ""} ${concluded ? "with-done" : ""}`}
+            >
               {boardStatuses.map((status) => {
                 const preview =
                   keyboard.move?.status === status ? keyboard.move : null;
@@ -352,19 +379,37 @@ export function Board({
                   />
                 );
               })}
+              {concluded && (
+                <DoneColumn
+                  tasks={concluded}
+                  open={doneOpen}
+                  dragging={Boolean(drag)}
+                  over={drop?.status === "done"}
+                  selectedId={selectedId}
+                  menuId={menuId}
+                  onMenu={drag ? undefined : onMenu}
+                  onToggle={() => onDoneOpen?.(!doneOpen)}
+                  onOpen={open}
+                  onArchive={onArchive}
+                />
+              )}
             </div>
-            <ConcludeZone
-              zoneRef={zone}
-              boxRef={box}
-              active={Boolean(drag)}
-              over={drop?.status === "done"}
-              receiving={Boolean(flight)}
-            />
+            {!concluded && (
+              <ConcludeZone
+                zoneRef={zone}
+                boxRef={box}
+                active={Boolean(drag)}
+                over={drop?.status === "done"}
+                receiving={Boolean(flight)}
+              />
+            )}
           </div>
           <span className="sr-only" role="status">
             {keyboard.announcement}
           </span>
           <DragOverlay
+            // Over another column, the card takes on its colour.
+            style={laneOf(drag && !atOrigin ? drop?.status : undefined)}
             // After a move the card is already drawn in its new place; animating back would send it
             // to its old place first.
             dropAnimation={
@@ -505,6 +550,7 @@ function Column({
     <section
       ref={setNodeRef}
       className={`column ${target ? "drop-target" : ""}`}
+      style={laneOf(status)}
       aria-label={statusTitle[status]}
     >
       <header className="column-head">
@@ -527,6 +573,112 @@ function Column({
         )}
       </div>
     </section>
+  );
+}
+
+/** Past this many, the column sends to the Archive for the rest. */
+export const doneShown = 30;
+
+/**
+ * The concluded tasks at the board's end: a narrow strip with their count, or opened, a column of
+ * quiet cards that open the task where it is. A card dropped on either is concluded, in place of
+ * the bar that rises below. The Archive keeps them all.
+ */
+function DoneColumn({
+  tasks,
+  open,
+  dragging,
+  over,
+  selectedId,
+  menuId,
+  onMenu,
+  onToggle,
+  onOpen,
+  onArchive,
+}: {
+  tasks: Task[];
+  open: boolean;
+  dragging: boolean;
+  over: boolean;
+  selectedId?: string | null;
+  menuId?: string | null;
+  onMenu?: (request: MenuRequest) => void;
+  onToggle: () => void;
+  onOpen: (task: Task) => void;
+  onArchive?: () => void;
+}) {
+  const title = t("Done tasks");
+  const { setNodeRef } = useDroppable({ id: "done" });
+  // The column stays mounted while it narrows back to the strip (the lane's width transition in
+  // board.css), then gives way to it.
+  const reduceMotion = useReducedMotion();
+  const [shown, setShown] = useState(open);
+  useEffect(() => {
+    if (open) return setShown(true);
+    const timer = window.setTimeout(
+      () => setShown(false),
+      reduceMotion ? 0 : 260,
+    );
+    return () => window.clearTimeout(timer);
+  }, [open, reduceMotion]);
+  const lane = `done-lane ${open ? "open" : ""} ${dragging ? "dropping" : ""} ${over ? "drop-target" : ""}`;
+  if (!shown)
+    return (
+      <div ref={setNodeRef} className={lane}>
+        <button
+          type="button"
+          className="done-strip"
+          aria-expanded={false}
+          aria-label={`${title}, ${tasks.length}`}
+          data-tooltip={t("Show done tasks")}
+          onClick={onToggle}
+        >
+          <StatusIcon status="done" />
+          <span className="count">{tasks.length}</span>
+          <span className="done-strip-name">{title}</span>
+        </button>
+      </div>
+    );
+  return (
+    <div ref={setNodeRef} className={lane}>
+      <section className="column done-column" aria-label={title}>
+        <header className="column-head">
+          <StatusIcon status="done" />
+          <h2 className="name">{title}</h2>
+          <span className="count">{tasks.length}</span>
+          <button
+            type="button"
+            className="icon-button small done-close"
+            aria-expanded
+            aria-label={t("Hide done tasks")}
+            data-tooltip={t("Hide done tasks")}
+            onClick={onToggle}
+          >
+            <Icon name="collapse" size={13} />
+          </button>
+        </header>
+        <div className="column-body scroll">
+          {tasks.slice(0, doneShown).map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              selected={selectedId === task.id}
+              menuOpen={menuId === task.id}
+              onMenu={onMenu}
+              onOpen={() => onOpen(task)}
+            />
+          ))}
+          {tasks.length === 0 && (
+            <div className="column-empty">{t("No tasks")}</div>
+          )}
+          {tasks.length > doneShown && onArchive && (
+            <button type="button" className="done-more" onClick={onArchive}>
+              {t("See all {0} in the Archive", [tasks.length])}
+            </button>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }
 

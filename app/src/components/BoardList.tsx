@@ -29,7 +29,7 @@ import {
 } from "../lib/types";
 import { Glyph } from "./BoardFilters";
 import { AgentBot } from "./AgentBot";
-import { ArchiveFlight, ConcludeZone } from "./Board";
+import { ArchiveFlight, ConcludeZone, doneShown, laneOf } from "./Board";
 import {
   agentColor,
   agentName,
@@ -68,7 +68,8 @@ const collision: CollisionDetection = (args) => {
  * in the same manual order. Rows are dragged like cards: inside a group to change the priority,
  * to another group to change the stage. From the keyboard, Space picks a row up, ↑/↓ choose the
  * place (crossing into the next group), Space drops it and Esc cancels. A row dropped on the bar
- * that rises at the bottom while dragging is concluded and goes to the Archive.
+ * that rises at the bottom while dragging is concluded and goes to the Archive. The concluded ones
+ * sit folded in a group on top, and dragging one to another group reopens it.
  */
 export function BoardList({
   tasks,
@@ -79,6 +80,10 @@ export function BoardList({
   onMenu,
   onMove,
   onOpen,
+  concluded,
+  doneOpen = false,
+  onDoneOpen,
+  onArchive,
 }: {
   tasks: Task[];
   goals: Goal[];
@@ -90,6 +95,11 @@ export function BoardList({
   /** `afterId` is the visible row the task goes after, or null for the top of the group. */
   onMove: (taskId: string, status: TaskStatus, afterId: string | null) => void;
   onOpen: (task: Task) => void;
+  /** Concluded tasks under the same filters, most recent first. */
+  concluded?: Task[];
+  doneOpen?: boolean;
+  onDoneOpen?: (open: boolean) => void;
+  onArchive?: () => void;
 }) {
   const body = useRef<HTMLDivElement>(null);
   const lists = useRef(new Map<TaskStatus, HTMLUListElement>());
@@ -115,9 +125,13 @@ export function BoardList({
       result[status] = tasks
         .filter((task) => task.status === status)
         .sort(byPosition);
+    result.done = concluded ?? [];
     return result;
-  }, [tasks]);
-  const moving = dragged ?? tasks.find((task) => task.id === keyboardId);
+  }, [tasks, concluded]);
+  const find = (id: unknown) =>
+    tasks.find((task) => task.id === id) ??
+    concluded?.find((task) => task.id === id);
+  const moving = dragged ?? find(keyboardId);
   const others = (status: TaskStatus, id: string) =>
     groups[status].filter((task) => task.id !== id);
   const origin = (task: Task) =>
@@ -306,7 +320,7 @@ export function BoardList({
         },
       }}
       onDragStart={({ active }) => {
-        const task = tasks.find((item) => item.id === active.id);
+        const task = find(active.id);
         if (!task) return;
         setKeyboardId(null);
         setDragged(task);
@@ -323,7 +337,7 @@ export function BoardList({
         if (!task || !target || !move) return;
         if (target.status === "done") {
           const overlay = document.querySelector(".list-row.drag-overlay");
-          if (overlay)
+          if (overlay && !concluded)
             setFlight({ task, rect: overlay.getBoundingClientRect() });
           onMove(task.id, "done", null);
           return;
@@ -336,7 +350,28 @@ export function BoardList({
           ref={body}
           className={`board-list scroll ${dragged ? "dragging" : ""}`}
         >
-          {tasks.length === 0 ? (
+          {concluded && (
+            <DoneGroup
+              count={concluded.length}
+              open={doneOpen}
+              target={drop?.status === "done" && changed}
+              onToggle={() => onDoneOpen?.(!doneOpen)}
+            >
+              {concluded.slice(0, doneShown).map((task) => row(task))}
+              {concluded.length > doneShown && onArchive && (
+                <li>
+                  <button
+                    type="button"
+                    className="done-more"
+                    onClick={onArchive}
+                  >
+                    {t("See all {0} in the Archive", [concluded.length])}
+                  </button>
+                </li>
+              )}
+            </DoneGroup>
+          )}
+          {tasks.length === 0 && !concluded?.length ? (
             <div className="empty-state">
               <Icon name="board" size={22} />
               <strong>{t("No tasks with these filters")}</strong>
@@ -372,18 +407,24 @@ export function BoardList({
             })
           )}
         </div>
-        <ConcludeZone
-          zoneRef={zone}
-          boxRef={box}
-          active={Boolean(dragged)}
-          over={drop?.status === "done"}
-          receiving={Boolean(flight)}
-        />
+        {!concluded && (
+          <ConcludeZone
+            zoneRef={zone}
+            boxRef={box}
+            active={Boolean(dragged)}
+            over={drop?.status === "done"}
+            receiving={Boolean(flight)}
+          />
+        )}
       </div>
       <span className="sr-only" role="status">
         {announcement}
       </span>
-      <DragOverlay dropAnimation={null}>
+      <DragOverlay
+        dropAnimation={null}
+        // Over another group, the row takes on its colour.
+        style={laneOf(changed ? drop?.status : undefined)}
+      >
         {dragged && row(dragged, true)}
       </DragOverlay>
       {flight && (
@@ -425,6 +466,7 @@ function ListGroup({
     <section
       ref={setNodeRef}
       className={`list-group ${count === 0 ? "empty" : ""} ${target ? "drop-target" : ""}`}
+      style={laneOf(status)}
       aria-label={statusTitle[status]}
     >
       <h2 className="list-group-head">
@@ -437,6 +479,46 @@ function ListGroup({
       <ul ref={listRef} className="rows">
         {children}
       </ul>
+    </section>
+  );
+}
+
+/** The concluded tasks, folded on top until opened. A row dropped on it is concluded. */
+function DoneGroup({
+  count,
+  open,
+  target,
+  onToggle,
+  children,
+}: {
+  count: number;
+  open: boolean;
+  target: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  const { setNodeRef } = useDroppable({ id: "done" });
+  return (
+    <section
+      ref={setNodeRef}
+      className={`list-group done-group ${target ? "drop-target" : ""}`}
+      aria-label={t("Done tasks")}
+    >
+      <h2 className="list-group-head">
+        <button
+          type="button"
+          className="done-toggle"
+          aria-expanded={open}
+          aria-label={`${open ? t("Hide done tasks") : t("Show done tasks")}, ${count}`}
+          onClick={onToggle}
+        >
+          <Icon name={open ? "chevronDown" : "chevronRight"} size={12} />
+          <StatusIcon status="done" />
+          {t("Done tasks")}
+          <span className="count">{count}</span>
+        </button>
+      </h2>
+      {open && <ul className="rows">{children}</ul>}
     </section>
   );
 }

@@ -180,6 +180,10 @@ export interface Goal {
   description: string;
   /** A day, `YYYY-MM-DD`. */
   targetDate: string | null;
+  /** The release it belongs to, as typed, such as `0.4.1`. */
+  version: string | null;
+  /** Its place in the project's list of goals, top first. */
+  position: number;
   /** When the person concluded it. */
   completedAt: number | null;
   createdAt: number;

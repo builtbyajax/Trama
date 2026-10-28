@@ -41,6 +41,7 @@ export function Segmented<T extends string | boolean>({
   labelledBy,
   size,
   className = "",
+  arrows = true,
 }: {
   options: SegmentedOption<T>[];
   value: T;
@@ -49,6 +50,9 @@ export function Segmented<T extends string | boolean>({
   labelledBy?: string;
   size?: "small";
   className?: string;
+  /** Off where the arrows belong to the page below, as in the project's tabs: then Tab reaches
+   * every item. */
+  arrows?: boolean;
 }) {
   const group = useRef<HTMLDivElement>(null);
   const current = options.findIndex((option) => option.value === value);
@@ -74,11 +78,15 @@ export function Segmented<T extends string | boolean>({
             type="button"
             role="radio"
             aria-checked={checked}
-            tabIndex={checked || (current < 0 && index === 0) ? 0 : -1}
+            tabIndex={
+              !arrows || checked || (current < 0 && index === 0) ? 0 : -1
+            }
             {...option.props}
             onClick={() => !checked && onChange(option.value)}
-            onKeyDown={(event) =>
-              radioKeyDown(event, options.length, index, choose)
+            onKeyDown={
+              arrows
+                ? (event) => radioKeyDown(event, options.length, index, choose)
+                : undefined
             }
           >
             {option.label}

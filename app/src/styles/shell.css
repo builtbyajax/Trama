@@ -501,6 +501,10 @@ button.crumb:hover {
   margin-right: -4px;
   padding-right: 4px;
 }
+/* WebKit draws the global thin bar despite `scrollbar-width`, which would push the icons left. */
+.sidebar.rail .sidebar-group.grow::-webkit-scrollbar {
+  display: none;
+}
 .sidebar.rail .nav-item {
   width: 34px;
   height: 32px;
@@ -825,6 +829,10 @@ button.crumb:hover {
 .window-body {
   position: relative;
 }
+/* Only groups the edge and the floating sidebar, to tell the pointer over them from elsewhere. */
+.sidebar-slot {
+  display: contents;
+}
 .sidebar-edge {
   position: absolute;
   z-index: 30;
@@ -857,7 +865,7 @@ button.crumb:hover {
 .sidebar-peek.leaving {
   opacity: 0;
   transform: translateX(-18px);
-  transition-duration: 160ms, 200ms;
+  transition-duration: 100ms, 130ms;
   transition-timing-function: ease-in;
 }
 /* A menu the floating sidebar opened leaves with it, at the same pace. */
@@ -866,8 +874,8 @@ button.crumb:hover {
   transform: translateX(-18px);
   pointer-events: none;
   transition:
-    opacity 160ms ease-in,
-    transform 200ms ease-in;
+    opacity 100ms ease-in,
+    transform 130ms ease-in;
 }
 .sidebar-peek .sidebar {
   padding-top: 8px;
@@ -880,56 +888,34 @@ button.crumb:hover {
 }
 
 /* ───── goals of the open project, under its row ─────
-   A line comes down from the project's mark (its center, 18px in) and branches to each row. */
+   One line each, beside a stripe in the project's color that runs down from under its mark (its
+   center, 18px in). The row fills from the left as its tasks get
+   done: a gray wash, blue while it filters the board, red once its target date passed. */
 .sidebar-goals {
   flex: none;
   display: flex;
   flex-direction: column;
-  margin: 0 0 6px;
-}
-.sidebar-goals > * {
-  position: relative;
-  margin-left: 30px;
-}
-.sidebar-goals > *::before,
-.sidebar-goals > *:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  /* Half a pixel back, so the 1px stroke is centred under the project mark. */
-  left: -12.5px;
-  pointer-events: none;
-  border-left: 1px solid var(--line-strong);
-}
-.sidebar-goals > *::before {
-  top: 0;
-  width: 8px;
-  height: 50%;
-  border-bottom: 1px solid var(--line-strong);
-  border-bottom-left-radius: 6px;
-}
-/* Above the last row the trunk runs through, so the branch is only the horizontal stroke, past
-   the trunk: the strokes are translucent and would darken where they overlap. */
-.sidebar-goals > *:not(:last-child)::before {
-  left: -11.5px;
-  width: 7px;
-  border-left: 0;
-  border-bottom-left-radius: 0;
-}
-.sidebar-goals > *:not(:last-child)::after {
-  top: 0;
-  bottom: 0;
+  gap: 1px;
+  margin: 2px 0 6px 17px;
+  padding-left: 9px;
+  border-left: 2px solid color-mix(in srgb, var(--goal-stripe) 40%, transparent);
 }
 .goal-item {
+  --goal-fill: color-mix(in srgb, var(--ink) 7%, transparent);
   flex: none;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 3px;
-  min-height: 28px;
-  padding: 3px 8px 4px;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 8px;
   border: 0;
   border-radius: var(--radius-control);
-  background: transparent;
+  background-color: transparent;
+  background-image: linear-gradient(
+    90deg,
+    var(--goal-fill) var(--progress),
+    transparent var(--progress)
+  );
   color: var(--ink-2);
   font: inherit;
   font-size: var(--fs-sm);
@@ -940,64 +926,58 @@ button.crumb:hover {
 }
 .goal-item:hover,
 .goal-item.menu-open {
-  background: var(--hover);
+  background-color: var(--hover);
   color: var(--ink);
 }
 .goal-item.selected {
-  background: var(--accent-soft);
+  --goal-fill: color-mix(in srgb, var(--accent) 28%, transparent);
+  background-color: var(--accent-soft);
   color: var(--ink);
 }
-.goal-item.concluded {
-  color: var(--ink-3);
+.goal-item.late {
+  --goal-fill: color-mix(in srgb, var(--danger) 16%, transparent);
 }
-.goal-line {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
+/* A late goal stays red while it filters the board, instead of the blue of a selected row. */
+.goal-item.late.selected {
+  --goal-fill: color-mix(in srgb, var(--danger) 30%, transparent);
+  background-color: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+.goal-item.dragging {
+  opacity: 0.35;
+}
+/* The copy under the pointer, lifted a little off the list. */
+.goal-item.drag-overlay {
+  background-color: var(--card-hover);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.45),
+    0 0 0 1px var(--accent-line);
+  color: var(--ink);
+}
+/* Where the dragged goal will land. */
+.goal-drop {
+  flex: none;
+  height: 2px;
+  margin: 0 8px;
+  border-radius: 1px;
+  background: var(--accent);
 }
 .goal-name {
   flex: 1;
   min-width: 0;
 }
-.goal-count,
-.goal-near {
-  flex: none;
-  color: var(--ink-3);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-.goal-near.late {
+.goal-item.late .goal-name {
   color: var(--danger);
 }
-.goal-ready {
+.goal-percent {
   flex: none;
-  display: inline-flex;
-  color: var(--s-done);
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
 }
-.goal-ready .icon {
-  stroke-width: 2;
-}
-.goal-bar {
-  display: block;
-  height: 2px;
-  border-radius: 1px;
-  background: var(--line-subtle);
-  overflow: hidden;
-}
-.goal-bar > span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--ink-3);
-  transition: width 0.3s var(--ease);
-}
-.goal-item.selected .goal-bar > span {
-  background: var(--accent);
-}
-.goal-bar.full > span,
-.goal-item.selected .goal-bar.full > span {
-  background: var(--s-done);
+/* "New goal" and the concluded ones share one quiet line under the goals. */
+.goal-footer {
+  display: flex;
+  align-items: center;
 }
 .goal-new,
 .goal-concluded {
@@ -1015,18 +995,17 @@ button.crumb:hover {
   font-size: var(--fs-sm);
   text-align: left;
 }
+.goal-concluded {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+}
 .goal-new:hover,
-.goal-concluded:hover,
-.goal-concluded[aria-expanded="true"] {
+.goal-concluded:hover {
   background: var(--hover);
   color: var(--ink-2);
 }
 .goal-concluded.selected {
   color: var(--ink);
-}
-/* Points to the side the list opens on, like a submenu. */
-.goal-concluded > .icon:last-child {
-  margin-left: auto;
 }
 
 /* ───── the goal the board is filtered by, in the project head ───── */
@@ -1120,24 +1099,24 @@ button.crumb:hover {
 .goal-bar > span {
   border-radius: 3.5px;
 }
-:is(.goal-dots, .goal-bar, .project-goal-bar) > .s-done,
-.project-legend .dot.s-done {
+:is(.goal-dots, .goal-bar) > .s-done,
+:is(.project-legend, .project-pulse) .dot.s-done {
   background: var(--s-done);
 }
-:is(.goal-dots, .goal-bar, .project-goal-bar) > .s-review,
-.project-legend .dot.s-review {
+:is(.goal-dots, .goal-bar) > .s-review,
+:is(.project-legend, .project-pulse) .dot.s-review {
   background: var(--s-review);
 }
-:is(.goal-dots, .goal-bar, .project-goal-bar) > .s-inProgress,
-.project-legend .dot.s-inProgress {
+:is(.goal-dots, .goal-bar) > .s-inProgress,
+:is(.project-legend, .project-pulse) .dot.s-inProgress {
   background: var(--s-inProgress);
 }
-:is(.goal-dots, .goal-bar, .project-goal-bar) > .s-todo,
-.project-legend .dot.s-todo {
+:is(.goal-dots, .goal-bar) > .s-todo,
+:is(.project-legend, .project-pulse) .dot.s-todo {
   background: var(--ink-off);
 }
-:is(.goal-dots, .goal-bar, .project-goal-bar) > .s-backlog,
-.project-legend .dot.s-backlog {
+:is(.goal-dots, .goal-bar) > .s-backlog,
+:is(.project-legend, .project-pulse) .dot.s-backlog {
   background: var(--s-backlog);
   opacity: 0.55;
 }
@@ -1273,114 +1252,56 @@ button.crumb:hover {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
-.goal-modal {
-  width: 460px;
+/* The goal form reads like a document: the name on top, version and date as chips, the
+   description filling the body. */
+.goal-form {
+  gap: 10px;
 }
-.text-area.short {
-  height: 82px;
+.goal-form .sheet-title:focus-visible {
+  border-color: transparent;
+  box-shadow: none;
+}
+.goal-version-chip {
+  gap: 6px;
+}
+.goal-version-chip:focus-within {
+  border-color: var(--accent-line);
+}
+.prop-chip.goal-version-chip input {
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font: inherit;
+  outline: none;
+}
+.prop-chip.goal-version-chip input::placeholder {
+  color: var(--ink-3);
+}
+.prop-chip .date-field-hint {
+  font-size: inherit;
+}
+.modal-body .goal-description,
+.modal-body .goal-description:hover,
+.modal-body .goal-description:focus-visible {
+  margin: 6px calc(var(--bar) - 24px) 0 -24px;
+  padding: 16px calc(24px - var(--bar)) 4px 24px;
+  border: 0;
+  border-top: 1px solid var(--line-subtle);
+  border-radius: 0;
+  background: transparent;
+  resize: none;
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  box-shadow: none;
 }
 .workspace-target .truncate {
   flex: 1;
 }
 .goal-chip.empty {
   color: var(--ink-3);
-}
-
-/* Every concluded goal, from "See all…" in the goal menus. */
-.concluded-modal {
-  width: 520px;
-  height: min(600px, calc(100vh - 48px));
-}
-.modal-body.concluded-body {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  padding: 4px 24px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-}
-.concluded-search {
-  position: relative;
-  flex: none;
-}
-.concluded-search .icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--ink-3);
-  pointer-events: none;
-}
-.concluded-search input {
-  padding-left: 30px;
-}
-.concluded-list {
-  flex: 1;
-  min-height: 0;
-  margin: 0 -8px;
-  padding: 0 calc(8px - var(--bar)) 0 8px;
-  overflow-y: scroll;
-  overscroll-behavior: contain;
-}
-.concluded-month {
-  margin: 0;
-  padding: 10px 8px 4px;
-  font-size: var(--fs-xs);
-  font-weight: 500;
-  color: var(--ink-3);
-}
-.concluded-month::first-letter {
-  text-transform: uppercase;
-}
-.concluded-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 4px 0 0;
-  border-radius: 7px;
-}
-.concluded-row:hover,
-.concluded-row:focus-within {
-  background: var(--hover);
-}
-.concluded-open {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 6px 8px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  text-align: left;
-}
-.concluded-open > .truncate {
-  max-width: 100%;
-}
-.concluded-meta {
-  font-size: var(--fs-xs);
-  color: var(--ink-3);
-}
-.concluded-row > .button,
-.concluded-row > .icon-button {
-  opacity: 0;
-}
-.concluded-row:hover > .button,
-.concluded-row:hover > .icon-button,
-.concluded-row:focus-within > .button,
-.concluded-row:focus-within > .icon-button {
-  opacity: 1;
-}
-.concluded-empty {
-  margin: 0;
-  padding: 24px 8px;
-  color: var(--ink-3);
-  text-align: center;
 }
 
 /* The agent sessions connected now, under their own heading, one character each: working, it hops
