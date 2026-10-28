@@ -174,6 +174,22 @@ export function HistoryNav({
   const tabStop = keys.includes(selection) ? selection : keys[0];
   const item = (key: string) =>
     list.current?.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"]`);
+  // Opening the history puts the keyboard on its list, so the arrows step through it right away,
+  // unless something else that takes keys already has focus.
+  const entered = useRef(false);
+  useEffect(() => {
+    if (entered.current || !keys.length) return;
+    entered.current = true;
+    const active = document.activeElement;
+    if (
+      active instanceof HTMLElement &&
+      active !== document.body &&
+      (active.isContentEditable ||
+        active.closest("input, textarea, select, dialog, [role=menu]"))
+    )
+      return;
+    item(tabStop)?.focus({ preventScroll: true });
+  }, [keys.length]);
   useEffect(() => {
     if (!reveal) return;
     const row = item(selection);
