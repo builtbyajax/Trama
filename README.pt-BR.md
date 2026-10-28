@@ -18,7 +18,7 @@
   <a href="CHANGELOG.pt-BR.md">Histórico de versões</a>
 </p>
 
-![Quadro do Trama com tarefas atribuídas à pessoa ou ao agente em quatro colunas](docs/images/pt-BR/board.png)
+![Visão do projeto no Trama com objetivos, agentes conectados e detalhes do projeto](docs/images/pt-BR/project.png)
 
 ## Primeiros passos
 
@@ -38,15 +38,21 @@ Use o Trama por conta própria para organizar o projeto e acompanhar o históric
 - Mantenha suas anotações pessoais das tarefas privadas para os clientes MCP.
 - Arquive tarefas concluídas e encontre trabalhos de vários projetos na visão geral.
 
+![Quadro do Trama com tarefas atribuídas à pessoa ou ao agente em quatro colunas](docs/images/pt-BR/board.png)
+
 ## Objetivos
 
 Reúna tarefas em um objetivo para acompanhar o progresso do projeto. Defina uma data-alvo e uma versão e conclua o objetivo quando o trabalho terminar.
+
+![Objetivo concluído no Trama com resumo datado e tarefas vinculadas](docs/images/pt-BR/goals.png)
 
 ## Conecte seu agente de código
 
 O aplicativo inclui o **`trama-agent`**, um servidor MCP local por STDIO. Conecte-o ao Codex, Claude Code, OpenCode ou outro cliente compatível com servidores MCP locais.
 
 O agente pode ler briefings, atualizar tarefas, anexar notas do projeto e registrar referências de entrega. Cada sessão conectada tem um perfil com nome, personagem e estado de presença. O Trama não inicia nem hospeda agentes de código.
+
+![Página de Agentes do Trama com perfis conectados e opções para personalizar nome, cor, forma e olhos](docs/images/pt-BR/agents.png)
 
 1. [Conecte seu cliente MCP](docs/installation.pt-BR.md#conecte-seu-agente).
 2. Adicione a [skill do Trama](skills/trama/SKILL.md) para orientar o fluxo de fila, entrega e revisão.
@@ -59,7 +65,7 @@ Consulte alterações locais, branches, commits e tarefas vinculadas em um únic
 
 A visualização de Git do Trama é somente para consulta. Você e suas ferramentas de código continuam controlando commits, branches e merges.
 
-![Histórico Git do Trama com commits de uma tarefa, estado da entrega e arquivos alterados](docs/images/pt-BR/git.png)
+![Histórico do projeto no Trama com commits recentes e tarefas vinculadas](docs/images/pt-BR/git.png)
 
 ## Mantenha as notas do projeto em Markdown
 

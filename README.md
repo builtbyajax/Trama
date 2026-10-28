@@ -18,7 +18,7 @@
   <a href="CHANGELOG.md">Changelog</a>
 </p>
 
-![Trama's task board with work assigned to a person or an agent across four columns](docs/images/en/board.png)
+![Trama project overview with goals, connected agents, and project details](docs/images/en/project.png)
 
 ## Get started
 
@@ -38,15 +38,21 @@ Use Trama on your own for a project board and work history. Connect a coding age
 - Keep personal task notes private from MCP clients.
 - Archive completed tasks and find work across projects in the overview.
 
+![Trama's task board with work assigned to a person or an agent across four columns](docs/images/en/board.png)
+
 ## Goals
 
 Group tasks under a goal to follow progress across the project. Add a target date and version, then conclude the goal when its work is complete.
+
+![A completed Trama goal with its dated summary and linked tasks](docs/images/en/goals.png)
 
 ## Connect your coding agent
 
 The desktop app includes **`trama-agent`**, a local MCP server over STDIO. Connect it to Codex, Claude Code, OpenCode, or another client that supports local MCP servers.
 
 The agent can read task briefings, update tasks, attach project notes, and record delivery references. Each connected session has a profile with a name, character, and presence status. Trama does not launch or host coding agents.
+
+![Trama's Agents page with connected profiles and controls to customize an agent's name, color, shape, and eyes](docs/images/en/agents.png)
 
 1. [Connect your MCP client](docs/installation.md#connect-your-agent).
 2. Add the included [Trama skill](skills/trama/SKILL.md) for the queue, delivery, and review workflow.
@@ -59,7 +65,7 @@ Browse local changes, branches, commits, and linked tasks in one history. Open c
 
 Trama's Git view is read-only. You and your coding tools keep control of commits, branches, and merges.
 
-![Trama's Git history with a task's commits, delivery status, and changed files](docs/images/en/git.png)
+![Trama's project history with recent commits and linked tasks](docs/images/en/git.png)
 
 ## Keep project notes in Markdown
 
