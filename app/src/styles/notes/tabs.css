@@ -74,6 +74,7 @@
   margin-right: 6px;
   display: grid;
   place-items: center;
+  padding: 0;
   border: 0;
   border-radius: 5px;
   background: transparent;
